@@ -1,0 +1,55 @@
+#  ---------------------
+# |          ----*      |
+# | --* FMDT-DETECT --* |
+# |   -------*          |
+#  ---------------------
+#
+# Parameters:
+# -----------
+#  * in-video       = /home/ejovo/MAIN/S7/METEORIX/my_videos/edited/draco1/draco1.mp4
+#  * out-bb         = /home/ejovo/MAIN/S7/METEORIX/my_videos/edited/draco1/draco1_bb.txt
+#  * out-frames     = (null)
+#  * out-stats      = (null)
+#  * out-mag        = (null)
+#  * fra-start      = 0
+#  * fra-end        = 0
+#  * fra-skip       = 0
+#  * light-min      = 55
+#  * light-max      = 80
+#  * surface-min    = 3
+#  * surface-max    = 1000
+#  * k              = 3
+#  * max-dist       = 10
+#  * r-extrapol     = 5
+#  * angle-max      = 20.000000
+#  * fra-star-min   = 15
+#  * fra-meteor-min = 3
+#  * fra-meteor-max = 100
+#  * diff-dev       = 4.00
+#  * track-all      = 0
+#  * task-stats     = 0
+#  * ffmpeg-threads = 0
+#  * Runtime mode   = Pipeline
+# The program is running...
+# Tracks [1]:
+# -------||---------------------------||---------------------------||---------
+#  Track ||           Begin           ||            End            ||  Object 
+# -------||---------------------------||---------------------------||---------
+# -------||---------|--------|--------||---------|--------|--------||---------
+#     Id || Frame # |      x |      y || Frame # |      x |      y ||    Type 
+# -------||---------|--------|--------||---------|--------|--------||---------
+       2 ||       1 |  608.1 |  465.7 ||       3 |  606.0 |  456.0 ||  meteor 
+# Tracks statistics:
+# -> Processed frames =   33
+# -> Detected tracks = ['meteor':   1, 'star':   0, 'noise':   0, 'total':   1]
+#
+# Pipeline stage 0 (1 thread(s)): 
+# (II) Statistics are unavailable. Did you enable the statistics in the tasks?
+#
+# Pipeline stage 1 (4 thread(s)): 
+# (II) Statistics are unavailable. Did you enable the statistics in the tasks?
+#
+# Pipeline stage 2 (1 thread(s)): 
+# (II) Statistics are unavailable. Did you enable the statistics in the tasks?
+# End of the program, exiting.
+
