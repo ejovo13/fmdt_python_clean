@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fmdt-python"
+packages = [ 
+  { include = "fmdt" },
+]
+version = "0.0.15"
+authors = [
+  { name="Evan Voyles", email="ejovo13@yahoo.com" },
+]
+description = "utlity functions for fast meteor detection toolbox"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy", "ffmpeg-python"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"fmdt" = "https://github.com/alsoc/fmdt"
+"Homepage" = "https://github.com/ejovo13/fmdt_scripts"
