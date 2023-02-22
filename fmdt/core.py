@@ -8,17 +8,106 @@ Public API:
 """
 
 import fmdt.utils as utils
+from enum import Enum
 
 # Structure of tracking output table of fmdt-detect after 
 # each line gets stripped using whitespace as a delimiter
-__OBJECT_ID_COLUMN   = 0
-__START_FRAME_COLUMN = 2
-__START_X_COLUMN     = 4
-__START_Y_COLUMN     = 6
-__END_FRAME_COLUMN   = 8
-__END_X_COLUMN       = 10
-__END_Y_COLUMN       = 12
-__OBJECT_TYPE_COLUMN = 14
+# __OBJECT_ID_COLUMN   = 0
+# __START_FRAME_COLUMN = 2
+# __START_X_COLUMN     = 4
+# __START_Y_COLUMN     = 6
+# __END_FRAME_COLUMN   = 8
+# __END_X_COLUMN       = 10
+# __END_Y_COLUMN       = 12
+# __OBJECT_TYPE_COLUMN = 14
+
+class TrackingTable:
+
+    OBJECT_ID   = 0
+    START_FRAME = 2
+    START_X     = 4
+    START_Y     = 6
+    END_FRAME   = 8
+    END_X       = 10
+    END_Y       = 12
+    OBJECT_TYPE = 14
+
+
+class ObjectType(Enum):
+    METEOR = 0
+    STAR   = 1
+    NOISE  = 2
+
+    @staticmethod
+    def from_str(s: str):
+        slow = s.lower()
+        if slow == "meteor":
+            return ObjectType.METEOR
+        elif slow == "star":
+            return ObjectType.STAR
+        else:
+            return ObjectType.NOISE
+
+
+    
+class TrackedObject:
+
+    def __init__(
+        self,
+        id: int,
+        start_frame: int,
+        start_x: float,
+        start_y: float,
+        end_frame: int,
+        end_x: float,
+        end_y: float,
+        type: ObjectType
+        ): 
+
+        self.id = id
+        self.start_frame = start_frame
+        self.start_x = start_x
+        self.start_y = start_y
+        self.end_frame = end_frame
+        self.end_x = end_x
+        self.end_y = end_y
+        self.type = type
+        
+    def is_meteor(self) -> bool:
+        return self.type == ObjectType.METEOR
+
+    def is_star(self) -> bool:
+        return self.type == ObjectType.STAR
+
+    def is_noise(self) -> bool:
+        return self.type == ObjectType.NOISE
+    
+    def type_str(self) -> str:
+        if self.is_meteor():
+            return "Meteor" 
+        elif self.is_star():
+            return "Star" 
+        else:
+            return "Noise" 
+    
+    def __str__(self) -> str:
+
+        return f"<{self.type_str()} ({self.start_frame}, {self.end_frame}), pos0: ({self.start_x, self.start_y}), posT: ({self.end_x}, {self.end_y})>"
+    
+    def __repr__(self) -> str:
+        return f"<{self.type_str()} ({self.start_frame}, {self.end_frame})>"
+    
+    # @staticmethod
+    # def from_tracking_file(filename: str):
+    #     pass
+    #     # all_info = extract_all_information()
+
+# class TrackingList:
+#     """A list of TrackedObjects"""
+
+def read_tracks_file(tracks_filename: str) -> list[TrackedObject]:
+    return extract_all_information(tracks_filename)
+
 
 def extract_key_information(detect_tracks_in: str) -> list[dict]:
     """Extract key information from a detect_tracks.txt file.
@@ -47,9 +136,9 @@ def extract_key_information(detect_tracks_in: str) -> list[dict]:
     def line_to_dict(split_line: list[str]):
 
         return {
-            "type":         split_line[__OBJECT_TYPE_COLUMN],
-            "start_frame":  int(split_line[__START_FRAME_COLUMN]),
-            "end_frame":    int(split_line[__END_FRAME_COLUMN])
+            "type":         split_line[TrackingTable.OBJECT_TYPE],
+            "start_frame":  int(split_line[TrackingTable.START_FRAME]),
+            "end_frame":    int(split_line[TrackingTable.END_FRAME])
         }
 
     # Utility boolean function to extract only the important lines
@@ -68,7 +157,7 @@ def extract_key_information(detect_tracks_in: str) -> list[dict]:
 
     return dict_array
 
-def extract_all_information(detect_tracks_in: str) -> list[dict]:
+def extract_all_information(detect_tracks_in: str) -> list[TrackedObject]:
     """Extract all tracking information from a detect_tracks.txt file.
 
     Parameters
@@ -94,19 +183,29 @@ def extract_all_information(detect_tracks_in: str) -> list[dict]:
     """
 
     # Utility function to convert a line of interest to a dictionary
-    def line_to_dict(split_line: list[str]):
+    # def line_to_dict(split_line: list[str]):
 
-        return {
-            "id":           int(split_line[__OBJECT_ID_COLUMN]),
-            "start_frame":  int(split_line[__START_FRAME_COLUMN]),
-            "start_x":      float(split_line[__START_X_COLUMN]),
-            "start_y":      float(split_line[__START_Y_COLUMN]),
-            "end_frame":    int(split_line[__END_FRAME_COLUMN]),
-            "end_x":        float(split_line[__END_X_COLUMN]),
-            "end_y":        float(split_line[__END_Y_COLUMN]),
-            "type":         split_line[__OBJECT_TYPE_COLUMN]
-        }
+    #     return {
+    #         "id":           int(split_line[TrackingTable.OBJECT_ID]),
+    #         "start_frame":  int(split_line[TrackingTable.START_FRAME]),
+    #         "start_x":      float(split_line[TrackingTable.START_X]),
+    #         "start_y":      float(split_line[TrackingTable.START_Y]),
+    #         "end_frame":    int(split_line[TrackingTable.END_FRAME]),
+    #         "end_x":        float(split_line[TrackingTable.END_X]),
+    #         "end_y":        float(split_line[TrackingTable.END_Y]),
+    #         "type":         split_line[TrackingTable.OBJECT_TYPE]
+    #     }
 
+    def line_to_obj(split_line: list[str]) -> TrackedObject:
+        return TrackedObject(int(split_line[TrackingTable.OBJECT_ID]),
+                             int(split_line[TrackingTable.START_FRAME]),
+                             float(split_line[TrackingTable.START_X]),
+                             float(split_line[TrackingTable.START_Y]),
+                             int(split_line[TrackingTable.END_FRAME]),
+                             float(split_line[TrackingTable.END_X]),
+                             float(split_line[TrackingTable.END_Y]),
+                             ObjectType.from_str(split_line[TrackingTable.OBJECT_TYPE]))
+      
     # Utility boolean function to extract only the important lines
     interesting_line = lambda line: (
         (" meteor" in line) or (" star" in line) or (" noise" in line)
@@ -115,13 +214,9 @@ def extract_all_information(detect_tracks_in: str) -> list[dict]:
     # Processing of the actual file
     file_tracks = open(detect_tracks_in)
     file_lines  = file_tracks.readlines()
-    dict_array = []
 
-    for line in file_lines:
-        if interesting_line(line):
-            dict_array.append(line_to_dict(line.split()))
+    return [line_to_obj(line.split()) for line in file_lines if interesting_line(line)]
 
-    return dict_array
 
 def split_video_at_meteors(
         video_filename: str,
