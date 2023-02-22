@@ -9,7 +9,13 @@ import fmdt.core
 import fmdt.utils
 import fmdt.args
 
-def count(trk_bb_path: str, stars: bool = False, meteors: bool = True, noise: bool = False, all: bool = False) -> int:
+def count(
+        trk_bb_path: str,
+        stars: bool = False,
+        meteors: bool = True,
+        noise: bool = False,
+        all: bool = False
+    ) -> int:
     """Count the number of meteors detected in a tracks_bb file"""
     if all:
         stars = True
@@ -18,14 +24,14 @@ def count(trk_bb_path: str, stars: bool = False, meteors: bool = True, noise: bo
 
     tracked = fmdt.core.extract_key_information(trk_bb_path)
 
-    if not stars:
-        tracked = [t for t in tracked if t["type"] != "star"]
-
-    if not meteors:
-        tracked = [t for t in tracked if t["type"] != "meteor"]
-
-    if not noise:
-        tracked = [t for t in tracked if t["type"] != "noise"]
+    # If we shouldn't keep this object type, filter it out
+    def refine(obj_type: bool, type_str: str) -> None: 
+        if not obj_type:
+            tracked = [t for t in tracked if t["type"] != type_str]
+    
+    refine(stars, "stars")
+    refine(meteors, "meteors")
+    refine(noise, "noise")
 
     # tracked_meteors = fmdt.utils.retain_meteors(tracked)
     return len(tracked)
@@ -62,6 +68,11 @@ def detect(
         out_track_file: str | None = None,
         log: bool = False
     ) -> fmdt.args.Args:
+    """Wrapper to executable fmdt-detect.
+
+
+    
+    """
 
     # Wrap up all of the arguments into a dictionary
     detect_args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
@@ -89,7 +100,13 @@ def detect(
     
 
 
-def visu(in_video: str, in_track_file: str, in_bb_file: str, out_visu_file: str | None = None, show_id: bool = False) -> None:
+def visu(
+        in_video: str,
+        in_track_file: str,
+        in_bb_file: str,
+        out_visu_file: str | None = None,
+        show_id: bool = False
+    ) -> None:
 
     fmdt_visu_exe = shutil.which("fmdt-visu")
     fmdt_visu_found = not fmdt_visu_exe is None
