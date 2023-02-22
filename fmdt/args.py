@@ -43,13 +43,12 @@ class Args:
     #         f"detect_args:"
     
     
-    @classmethod
     def detect(self):
         """OOP Interface to calling fmdt.api.detect()"""
 
         # Make sure the detecting arguments are not none
         if self.detect_args is None:
-            self.detect_args = self.default_detect_args()
+            self.detect_args = default_detect_args()
         
         # Convert the list of detect args to a single command
         args = fmdt.api.detect(**self.detect_args)
@@ -105,6 +104,12 @@ class Args:
 
     # Write the dictionary of fmdt-detect arguments to a csv file
     # def detect_to_csv(self, csv_filename) -> None:
+
+def video_input(filename: str) -> Args:
+    a = Args()
+    a.detect_args = default_detect_args()
+    a.detect_args["vid_in_path"] = filename
+    return a
 
 class ArgList:
     """This class allows us to read in the arguments to calls to fmdt-detect from a csv file"""
@@ -259,7 +264,7 @@ def handle_detect_args(
     def arg_str(arg: str | None, flag: str) -> None:
         """Modify args in place if arg is not None"""
         if not arg is None:
-            args.extend(["--" + flag, arg])
+            args.extend(["--" + flag, str(arg)])
 
     def arg_bool(arg: bool | None, flag: str) -> None:
         """Modify args in place if arg is True"""
@@ -296,7 +301,7 @@ def handle_detect_args(
     # ======== Arguments of the form --toggle
     arg_bool(vid_in_buff, "vid_in_buff")
     arg_bool(ccl_fra_id, "ccl-fra-id")
-    arg_bool(vid_in_buff, "trk-all")
+    arg_bool(trk_all, "trk-all")
 
     return args
 
