@@ -53,7 +53,9 @@ def extract_key_information(detect_tracks_in: str) -> list[dict]:
         }
 
     # Utility boolean function to extract only the important lines
-    interesting_line = lambda line: (" meteor" in line) or (" star" in line) or (" noise" in line)
+    interesting_line = lambda line: (
+        (" meteor" in line) or (" star" in line) or (" noise" in line)
+    )
     
     # Processing of the actual file
     file_tracks = open(detect_tracks_in)
@@ -106,7 +108,9 @@ def extract_all_information(detect_tracks_in: str) -> list[dict]:
         }
 
     # Utility boolean function to extract only the important lines
-    interesting_line = lambda line: (" meteor" in line) or (" star" in line) or (" noise" in line)
+    interesting_line = lambda line: (
+        (" meteor" in line) or (" star" in line) or (" noise" in line)
+    )
     
     # Processing of the actual file
     file_tracks = open(detect_tracks_in)
@@ -119,7 +123,15 @@ def extract_all_information(detect_tracks_in: str) -> list[dict]:
 
     return dict_array
 
-def split_video_at_meteors(video_filename: str, detect_tracks_in: str, nframes_before=3, nframes_after=3, overwrite=False, exact_split: bool = False, log: bool = False) -> None:
+def split_video_at_meteors(
+        video_filename: str,
+        detect_tracks_in: str,
+        nframes_before=3,
+        nframes_after=3,
+        overwrite=False,
+        exact_split: bool = False,
+        log: bool = False
+    ) -> None:
     """
     Split a video into small segments of length (nframes_before + nframes_after + sequence_length) frames
     for each meteor detected 
@@ -163,9 +175,12 @@ def split_video_at_meteors(video_filename: str, detect_tracks_in: str, nframes_b
         frames = utils.convert_video_to_ndarray(video_filename, log=log)
         frame_rate = utils.get_avg_frame_rate(video_filename)
         total_frames, _, _, _ = frames.shape
-        seq_video_name = lambda seq: f'{video_name}_f{format(seq[0], format_str)}-{format(seq[1], format_str)}.{extension}'
+        seq_video_name = lambda seq: (
+            f'{video_name}_f{format(seq[0], format_str)}-{format(seq[1], format_str)}.{extension}'
+        )
 
         def exact_splitting(seq) -> None:
+            """Function call that will convert a 'meteor seq' to a frame perfect video sequence"""
 
             # Ensure that f_start and f_end are valid
             f_start = s[0] - nframes_before if s[0] - nframes_before >= 0 else 0
@@ -177,13 +192,17 @@ def split_video_at_meteors(video_filename: str, detect_tracks_in: str, nframes_b
     
     else:
 
-        seq_video_name = lambda seq: f'{video_name}_f{format(seq[0], format_str)}-{format(seq[1], format_str)}_.{extension}'
+        seq_video_name = lambda seq: (
+            f'{video_name}_f{format(seq[0], format_str)}-{format(seq[1], format_str)}_.{extension}'
+        )
 
         def approx_splitting(seq) -> None:
+            """Function call that will convert a 'meteor seq' to an approximate video sequence"""
 
             f_start = s[0] - nframes_before if s[0] - nframes_before >= 0 else 0
             f_end   = s[1] + nframes_after
-            utils.extract_video_frames(video_filename, f_start, f_end, seq_video_name(s), overwrite=overwrite)
+            utils.extract_video_frames(video_filename, f_start, f_end,
+                                       seq_video_name(s), overwrite=overwrite)
 
         splitting_algorithm = approx_splitting
 

@@ -60,10 +60,9 @@ def get_video_height(filename: str) -> int:
 
     
 def decompose_video_filename(filename: str) -> tuple[str, str]:
-    """
-    Seperate the video filename from the extension
+    """Separate the name of a video from its extension
 
-    decompose_video_filename("vid.mp4") -> ("vid", "mp4") 
+    The function call decompose_video_filename("vid.mp4") returns the pair ("vid", "mp4") 
     """
     sep = filename.split('.')
     assert len(sep) == 2, "Filename has multiply periods"
@@ -72,7 +71,7 @@ def decompose_video_filename(filename: str) -> tuple[str, str]:
 def assert_file_exists(filename: str) -> None:
     assert os.path.exists(filename), f"{filename} not found"
 
-def time_s_to_ffmpeg_format(time) -> str:
+def time_s_to_ffmpeg_format(time: int | float) -> str:
 
     time_h = int(time // (60 * 60))
     time -= time_h * 60 * 60
@@ -91,7 +90,14 @@ def time_s_to_ffmpeg_format(time) -> str:
 #     return time_s_to_ffmpeg_format(start_time)
 
 
-def extract_video_frames(filename: str, start_frame: int, end_frame: int, out_file: str | None = None, quiet=True, overwrite=False) -> None:
+def extract_video_frames(
+        filename: str,
+        start_frame: int,
+        end_frame: int,
+        out_file: str | None = None,
+        quiet = True,
+        overwrite = False
+    ) -> None:
 
     assert_file_exists(filename)
 
@@ -127,7 +133,8 @@ def convert_video_to_ndarray(filename: str, log=False) -> np.ndarray:
     """
     Convert a video file to a numpy array of size [n_frames, height, width, 3] 
 
-    Taken from ffmpeg-python's documentation https://github.com/kkroening/ffmpeg-python/blob/master/examples/README.md#convert-video-to-numpy-array
+    Taken from ffmpeg-python's documentation 
+    https://github.com/kkroening/ffmpeg-python/blob/master/examples/README.md#convert-video-to-numpy-array
     """
 
     assert_file_exists(filename)
@@ -153,7 +160,13 @@ def convert_video_to_ndarray(filename: str, log=False) -> np.ndarray:
 
     return video
 
-def convert_ndarray_to_video(filename_out: str, frames: np.ndarray, framerate=60, vcodec='libx264', log=False) -> None:
+def convert_ndarray_to_video(
+        filename_out: str,
+        frames: np.ndarray,
+        framerate=60,
+        vcodec='libx264',
+        log=False
+    ) -> None:
     """
     Convert a rgb numpy array to video using ffmpeg-python
 

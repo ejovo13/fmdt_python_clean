@@ -3,6 +3,29 @@ import fmdt.api
 import shutil
 
 class Args:
+    """Args keeps track of a configuration of parameters for all of fmdt's executables
+
+    Upon a call to `fmdt.detect()`, an Args object is returned that remembers the configuration
+    used to execute fmdt-detect. We can subsequently use the Args object as an interface to
+    directly calling fmdt-visu, without having to respecify some of the more specific arguments.
+
+    Consider the difference between the two calls:
+    ```
+    fmdt.detect(vid_in_path = "vid.mp4")
+    fmdt.visu(vid_in_path = "vid.mp4", vid_out_path = "vid_visu.mp4")
+    ```
+
+    and
+    ```
+    fmdt.detect(vid_in_path = "vid.mp4").visu()
+    ```  
+    where storing the configuration for `fmdt-detect` in an Args object allows us to fill
+    in the parameters needed by a call to `fmdt-visu`.
+
+    This class is therefore a collection of dictionaries of parameters and interfaces to
+    the fmdt.api functions.
+    
+    """
 
     def __init__(self, tracking_list, detect_args: dict | None = None):
         self.tracking_list = tracking_list
@@ -10,6 +33,7 @@ class Args:
     
     @classmethod
     def detect(self):
+        """OOP Interface to calling fmdt.api.detect()"""
 
         # Make sure the detecting arguments are not none
         if self.detect_args is None:
@@ -33,44 +57,46 @@ class Args:
             gt_path: str | None = None,
             vid_out_path: str | None = None
         ):
+        """OOP Interface to calling fmdt.api.visu()"""
 
         print("Not yet implemented")
     
 
 
 def detect_args(
-    vid_in_path: str, 
-    vid_in_start: int | None = None,
-    vid_in_stop: int | None = None,
-    vid_in_skip: int | None = None,
-    vid_in_buff: bool | None = None,
-    vid_in_loop: int | None = None,
-    vid_in_threads: int | None = None,
-    light_min: int | None = None,
-    light_max: int | None = None,
-    ccl_fra_path: str | None = None,
-    ccl_fra_id: bool | None = None,
-    mrp_s_min: int | None = None,
-    mrp_s_max: int | None = None,
-    knn_k: int | None = None,
-    knn_d: int | None = None,
-    knn_s: int | None = None,
-    trk_ext_d: int | None = None,
-    trk_ext_o: int | None = None,
-    trk_angle: float | None = None,
-    trk_star_min: int | None = None,
-    trk_meteor_min: int | None = None,
-    trk_meteor_max: int | None = None,
-    trk_ddev: float | None = None,
-    trk_all: bool | None = None,
-    trk_bb_path: str | None = None,
-    trk_mag_path: str | None = None,
-    log_path: str | None = None,
-    out_track_file: str | None = None,
-    log: bool = False
-) -> dict:
+        vid_in_path: str, 
+        vid_in_start: int | None = None,
+        vid_in_stop: int | None = None,
+        vid_in_skip: int | None = None,
+        vid_in_buff: bool | None = None,
+        vid_in_loop: int | None = None,
+        vid_in_threads: int | None = None,
+        light_min: int | None = None,
+        light_max: int | None = None,
+        ccl_fra_path: str | None = None,
+        ccl_fra_id: bool | None = None,
+        mrp_s_min: int | None = None,
+        mrp_s_max: int | None = None,
+        knn_k: int | None = None,
+        knn_d: int | None = None,
+        knn_s: int | None = None,
+        trk_ext_d: int | None = None,
+        trk_ext_o: int | None = None,
+        trk_angle: float | None = None,
+        trk_star_min: int | None = None,
+        trk_meteor_min: int | None = None,
+        trk_meteor_max: int | None = None,
+        trk_ddev: float | None = None,
+        trk_all: bool | None = None,
+        trk_bb_path: str | None = None,
+        trk_mag_path: str | None = None,
+        log_path: str | None = None,
+        out_track_file: str | None = None,
+        log: bool = False
+    ) -> dict:
+    """Convert the parameters used in fmdt.detect into a dictionary"""
 
-    detect_args = {
+    return {
         "vid_in_path": vid_in_path, 
         "vid_in_start": vid_in_start,
         "vid_in_stop": vid_in_stop,
@@ -100,9 +126,6 @@ def detect_args(
         "log_path": log_path,
         "out_track_file": out_track_file 
     }
-
-    return detect_args
-
 
 def default_detect_args() -> dict:       
     # Hi 
@@ -140,127 +163,91 @@ def default_detect_args() -> dict:
     return default_detect
 
 def handle_detect_args(
+        vid_in_path: str, 
+        vid_in_start: int | None = None,
+        vid_in_stop: int | None = None,
+        vid_in_skip: int | None = None,
+        vid_in_buff: bool | None = None,
+        vid_in_loop: int | None = None,
+        vid_in_threads: int | None = None,
+        light_min: int | None = None,
+        light_max: int | None = None,
+        ccl_fra_path: str | None = None,
+        ccl_fra_id: bool | None = None,
+        mrp_s_min: int | None = None,
+        mrp_s_max: int | None = None,
+        knn_k: int | None = None,
+        knn_d: int | None = None,
+        knn_s: int | None = None,
+        trk_ext_d: int | None = None,
+        trk_ext_o: int | None = None,
+        trk_angle: float | None = None,
+        trk_star_min: int | None = None,
+        trk_meteor_min: int | None = None,
+        trk_meteor_max: int | None = None,
+        trk_ddev: float | None = None,
+        trk_all: bool | None = None,
+        trk_bb_path: str | None = None,
+        trk_mag_path: str | None = None,
+        log_path: str | None = None,
+        out_track_file: str | None = None,
+        log: bool = False
+    ) -> list[str]:
+    """Convert the arguments needed for fmdt-detect into a fmdt-detect command-line call
+    
+     
+    
+    
+    """
 
-    vid_in_path: str, 
-    vid_in_start: int | None = None,
-    vid_in_stop: int | None = None,
-    vid_in_skip: int | None = None,
-    vid_in_buff: bool | None = None,
-    vid_in_loop: int | None = None,
-    vid_in_threads: int | None = None,
-    light_min: int | None = None,
-    light_max: int | None = None,
-    ccl_fra_path: str | None = None,
-    ccl_fra_id: bool | None = None,
-    mrp_s_min: int | None = None,
-    mrp_s_max: int | None = None,
-    knn_k: int | None = None,
-    knn_d: int | None = None,
-    knn_s: int | None = None,
-    trk_ext_d: int | None = None,
-    trk_ext_o: int | None = None,
-    trk_angle: float | None = None,
-    trk_star_min: int | None = None,
-    trk_meteor_min: int | None = None,
-    trk_meteor_max: int | None = None,
-    trk_ddev: float | None = None,
-    trk_all: bool | None = None,
-    trk_bb_path: str | None = None,
-    trk_mag_path: str | None = None,
-    log_path: str | None = None,
-    out_track_file: str | None = None,
-    log: bool = False
 
-) -> list[str]:
 
     fmdt_detect_exe = shutil.which("fmdt-detect")
     fmdt_detect_found = not fmdt_detect_exe is None
     assert fmdt_detect_found, "fmdt-detect executable not found"
     args = [fmdt_detect_exe, "--vid-in-path", vid_in_path]
 
-    if not vid_in_skip is None:
-        args.extend(["--vid-in-skip", vid_in_skip])
+    def arg_str(arg: str | None, flag: str) -> None:
+        """Modify args in place if arg is not None"""
+        if not arg is None:
+            args.extend(["--" + flag, arg])
 
-    if vid_in_buff:
-        args.append("--vid-in-buff")
+    def arg_bool(arg: bool | None, flag: str) -> None:
+        """Modify args in place if arg is True"""
+        if arg:
+            args.append("--" + flag)
 
-    if not vid_in_threads is None:
-        args.extend(["--vid-in-threads", vid_in_threads])
+    # ====== Arguments of the form --flag <arg_value>
+    arg_str(vid_in_skip, "vid-in-skip")
+    arg_str(vid_in_threads, "vid-in-threads")
+    arg_str(light_min, "ccl-hyst-lo")
+    arg_str(light_max, "ccl-hyst-hi")
+    arg_str(ccl_fra_path, "ccl_fra_path")
+    arg_str(mrp_s_min, "mrp-s-min")
+    arg_str(mrp_s_max, "mrp-s-max")
+    arg_str(knn_k, "knn-k")
+    arg_str(knn_d, "knn-d")
+    arg_str(knn_s, "knn-s")
+    arg_str(trk_ext_d, "trk-ext-d")
+    arg_str(trk_ext_o, "trk-ext-o")
+    arg_str(trk_star_min, "trk-star-min")
+    arg_str(trk_meteor_min, "trk-meteor-min")
+    arg_str(trk_meteor_max, "trk-meteor-max")
+    arg_str(trk_ddev, "trk-ddev")
+    arg_str(trk_mag_path, "trk-mag-path")
+    arg_str(log_path, "log-path")
+    arg_str(trk_angle, "trk-angle")
+    arg_str(trk_star_min, "trk-star-min")
+    arg_str(vid_in_start, "vid-in-start")
+    arg_str(vid_in_stop, "vid-in-stop")
+    arg_str(trk_bb_path, "trk-bb-path")
+    arg_str(vid_in_loop, "vid-in-loop")
+    arg_str(log_path, "log-path")
 
-    if not light_min is None:
-        args.extend(["--ccl-hyst-lo", light_min])
-
-    if not light_max is None:
-        args.extend(["--ccl-hyst-hi", light_max])
-
-    if not ccl_fra_path is None:
-        args.extend(["--ccl_fra_path", ccl_fra_path])
-
-    if not ccl_fra_id is None:
-        args.extend(["--ccl-fra-id"])
-
-    if not mrp_s_min is None:
-        args.extend(["--mrp-s-min", mrp_s_min])
-
-    if not mrp_s_max is None:
-        args.extend(["--mrp-s-max", mrp_s_max])
-
-    if not knn_k is None:
-        args.extend(["--knn-k", knn_k])
-
-    if not knn_d is None:
-        args.extend(["--knn-d", knn_d])
-
-    if not knn_s is None:
-        args.extend(["--knn-s", knn_s])
-
-    if not trk_ext_d is None:
-        args.extend(["--trk-ext-d", trk_ext_d])
-
-    if not trk_ext_o is None:
-        args.extend(["--trk-ext-o", trk_ext_o])
-
-    if not trk_star_min is None:
-        args.extend(["--trk-star-min", trk_star_min])
-
-    if not trk_meteor_min is None:
-        args.extend(["--trk-meteor-min", trk_meteor_min])
-
-    if not trk_meteor_max is None:
-        args.extend(["--trk-meteor-max", trk_meteor_max])
-
-    if not trk_ddev is None:
-        args.extend(["--trk-ddev", trk_ddev])
-
-    if trk_all:
-        args.append("--trk-all")
-
-    if not trk_mag_path is None:
-        args.extend(["--trk-mag-path", trk_mag_path])
-
-    if not log_path is None:
-        args.extend(["--log-path", log_path])
-
-    if not trk_angle is None:
-        args.extend(["--trk-angle", trk_angle])
-
-    if not trk_star_min is None:
-        args.extend(["--trk-star-min", trk_star_min])
-
-    if not vid_in_start is None:
-        args.extend(["--vid-in-start", vid_in_start])
-
-    if not vid_in_stop is None:
-        args.extend(["--vid-in-stop", vid_in_stop])
-
-    if not trk_bb_path is None:
-        args.extend(["--trk-bb-path", trk_bb_path])
-
-    if not vid_in_loop is None:
-        args.extend(["--vid-in-loop", vid_in_loop])
-
-    if not log_path is None:
-        args.extend(["--log-path", log_path])
+    # ======== Arguments of the form --toggle
+    arg_bool(vid_in_buff, "vid_in_buff")
+    arg_bool(ccl_fra_id, "ccl-fra-id")
+    arg_bool(vid_in_buff, "trk-all")
 
     return args
 
