@@ -96,8 +96,12 @@ def detect(
             subprocess.run(args, stdout=outfile)
     
     # And return the Args object that keeps track of the detect call
-
+    if not out_track_file is None:
+        out = fmdt.args.Args(fmdt.core.extract_all_information(out_track_file), detect_args)
+    else:
+        out = fmdt.args.Args(detect_args=detect_args)
     
+    return out
 
 
 def visu(

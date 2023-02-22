@@ -160,6 +160,19 @@ def convert_video_to_ndarray(filename: str, log=False) -> np.ndarray:
 
     return video
 
+def convert_video_to_frames(video_filename: str) -> None:
+
+    # We can implement this two ways, one using ffmpeg to write frames to a folder
+    vid_name, _ = decompose_video_filename(video_filename)
+    os.mkdir(vid_name)
+    ffmpeg_cmd = f"ffmpeg -loglevel error -vcodec h264 -i {video_filename} {vid_name}/%05d.png"
+    # ffmpeg_cmd = f"ffmpeg -loglevel error -vcodec h264 -i {video_filename} {vid_name}/%05d.png"
+    args = ffmpeg_cmd.split(" ")
+
+    subprocess.run(args)
+    print(args)
+
+
 def convert_ndarray_to_video(
         filename_out: str,
         frames: np.ndarray,

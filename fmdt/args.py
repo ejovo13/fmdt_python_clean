@@ -1,5 +1,6 @@
 """Arguments Class to store shared parameters when calling a chain of .detect(args).visu().split()"""
 import fmdt.api
+import fmdt.core
 import shutil
 
 class Args:
@@ -27,9 +28,20 @@ class Args:
     
     """
 
-    def __init__(self, tracking_list, detect_args: dict | None = None):
+    def __init__(
+            self, 
+            tracking_list: str | None = None, 
+            detect_args: dict | None = None
+        ):
+
         self.tracking_list = tracking_list
         self.detect_args = detect_args
+
+    # We should change this to print out only the arguments that are not none
+    # def __str__(self) -> str:
+    #     if not self.detect_args:
+    #         f"detect_args:"
+    
     
     @classmethod
     def detect(self):
@@ -40,8 +52,12 @@ class Args:
             self.detect_args = self.default_detect_args()
         
         # Convert the list of detect args to a single command
+        args = fmdt.api.detect(**self.detect_args)
 
-        return fmdt.api.detect(**self.detect_args)
+        if not args.detect_args["out_track_file"] is None:
+            args.tracking_list = args.get_tracking_list()
+
+        return args
 
     def visu(
             self,
@@ -60,7 +76,40 @@ class Args:
         """OOP Interface to calling fmdt.api.visu()"""
 
         print("Not yet implemented")
+
+    # Take the detect argument dictionary and write out a comma separated value string
+    def detect_csv_header(self) -> str:
+        header = ""
+        for k in self.detect_args.keys():
+            if k == "log":
+                continue
+            header = header + f"{k},"
+
+        return header[:-1]
+
+    def detect_to_csv_row(self) -> str:
+        csv = ""
+        for v in self.detect_args.values():
+            if v is None:
+                csv = csv + ","
+            else:
+                csv = csv + f"{str(v)},"
+        
+        # Drop the last comma
+        return csv[:-1]
     
+    def get_tracking_list(self) -> list[dict]:
+        assert not self.detect_args["out_track_file"] is None, "Out track file not stored"
+
+        return fmdt.core.extract_all_information(self.detect_args["out_track_file"])
+
+    # Write the dictionary of fmdt-detect arguments to a csv file
+    # def detect_to_csv(self, csv_filename) -> None:
+
+class ArgList:
+    """This class allows us to read in the arguments to calls to fmdt-detect from a csv file"""
+    pass
+
 
 
 def detect_args(
@@ -255,3 +304,9 @@ def detect_args_to_cmd(args: dict) -> list[str]:
     return handle_detect_args(**args)            
 
     
+def main() -> None:
+    a = Args()
+    # a.detect_args = default_detect_args()
+    a.detect_args = detect_args(vid_in_path="demo.mp4")
+    print(a.detect_csv_header())
+    print(a.detect_to_csv_row())
