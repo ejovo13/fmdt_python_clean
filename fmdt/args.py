@@ -60,21 +60,26 @@ class Args:
 
         return args
     
-    def does_detect_fail(self) -> bool:
+    def does_detect_fail(self, log=False) -> bool:
         """Returns true if the stderr pipe of a call to fmdt-detect is not empty"""
 
         if self.detect_args["vid_in_path"] is None:
             return True
 
         detect_cmd = detect_args_to_cmd(self.detect_args)
-        print(detect_cmd)
-        res = subprocess.run(detect_cmd, stderr=subprocess.PIPE)
+        if (log):
+            print(detect_cmd)
+        res = subprocess.run(detect_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-        if res.stderr.decode() != '':
-            # print(res.stderr.decode())
+        # print(res.stderr.decode())
+
+        if res.returncode != 0:
             return True
         
         return False
+    
+    def detect_cmd(self) -> str:
+        return handle_detect_args(**self.detect_args)
 
 
     def visu(

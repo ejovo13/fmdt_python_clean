@@ -12,15 +12,6 @@ from enum import Enum
 
 # Structure of tracking output table of fmdt-detect after 
 # each line gets stripped using whitespace as a delimiter
-# __OBJECT_ID_COLUMN   = 0
-# __START_FRAME_COLUMN = 2
-# __START_X_COLUMN     = 4
-# __START_Y_COLUMN     = 6
-# __END_FRAME_COLUMN   = 8
-# __END_X_COLUMN       = 10
-# __END_Y_COLUMN       = 12
-# __OBJECT_TYPE_COLUMN = 14
-
 class TrackingTable:
 
     OBJECT_ID   = 0
@@ -197,11 +188,11 @@ def extract_all_information(detect_tracks_in: str) -> list[TrackedObject]:
     #     }
 
     def line_to_obj(split_line: list[str]) -> TrackedObject:
-        return TrackedObject(int(split_line[TrackingTable.OBJECT_ID]),
-                             int(split_line[TrackingTable.START_FRAME]),
+        return TrackedObject(int  (split_line[TrackingTable.OBJECT_ID]),
+                             int  (split_line[TrackingTable.START_FRAME]),
                              float(split_line[TrackingTable.START_X]),
                              float(split_line[TrackingTable.START_Y]),
-                             int(split_line[TrackingTable.END_FRAME]),
+                             int  (split_line[TrackingTable.END_FRAME]),
                              float(split_line[TrackingTable.END_X]),
                              float(split_line[TrackingTable.END_Y]),
                              ObjectType.from_str(split_line[TrackingTable.OBJECT_TYPE]))
