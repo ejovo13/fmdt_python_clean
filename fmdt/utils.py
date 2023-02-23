@@ -65,8 +65,14 @@ def decompose_video_filename(filename: str) -> tuple[str, str]:
     The function call decompose_video_filename("vid.mp4") returns the pair ("vid", "mp4") 
     """
     sep = filename.split('.')
-    assert len(sep) == 2, "Filename has multiply periods"
-    return (sep[0], sep[1])
+    # assert len(sep) == 2, "Filename has multiply periods"
+
+    ext = sep[-1]
+
+    if len(sep) >= 2:
+        name = ".".join(sep[:-1])
+
+    return (name, ext)
 
 def assert_file_exists(filename: str) -> None:
     assert os.path.exists(filename), f"{filename} not found"
