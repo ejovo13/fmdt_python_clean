@@ -2,6 +2,8 @@
 import fmdt.api
 import fmdt.core
 import shutil
+import subprocess
+
 
 class Args:
     """Args keeps track of a configuration of parameters for all of fmdt's executables
@@ -57,6 +59,23 @@ class Args:
             args.tracking_list = args.get_tracking_list()
 
         return args
+    
+    def does_detect_fail(self) -> bool:
+        """Returns true if the stderr pipe of a call to fmdt-detect is not empty"""
+
+        if self.detect_args["vid_in_path"] is None:
+            return True
+
+        detect_cmd = detect_args_to_cmd(self.detect_args)
+        print(detect_cmd)
+        res = subprocess.run(detect_cmd, stderr=subprocess.PIPE)
+
+        if res.stderr.decode() != '':
+            # print(res.stderr.decode())
+            return True
+        
+        return False
+
 
     def visu(
             self,
