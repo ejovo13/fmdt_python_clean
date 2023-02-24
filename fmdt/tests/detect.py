@@ -1,0 +1,1 @@
+"""Detect the contents of an entire folder"""
