@@ -4,8 +4,22 @@ from fmdt.core import (
     split_video_at_meteors
 ) 
 
-from fmdt.api  import (
+from fmdt.api import (
     detect,
     visu,
-    count
+    count,
+    detect_directory
 )
+
+from fmdt.args import (
+    Args,
+)
+
+from fmdt.truth import (
+    HumanDetection,
+    read_human_detection_csv,
+    init_ground_truth
+)
+
+# from fmdt.truth import HumanDetection
+

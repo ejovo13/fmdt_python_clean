@@ -7,6 +7,8 @@ from fmdt.core import TrackedObject
 
 class HumanDetection:
 
+    GROUND_TRUTH = None
+
     def __init__(
             self,
             video_name: str,
@@ -28,12 +30,60 @@ class HumanDetection:
 
     def __str__(self) -> str:
         return (
-            f"""({self.video_name}, f0: {self.start_frame}, fT: {self.end_frame}, pos0: ({self.start_x}, {self.end_x}), posT: ({self.start_y}, {self.end_y}))"""
+            f"""({self.video_name}, f0: {self.start_frame}, fT: {self.end_frame}, pos0: ({self.start_x}, {self.start_y}), posT: ({self.end_x}, {self.end_y}))"""
         )
+    
+    def delta_x(self) -> float:
+        """Displacement in the x_axis direction"""
+        return self.end_x - self.start_x
+    
+    def delta_y(self) -> float:
+        """Displacement in the y direction"""
+        return self.end_y - self.start_y
+    
+    def displacement(self) -> tuple[float, float]:
+        return (self.delta_x(), self.delta_y())
+    
+    def lifetime(self) -> tuple[int, int]:
+        return (self.start_frame, self.end_frame)
+    
+    def nframes_alive(self) -> int:
+        return self.end_frame - self.start_frame
+
+    def slope(self) -> float:
+        return self.delta_y() / self.delta_x()
+    
+    def direction(self) -> float:
+        """Return the angle of the displacement vector of this meteor. Units are radians"""
+        return math.atan2(self.delta_y(), self.delta_x())
+    
+    def dx(self) -> float:
+        return self.delta_x() / self.nframes_alive()
+    
+    def interpolate_pos(self, frame_n: int) -> tuple[float, float]:
+        f_prime = frame_n - self.start_frame
+        xi = self.start_x + (self.dx() * f_prime)
+        yi = self.start_y + (self.dx() * self.slope()) * f_prime
+        return (xi, yi)
+
+    def is_detected(self, tracking_list: list[TrackedObject]) -> bool:
+
+        # keep only meteors
+        # detected_m = [m for m in tracking_list if m.is_meteor()]
+
+        for tracked in tracking_list: 
+            if are_objects_the_same(self, tracked):
+                return True
+
+        return False 
     
     # def __repr__(self) -> str:
         # return self.__str__()
 
+    @staticmethod
+    def init_ground_truth(database_filename: str):
+        HumanDetection.GROUND_TRUTH = read_human_detection_csv(database_filename) 
+        return read_human_detection_csv(database_filename)
 
     # I want to convert a csv of truth values into a HumanDetection object
 
@@ -71,6 +121,17 @@ def df_row_to_human(row: pd.Series) -> HumanDetection:
 def read_human_detection_csv(csv_filename: str) -> list[HumanDetection]:
     df = pd.read_csv(csv_filename)
     return [df_row_to_human(df.iloc[i]) for i in range(len(df.index))]
+
+def init_ground_truth(database_filename: str) -> list[HumanDetection]:
+    return HumanDetection.init_ground_truth()
+
+# GROUND_TRUTH : list[HumanDetection] = None
+
+# def init_ground_truth(database_file: str) -> list[HumanDetection]:
+#     super(GROUND_TRUTH) = read_human_detection_csv(database_file)
+#     return read_human_detection_csv(database_file)
+
+# GROUND_TRUTH = read_human_detection_csv("human_detections.csv")
 
 def is_meteor_detected(meteor: HumanDetection, tracking_list: list[TrackedObject]) -> bool:
 
@@ -115,36 +176,22 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
         return False
     
     # TODO compare the ratio of slopes rather than the difference
-    # ====================== Slope ===========================
-    slope_meteor = (meteor.end_y - meteor.start_y) / (meteor.end_x - meteor.start_x)
-    slope_object = (tracked_obj.end_y - tracked_obj.start_y) / (tracked_obj.end_x - tracked_obj.start_x)
+    # =============== Compare Direction ==========================
+    angle_meteor_rad = meteor.direction() 
+    angle_object_rad = tracked_obj.direction() 
+    # We should really be comparing their angles...
 
-    epsilon = 0.5 # ARBITRARY AS FUCK
+    MAX_ANGLE_DIFF = 0.5 # ARBITRARY AS FUCK
 
-    if abs(slope_meteor - slope_object) > epsilon:
+    print(f"Meteor has angle: {angle_meteor_rad}")
+    print(f"Object has angle: {angle_object_rad}")
+
+    if abs(angle_meteor_rad - angle_object_rad) > MAX_ANGLE_DIFF:
+        print("Angles are too far apart")
         return False
     
 
-    # ====================== Flight Path ===========================
-    # create the flight path
-    dx_meteor = (meteor.end_x - meteor.start_x) / nframes_meteor # change in x per frame
-    dx_object = (tracked_obj.end_x - tracked_obj.start_x) / nframes_object # change in x per frame
-
-    frames_meteor    = [i for i in range(lifetime_meteor[0], lifetime_meteor[1] + 1)]
-
-    def calculate_meteor_position(frame):
-        f_prime = frame - meteor.start_frame
-        xi = meteor.start_x + (dx_meteor * f_prime)
-        yi = meteor.start_y + (dx_meteor * slope_meteor)
-        return (xi, yi)
-
-    # Create the flight path of the meteor, which is a list of (x, y) coordinate
-    # pairs 
-    positions_meteor: list[tuple[float, float]] = (
-        [calculate_meteor_position(frame_i) for frame_i in frames_meteor]
-    )
-
-    # Now we've calculated our flight path.
+    # ================ Compare Flight paths ==========================
     # At this point, there are only four cases left
     #   TRUTH      [***********************]           
     # case 1: 
@@ -176,33 +223,30 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
     else: # Case 3
         frames_object = [i for i in range(lifetime_object[0], lifetime_object[1] + 1)]
 
-    def calculate_object_position(frame):
-        f_prime = frame - meteor.start_frame
-        xi = tracked_obj.start_x + (dx_object * f_prime)
-        yi = tracked_obj.start_y + (dx_object * slope_object)
-        return (xi, yi)
-
-    # Create the flight path of the object
-    positions_object = [calculate_object_position(frame) for frame in frames_object]
-    
     # Now we want to compare the two flight paths!
     # TODO choisir judiciement un epsilon
-    MAX_DIST = 5 # ????????????????????????????????????????????????? 
-    
+    MAX_DIST = 10 # ????????????????????????????????????????????????? 
+
     # If the any two points in the flight path are too far away, then they are not the 
     # same meteor.
-    for i in range(len(frames_object)):
+    for f in frames_object:
 
-        f = frames_object[i]
-        
-        pos_meteor = positions_meteor[i]
-        pos_object = positions_object[i]
+        pos_meteor = meteor.interpolate_pos(f) 
+        pos_object = tracked_obj.interpolate_pos(f - 1)
+
+        # print(f"f: {f}, pos_m: {meteor.interpolate_pos(f)}, pos_o: {tracked_obj.interpolate_pos(f)}")
+
+        # print(pos_meteor)
+        # print(po)
 
         sqr = lambda x : x * x
 
         dist = math.sqrt(sqr(pos_object[0] - pos_meteor[0]) + sqr(pos_object[1] - pos_meteor[1]))
 
+        # print(dist)
+
         if dist > MAX_DIST:
+            # print(f"Position at frame {f} is too far apart (dist: {dist})")
             return False
         
     return True
@@ -256,4 +300,6 @@ def main() -> None:
         # print(are_objects_the_same(hums[15], obj))
 
     print(len(hums))
+
+    # print(GROUND_TRUTH)
     

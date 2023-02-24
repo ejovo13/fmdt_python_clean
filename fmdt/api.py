@@ -3,6 +3,7 @@ API to call fmdt executables. Assumes that fmdt-detect and other executables
 are on the system path
 """
 
+from os import listdir
 import shutil
 import subprocess
 import fmdt.core
@@ -125,3 +126,34 @@ def visu(
         args.append("--show-id")
 
     subprocess.run(args)
+
+
+def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
+
+    entries = listdir(dir_name)
+    is_video_fn = lambda v: v[-3:] == "mp4" or v[-3:] == "avi"
+    videos = [e for e in entries if is_video_fn(e)]
+
+    # Now let's call fmdt detect one time for each video
+    failing_cmds = []
+    i = 0
+    for v in videos:
+        # res = fmdt.detect(directory + "/" + v, light_min=150, light_max=245, trk_all=True, log=False, out_track_file="tracks.txt")
+        # a = fmdt.args.video_input(directory + "/" + v)
+        # a.detect_args["out_track_file"] = "tracks.txt"
+
+        # if i > 10:
+        #     break
+        args.detect_args["vid_in_path"] = dir_name + "/" + v
+
+        fail = args.does_detect_fail(log=log)
+        if log: 
+            print(f"{v} fails? {fail}")
+
+        if (fail):
+            failing_cmds.append(" ".join(args.detect_cmd()))
+        
+        i = i + 1
+
+    for c in failing_cmds:
+        print(c)

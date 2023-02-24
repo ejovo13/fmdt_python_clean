@@ -9,6 +9,7 @@ Public API:
 
 import fmdt.utils as utils
 from enum import Enum
+import math
 
 # Structure of tracking output table of fmdt-detect after 
 # each line gets stripped using whitespace as a delimiter
@@ -88,6 +89,40 @@ class TrackedObject:
     def __repr__(self) -> str:
         return f"<{self.type_str()} ({self.start_frame}, {self.end_frame})>"
     
+
+    def delta_x(self) -> float:
+        """Displacement in the x_axis direction"""
+        return self.end_x - self.start_x
+    
+    def delta_y(self) -> float:
+        """Displacement in the y direction"""
+        return self.end_y - self.start_y
+    
+    def displacement(self) -> tuple[float, float]:
+        return (self.delta_x(), self.delta_y())
+    
+    def lifetime(self) -> tuple[int, int]:
+        return (self.start_frame, self.end_frame)
+    
+    def nframes_alive(self) -> int:
+        return self.end_frame - self.start_frame
+
+    def slope(self) -> float:
+        return self.delta_y() / self.delta_x()
+    
+    def direction(self) -> float:
+        """Return the angle of the displacement vector of this meteor. Units are radians"""
+        return math.atan2(self.delta_y(), self.delta_x())
+
+    def dx(self) -> float:
+        return self.delta_x() / self.nframes_alive()
+    
+    def interpolate_pos(self, frame_n: int) -> tuple[float, float]:
+        f_prime = frame_n - self.start_frame
+        xi = self.start_x + (self.dx() * f_prime)
+        yi = self.start_y + (self.dx() * self.slope()) * f_prime
+        return (xi, yi)
+
     # @staticmethod
     # def from_tracking_file(filename: str):
     #     pass
