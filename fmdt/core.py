@@ -108,6 +108,8 @@ class TrackedObject:
         return self.end_frame - self.start_frame
 
     def slope(self) -> float:
+        if self.delta_x() == 0:
+            return float("inf")
         return self.delta_y() / self.delta_x()
     
     def direction(self) -> float:

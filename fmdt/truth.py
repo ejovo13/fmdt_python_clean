@@ -4,6 +4,8 @@ import pandas as pd
 import math
 import fmdt.core
 from fmdt.core import TrackedObject
+import numpy as np
+import os
 
 class HumanDetection:
 
@@ -51,6 +53,8 @@ class HumanDetection:
         return self.end_frame - self.start_frame
 
     def slope(self) -> float:
+        if self.delta_x() == 0:
+            return float("inf")
         return self.delta_y() / self.delta_x()
     
     def direction(self) -> float:
@@ -66,7 +70,7 @@ class HumanDetection:
         yi = self.start_y + (self.dx() * self.slope()) * f_prime
         return (xi, yi)
 
-    def is_detected(self, tracking_list: list[TrackedObject]) -> bool:
+    def is_detected_in_list(self, tracking_list: list[TrackedObject]) -> bool:
 
         # keep only meteors
         # detected_m = [m for m in tracking_list if m.is_meteor()]
@@ -75,20 +79,36 @@ class HumanDetection:
             if are_objects_the_same(self, tracked):
                 return True
 
-        return False 
+        return False
     
-    # def __repr__(self) -> str:
-        # return self.__str__()
+    def test_detection_vary_light(
+            self,
+            vid: str,
+            offset: int = 25,
+            light_min_start: int = 150,
+            light_min_end: int = 230,
+            k_trials: int = 10,
+            log: bool = False
+        ) -> None:
+
+        return vary_light_intervals(
+            vid=vid,
+            truth=self,
+            offset=offset,
+            light_min_start=light_min_start,
+            light_min_end=light_min_end,
+            k_trials=k_trials,
+            log=log
+        )
 
     @staticmethod
     def init_ground_truth(database_filename: str):
         HumanDetection.GROUND_TRUTH = read_human_detection_csv(database_filename) 
         return read_human_detection_csv(database_filename)
 
-    # I want to convert a csv of truth values into a HumanDetection object
 
-    # Ultimately, I will need a function that takes in a csv of truth values and converts it into 
-    # a list of HumanDetection objects
+
+
 
 # Take a row in a csv file from https://docs.google.com/spreadsheets/d/1yYsMy0nnLAsqzTYOoEjof00wVu6oP91vCiLS7orxMpg/edit#gid=365172110
 # and convert it to a HumanDetection object
@@ -161,9 +181,6 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
     # ====================== Lifetime ===========================
     lifetime_meteor = (meteor.start_frame, meteor.end_frame)
     lifetime_object = (tracked_obj.start_frame, tracked_obj.end_frame)
-
-    nframes_meteor = lifetime_meteor[1] - lifetime_meteor[0]
-    nframes_object = lifetime_object[1] - lifetime_object[0]
 
     # meteor:                        [***********************]           
     # object:        [------]
@@ -243,8 +260,6 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
 
         dist = math.sqrt(sqr(pos_object[0] - pos_meteor[0]) + sqr(pos_object[1] - pos_meteor[1]))
 
-        # print(dist)
-
         if dist > MAX_DIST:
             # print(f"Position at frame {f} is too far apart (dist: {dist})")
             return False
@@ -252,9 +267,54 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
     return True
         
 
-# I want to compare the human results with the automatic results.
+def vary_light_intervals(
+        vid: str,
+        truth: HumanDetection,
+        offset: int,
+        light_min_start: int,
+        light_min_end: int,
+        k_trials: int,
+        log: bool = False
+    ) -> None:
+    """Vary light min and light max to try and detect the truth"""
 
-# First thing I need is a pipeline to get the automatic results
+    for lmin in np.linspace(light_min_start, light_min_end, k_trials, dtype=int):
+
+        light_min = int(lmin)
+        light_max = light_min + offset
+
+        track_file = "tracks.txt"
+        track_bb_path = "track_bb.txt"
+
+        vname, ext = fmdt.utils.decompose_video_filename(vid)
+        vname = f"{vname}_off{offset}"
+
+        res = fmdt.detect(vid, 
+                        out_track_file=track_file,
+                        log=True,
+                        light_min=light_min,
+                        light_max=light_max,
+                        trk_all=True,
+                        trk_bb_path=track_bb_path)
+
+        if len(res.tracking_list) != 0:
+
+            if not os.path.isdir(vname):
+                os.mkdir(vname)
+
+            if truth.is_detected_in_list(res.tracking_list):
+                addon = "_detected"
+                if truth.is_detected_in_list([t for t in res.tracking_list if t.is_meteor()]):
+                    addon = f"{addon}_as_meteor"
+            else:
+                addon = ""
+
+            fmdt.visu(vid, track_file, track_bb_path, f"{vname}/lmin{light_min}_lmax{light_max}{addon}.{ext}", show_id=True)
+
+        if log: 
+            meteors = [m for m in res.tracking_list if m.is_meteor()]
+            for m in meteors:
+                print(m)
 
 def main() -> None:
     # dets = read_human_detection_csv("human_detection.csv")
