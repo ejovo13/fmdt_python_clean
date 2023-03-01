@@ -3,6 +3,7 @@
 import pandas as pd
 import math
 import fmdt.core
+import fmdt.utils
 import fmdt.args
 from fmdt.core import TrackedObject
 import numpy as np
@@ -35,6 +36,18 @@ class HumanDetection:
         return (
             f"""({self.video_name}, f0: {self.start_frame}, fT: {self.end_frame}, pos0: ({self.start_x}, {self.start_y}), posT: ({self.end_x}, {self.end_y}))"""
         )
+    
+    def is_draco_6(self) -> bool:
+        """Return true if part of the Draconids6mm series"""
+        # vid_name = self.video_name.split("/")[-1]
+        v, _ = fmdt.utils.decompose_video_filename(self.video_name)
+        return "Draconids-6mm" in v 
+    
+    def is_draco_12(self) -> bool:
+        """Return true if part of the Draconids6mm series"""
+        # vid_name = self.video_name.split("/")[-1]
+        v, _ = fmdt.utils.decompose_video_filename(self.video_name)
+        return "Draconids-12mm" in v 
     
     def delta_x(self) -> float:
         """Displacement in the x_axis direction"""
@@ -144,7 +157,7 @@ def read_human_detection_csv(csv_filename: str) -> list[HumanDetection]:
     return [df_row_to_human(df.iloc[i]) for i in range(len(df.index))]
 
 def init_ground_truth(database_filename: str) -> list[HumanDetection]:
-    return HumanDetection.init_ground_truth()
+    return HumanDetection.init_ground_truth(database_filename)
 
 # GROUND_TRUTH : list[HumanDetection] = None
 
