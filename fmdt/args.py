@@ -4,7 +4,26 @@ import fmdt.core
 import fmdt.utils
 import shutil
 import subprocess
+import pandas as pd
 
+def filter_dict(d: dict):
+
+    out = {}
+
+    for (k, v) in d.items():
+        if not v is None:
+            out[k] = v
+
+    return out
+
+def row_to_dict(row: pd.Series) -> dict:
+    """Convert the non Na values of a pd.DataFrame row to a dict"""
+    out = {}
+    for k in row.keys():
+        if not pd.isna(row[k]):
+            out[k] = row[k]
+    
+    return out
 
 class Args:
     """Args keeps track of a configuration of parameters for all of fmdt's executables
@@ -46,7 +65,20 @@ class Args:
     # def __str__(self) -> str:
     #     if not self.detect_args:
     #         f"detect_args:"
+
+    def __repr__(self) -> str:
+
+        d = filter_dict(self.detect_args)
+
+        # s = ""
+        # for (k, v) in self.detect_args.items():
+            # if not v is None:
+                # s += f'"{k}": {v}, ' 
+        
+        # return "{" + s[:-2] + "}"
+        return d.__repr__()
     
+    # def to_csv
     
     def detect(self):
         """OOP Interface to calling fmdt.api.detect()"""
@@ -98,7 +130,7 @@ class Args:
                 continue
             header = header + f"{k},"
 
-        return header[:-1]
+        return header[:-1] + "\n"
 
     def detect_to_csv_row(self) -> str:
         csv = ""
@@ -109,7 +141,7 @@ class Args:
                 csv = csv + f"{str(v)},"
         
         # Drop the last comma
-        return csv[:-1]
+        return csv[:-1] + "\n"
     
     def get_tracking_list(self) -> list[dict]:
         assert not self.detect_args["trk_out_path"] is None, "Out track file not stored"
@@ -118,6 +150,21 @@ class Args:
 
     # Write the dictionary of fmdt-detect arguments to a csv file
     # def detect_to_csv(self, csv_filename) -> None:
+
+def list_args_to_csv(lst: list[Args], csv_file: str):
+
+    with open(csv_file, "w") as f:
+
+        f.write(lst[0].detect_csv_header())
+        for a in lst:
+            f.write(a.detect_to_csv_row())
+
+def csv_to_list_args(csv_file: str) -> list[Args]:
+
+    df = pd.read_csv(csv_file)
+    n_rows = len(df)
+    
+    return [Args.from_row(df.loc[i]) for i in range(n_rows)]
 
 def video_input(filename: str) -> Args:
     a = Args()
