@@ -134,6 +134,8 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     is_video_fn = lambda v: v[-3:] == "mp4" or v[-3:] == "avi"
     videos = [e for e in entries if is_video_fn(e)]
 
+    assert len(videos) > 0, "Directory is empty, call to fmdt.detect_directory failed"
+
     # Now let's call fmdt detect one time for each video
     failing_cmds = []
     i = 0
@@ -157,3 +159,5 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
 
     for c in failing_cmds:
         print(c)
+
+# Launch multiple processes of 

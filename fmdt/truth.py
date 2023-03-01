@@ -3,6 +3,7 @@
 import pandas as pd
 import math
 import fmdt.core
+import fmdt.args
 from fmdt.core import TrackedObject
 import numpy as np
 import os
@@ -177,7 +178,6 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
     """
 
     # Are the lifetimes the same???
-    # TODO
     # ====================== Lifetime ===========================
     lifetime_meteor = (meteor.start_frame, meteor.end_frame)
     lifetime_object = (tracked_obj.start_frame, tracked_obj.end_frame)
@@ -192,13 +192,11 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
     if lifetime_object[0] > lifetime_meteor[1]:
         return False
     
-    # TODO compare the ratio of slopes rather than the difference
     # =============== Compare Direction ==========================
     angle_meteor_rad = meteor.direction() 
     angle_object_rad = tracked_obj.direction() 
-    # We should really be comparing their angles...
 
-    MAX_ANGLE_DIFF = 0.5 # ARBITRARY AS FUCK
+    MAX_ANGLE_DIFF = 0.5 #!!! ARBITRARY
 
     print(f"Meteor has angle: {angle_meteor_rad}")
     print(f"Object has angle: {angle_object_rad}")
@@ -275,10 +273,16 @@ def vary_light_intervals(
         light_min_end: int,
         k_trials: int,
         log: bool = False
-    ) -> None:
-    """Vary light min and light max to try and detect the truth"""
+    ) -> list[fmdt.args.Args]:
+    """Vary light min and light max to try and detect the truth
+    
+    Return a list of args that succesfully detected this truth
+    """
+
+    args = []
 
     for lmin in np.linspace(light_min_start, light_min_end, k_trials, dtype=int):
+
 
         light_min = int(lmin)
         light_max = light_min + offset
@@ -306,6 +310,7 @@ def vary_light_intervals(
                 addon = "_detected"
                 if truth.is_detected_in_list([t for t in res.tracking_list if t.is_meteor()]):
                     addon = f"{addon}_as_meteor"
+                    args.append(res)
             else:
                 addon = ""
 
@@ -315,6 +320,8 @@ def vary_light_intervals(
             meteors = [m for m in res.tracking_list if m.is_meteor()]
             for m in meteors:
                 print(m)
+
+    return args
 
 def main() -> None:
     # dets = read_human_detection_csv("human_detection.csv")

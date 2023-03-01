@@ -3,7 +3,8 @@ import fmdt
 import sys
 
 # Directory whose videos you would like to view
-directory = "/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor/"
+# directory = "/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor/"
+directory = "/home/ejovo/Videos/Watec12mm"
 
 def print_help() -> None:
     print("Type the name of the directory you wish to process:")
@@ -25,5 +26,12 @@ args = {
 }
 
 a = fmdt.Args(detect_args=args)
+
+# List the files in the directory
+
+print(os.listdir(directory))
+
+print("Running fmdt.detect_directory with args:")
+print(a.detect_args)
 
 fmdt.detect_directory(directory, a, True)
