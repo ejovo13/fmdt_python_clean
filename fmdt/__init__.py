@@ -21,6 +21,8 @@ from fmdt.utils import (
 )
 
 from fmdt.truth import (
+    WATEC6_DIR,
+    WATEC12_DIR,
     HumanDetection,
     read_human_detection_csv,
     init_ground_truth

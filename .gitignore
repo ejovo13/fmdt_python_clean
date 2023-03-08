@@ -1,6 +1,12 @@
 __pycache__
 dist
 videos
+<<<<<<< HEAD
 *.txt
 *.mp4
 *.avi
+=======
+*txt
+*mp4
+*avi
+>>>>>>> 713fe13 (update some logging statements)

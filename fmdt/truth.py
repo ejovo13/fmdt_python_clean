@@ -1,4 +1,9 @@
-"""Class to handle the ground truth of a video"""
+"""Class to handle the ground truth of a video
+
+HumanDetections are loaded in with a video name that is completely
+independent of the path. Users can set the fmdt variables WATEC6_DIR
+and WATEC12_DIR to execute database tests
+"""
 
 import pandas as pd
 import math
@@ -8,6 +13,9 @@ import fmdt.args
 from fmdt.core import TrackedObject
 import numpy as np
 import os
+
+WATEC6_DIR:  str = "./"
+WATEC12_DIR: str = "./"
 
 class HumanDetection:
 
@@ -36,6 +44,9 @@ class HumanDetection:
         return (
             f"""({self.video_name}, f0: {self.start_frame}, fT: {self.end_frame}, pos0: ({self.start_x}, {self.start_y}), posT: ({self.end_x}, {self.end_y}))"""
         )
+
+    def __lt__(self, other):
+        return self.video_name < other.video_name
     
     def is_draco_6(self) -> bool:
         """Return true if part of the Draconids6mm series"""
@@ -103,7 +114,7 @@ class HumanDetection:
             light_min_end: int = 230,
             k_trials: int = 10,
             log: bool = False
-        ) -> None:
+        ):
 
         return vary_light_intervals(
             vid=vid,
@@ -116,9 +127,9 @@ class HumanDetection:
         )
 
     @staticmethod
-    def init_ground_truth(database_filename: str):
-        HumanDetection.GROUND_TRUTH = read_human_detection_csv(database_filename) 
-        return read_human_detection_csv(database_filename)
+    def init_ground_truth(database_filename: str, video_db_dir: str = "./"):
+        HumanDetection.GROUND_TRUTH = read_human_detection_csv(database_filename, video_db_dir) 
+        return read_human_detection_csv(database_filename, video_db_dir)
 
 
 
@@ -138,13 +149,13 @@ def csv_to_human(csv_row: str) -> HumanDetection:
 
 # Take a single row of a pandas data frame of the csv data and return
 # a python HumanDetection object
-def df_row_to_human(row: pd.Series) -> HumanDetection:
+def df_row_to_human(row: pd.Series, dir_prepend: str = "") -> HumanDetection:
 
     # This function is performing NOOOO sanity checks
     # like do any of these fields even actually exist 
     # in our data frame??
 
-    return HumanDetection(row["video_name"],
+    return HumanDetection(dir_prepend + row["video_name"],
                           int(row["start_frame"]),
                           int(row["end_frame"]),
                           float(row["start_x"]),
@@ -152,12 +163,12 @@ def df_row_to_human(row: pd.Series) -> HumanDetection:
                           float(row["end_x"]),
                           float(row["end_y"]))
 
-def read_human_detection_csv(csv_filename: str) -> list[HumanDetection]:
+def read_human_detection_csv(csv_filename: str, db_dir: str = "") -> list[HumanDetection]:
     df = pd.read_csv(csv_filename)
-    return [df_row_to_human(df.iloc[i]) for i in range(len(df.index))]
+    return [df_row_to_human(df.iloc[i], db_dir) for i in range(len(df.index))]
 
-def init_ground_truth(database_filename: str) -> list[HumanDetection]:
-    return HumanDetection.init_ground_truth(database_filename)
+def init_ground_truth(database_filename: str, vid_db_dir: str = "./") -> list[HumanDetection]:
+    return HumanDetection.init_ground_truth(database_filename, video_db_dir=vid_db_dir)
 
 # GROUND_TRUTH : list[HumanDetection] = None
 
@@ -178,7 +189,7 @@ def is_meteor_detected(meteor: HumanDetection, tracking_list: list[TrackedObject
 
     return False 
 
-def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> bool:
+def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject, log: bool = False) -> bool:
     """Check if a HumanDetected meteor is the same as a tracked obj
     
     A tracked object is a dictionary with keys:
@@ -211,11 +222,13 @@ def are_objects_the_same(meteor: HumanDetection, tracked_obj: TrackedObject) -> 
 
     MAX_ANGLE_DIFF = 0.5 #!!! ARBITRARY
 
-    print(f"Meteor has angle: {angle_meteor_rad}")
-    print(f"Object has angle: {angle_object_rad}")
+    if log:
+        print(f"Meteor has angle: {angle_meteor_rad}")
+        print(f"Object has angle: {angle_object_rad}")
 
     if abs(angle_meteor_rad - angle_object_rad) > MAX_ANGLE_DIFF:
-        print("Angles are too far apart")
+        if log:
+            print("Angles are too far apart")
         return False
     
 
