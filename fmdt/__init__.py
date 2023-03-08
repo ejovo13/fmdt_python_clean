@@ -1,7 +1,8 @@
 from fmdt.core import (
     extract_all_information,
     extract_key_information,
-    split_video_at_meteors
+    split_video_at_meteors,
+    split_video_at_intervals,
 ) 
 
 from fmdt.api import (
@@ -13,6 +14,10 @@ from fmdt.api import (
 
 from fmdt.args import (
     Args,
+)
+
+from fmdt.utils import (
+    condense_start_end,
 )
 
 from fmdt.truth import (
