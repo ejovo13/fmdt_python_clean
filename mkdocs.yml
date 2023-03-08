@@ -1,0 +1,10 @@
+site_name: fmdt-python
+
+site_description: Python bindings for fmdt
+site_author: Evan Voyles
+
+repo_url: https://github.com/ejovo13/fmdt_python_clean
+
+theme:
+  name: readthedocs
+  # hljs_style: monokai
