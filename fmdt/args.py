@@ -458,11 +458,11 @@ def handle_visu_args(
 
     def add_arg(arg, flag):
         if not arg is None:
-            args.extend([flag, args])
+            args.extend([flag, str(args)])
 
-    add_arg(int(vid_in_start), "--vid-in-start")
-    add_arg(int(vid_in_stop), "--vid-in-stop")
-    add_arg(int(vid_in_threads), "--vid-in-threads")
+    add_arg(vid_in_start, "--vid-in-start")
+    add_arg(vid_in_stop, "--vid-in-stop")
+    add_arg(vid_in_threads, "--vid-in-threads")
     add_arg(gt_path, "--gt-path")
 
     if trk_id:
