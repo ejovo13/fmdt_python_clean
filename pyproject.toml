@@ -7,7 +7,7 @@ name = "fmdt-python"
 packages = [ 
   { include = "fmdt" },
 ]
-version = "0.0.17"
+version = "0.0.18"
 authors = [
   { name="Evan Voyles", email="ejovo13@yahoo.com" },
 ]
