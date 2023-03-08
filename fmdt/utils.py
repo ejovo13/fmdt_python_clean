@@ -21,7 +21,7 @@ def separate_meteor_sequences(tracking_list: list[dict], frame_buffer = 5) -> li
     # Let's convert the tracking list into a list of (start_frame, end_frame) tuples
     start_end = [(obj["start_frame"], obj["end_frame"]) for obj in tracking_list]
 
-    return condense_start_end(start_end)
+    return condense_start_end(start_end, frame_buffer)
 
 def condense_start_end(start_end: list[tuple[int, int]], frame_buffer) -> list[tuple[int, int]]:
     """Condense a list of (f_start, f_end) frame pairs into a small sequence of 

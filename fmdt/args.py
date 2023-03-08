@@ -116,10 +116,20 @@ class Args:
     def detect_cmd(self) -> str:
         return handle_detect_args(**self.detect_args)
 
-    def visu(self):
+    def visu(self, **kwargs):
         """OOP Interface to calling fmdt.api.visu()"""
 
-        # We 
+        # Do we have visu arguments?
+        assert not self.visu_args is None, "No visu args for this object"
+
+        
+        for k, v in kwargs.items():
+            self.visu_args[k] = v
+
+        args = fmdt.api.visu(**self.visu_args)
+
+        return args 
+
 
 
     # Take the detect argument dictionary and write out a comma separated value string
