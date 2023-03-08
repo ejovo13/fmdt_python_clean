@@ -21,7 +21,12 @@ def separate_meteor_sequences(tracking_list: list[dict], frame_buffer = 5) -> li
     # Let's convert the tracking list into a list of (start_frame, end_frame) tuples
     start_end = [(obj["start_frame"], obj["end_frame"]) for obj in tracking_list]
 
-    # Now condense overlapping sequences
+    return condense_start_end(start_end)
+
+def condense_start_end(start_end: list[tuple[int, int]], frame_buffer) -> list[tuple[int, int]]:
+    """Condense a list of (f_start, f_end) frame pairs into a small sequence of 
+    non-overlapping sequences
+    """
     start_end_condensed = [start_end[0]]
     ci = 0 # condensed index, will not always be equal to i
     for i in range(len(start_end) - 1):
@@ -34,6 +39,7 @@ def separate_meteor_sequences(tracking_list: list[dict], frame_buffer = 5) -> li
             start_end_condensed.append(start_end[i + 1]) 
 
     return start_end_condensed
+
 
 # =============================== Video file functions ========================================
 def get_avg_frame_rate(filename: str) -> float:
