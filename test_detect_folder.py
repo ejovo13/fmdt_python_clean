@@ -18,7 +18,7 @@ elif directory is None:
     directory = sys.argv[1]
 
 args = {
-    "out_track_file": "tracks.txt",
+    "trk_out_path": "tracks.txt",
     "light_min": 190,
     "light_max": 235, # None of the videos fail with _just_ a light max
     "trk_all": True,

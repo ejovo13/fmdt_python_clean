@@ -294,7 +294,7 @@ def vary_light_intervals(
         vname = f"{vname}_off{offset}"
 
         res = fmdt.detect(vid, 
-                        out_track_file=track_file,
+                        trk_out_path=track_file,
                         log=True,
                         light_min=light_min,
                         light_max=light_max,

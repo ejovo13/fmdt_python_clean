@@ -8,9 +8,9 @@ import subprocess
 class Args:
     """Args keeps track of a configuration of parameters for all of fmdt's executables
 
-    Upon a call to `fmdt.detect()`, an Args object is returned that remembers the configuration
-    used to execute fmdt-detect. We can subsequently use the Args object as an interface to
-    directly calling fmdt-visu, without having to respecify some of the more specific arguments.
+    Upon a call to `fmdt.detect()`, an Args object is returned that remembers
+    the configuration used to execute fmdt-detect. We can subsequently use the
+    Args object as an interface to directly calling fmdt-visu, without having to respecify some of the more specific arguments.
 
     Consider the difference between the two calls:
     ```
@@ -33,11 +33,13 @@ class Args:
     def __init__(
             self, 
             tracking_list: str | None = None, 
-            detect_args: dict | None = None
+            detect_args: dict | None = None,
+            visu_args: dict | None = None
         ):
 
         self.tracking_list = tracking_list
         self.detect_args = detect_args
+        self.visu_args = visu_args
 
     # We should change this to print out only the arguments that are not none
     # def __str__(self) -> str:
@@ -55,7 +57,7 @@ class Args:
         # Convert the list of detect args to a single command
         args = fmdt.api.detect(**self.detect_args)
 
-        if not args.detect_args["out_track_file"] is None:
+        if not args.detect_args["trk_out_path"] is None:
             args.tracking_list = args.get_tracking_list()
 
         return args
@@ -122,9 +124,9 @@ class Args:
         return csv[:-1]
     
     def get_tracking_list(self) -> list[dict]:
-        assert not self.detect_args["out_track_file"] is None, "Out track file not stored"
+        assert not self.detect_args["trk_out_path"] is None, "Out track file not stored"
 
-        return fmdt.core.extract_all_information(self.detect_args["out_track_file"])
+        return fmdt.core.extract_all_information(self.detect_args["trk_out_path"])
 
     # Write the dictionary of fmdt-detect arguments to a csv file
     # def detect_to_csv(self, csv_filename) -> None:
@@ -169,7 +171,7 @@ def detect_args(
         trk_bb_path: str | None = None,
         trk_mag_path: str | None = None,
         log_path: str | None = None,
-        out_track_file: str | None = None,
+        trk_out_path: str | None = None,
         log: bool = False
     ) -> dict:
     """Convert the parameters used in fmdt.detect into a dictionary"""
@@ -202,7 +204,7 @@ def detect_args(
         "trk_bb_path": trk_bb_path,
         "trk_mag_path": trk_mag_path,
         "log_path": log_path,
-        "out_track_file": out_track_file 
+        "trk_out_path": trk_out_path 
     }
 
 def default_detect_args() -> dict:       
@@ -235,7 +237,7 @@ def default_detect_args() -> dict:
         "trk_bb_path": None,
         "trk_mag_path": None,
         "log_path": None,
-        "out_track_file": None
+        "trk_out_path": None
     }
 
     return default_detect
@@ -268,7 +270,7 @@ def handle_detect_args(
         trk_bb_path: str | None = None,
         trk_mag_path: str | None = None,
         log_path: str | None = None,
-        out_track_file: str | None = None,
+        trk_out_path: str | None = None,
         log: bool = False
     ) -> list[str]:
     """Convert the arguments needed for fmdt-detect into a fmdt-detect command-line call

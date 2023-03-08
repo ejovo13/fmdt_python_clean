@@ -11,7 +11,7 @@ human = fmdt.truth.HumanDetection(vid, 45, 59, 240, 226, 125, 264)
 track = "tracks.txt"
 bb    = "bb.txt"
 
-# res = fmdt.detect(vid, light_min=light_min, light_max=light_max, trk_all=True, out_track_file=track, trk_bb_path=bb)
+# res = fmdt.detect(vid, light_min=light_min, light_max=light_max, trk_all=True, trk_out_path=track, trk_bb_path=bb)
 
 # fmdt.visu(vid, track, bb, "visu.mp4", True)
 
