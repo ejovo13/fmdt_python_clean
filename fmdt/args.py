@@ -1,6 +1,7 @@
 """Arguments Class to store shared parameters when calling a chain of .detect(args).visu().split()"""
 import fmdt.api
 import fmdt.core
+import fmdt.utils
 import shutil
 import subprocess
 
@@ -83,24 +84,11 @@ class Args:
     def detect_cmd(self) -> str:
         return handle_detect_args(**self.detect_args)
 
-
-    def visu(
-            self,
-            vid_in_path: str | None = None,
-            vid_in_start: int | None = None,
-            vid_in_stop:  int | None = None,
-            vid_in_threads: int | None = None,
-            trk_path: str | None = None,
-            trk_bb_path: str | None = None,
-            trk_id: bool | None = None,
-            trk_nat_num: bool | None = None,
-            trk_only_meteor: bool | None = None,
-            gt_path: str | None = None,
-            vid_out_path: str | None = None
-        ):
+    def visu(self):
         """OOP Interface to calling fmdt.api.visu()"""
 
-        print("Not yet implemented")
+        # We 
+
 
     # Take the detect argument dictionary and write out a comma separated value string
     def detect_csv_header(self) -> str:
@@ -173,10 +161,10 @@ def detect_args(
         log_path: str | None = None,
         trk_out_path: str | None = None,
         log: bool = False
-    ) -> dict:
+    ) -> tuple[dict, dict]:
     """Convert the parameters used in fmdt.detect into a dictionary"""
 
-    return {
+    d_args = {
         "vid_in_path": vid_in_path, 
         "vid_in_start": vid_in_start,
         "vid_in_stop": vid_in_stop,
@@ -205,6 +193,53 @@ def detect_args(
         "trk_mag_path": trk_mag_path,
         "log_path": log_path,
         "trk_out_path": trk_out_path 
+    }
+
+    assert not vid_in_path is None, "vid_in_path cannot be None"
+
+    name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
+    visu_name = f"{name}_visu.{ext}"
+
+    v_args = {
+        "vid_in_path": vid_in_path,
+        "vid_in_start": vid_in_start,
+        "vid_in_stop": vid_in_stop,
+        "vid_in_threads": vid_in_threads,
+        "trk_path": trk_out_path,
+        "trk_bb_path": trk_bb_path,
+        "vid_out_path": visu_name
+    }
+
+    return d_args, v_args
+
+def visu_args(
+        vid_in_path: str = None,
+        vid_in_start: int = None,
+        vid_in_stop: int = None,
+        vid_in_threads: int = None,
+        trk_path: str = None,
+        trk_bb_path: str = None,
+        trk_id: bool = None,
+        trk_nat_num: bool = None,
+        trk_only_meteor: bool = None,
+        gt_path: str = None,
+        vid_out_path: str = None
+    ) -> dict:
+
+    return {
+
+        "vid_in_path": vid_in_path,
+        "vid_in_start": vid_in_start,
+        "vid_in_stop": vid_in_stop,
+        "vid_in_threads": vid_in_threads,
+        "trk_path": trk_path,
+        "trk_bb_path": trk_bb_path,
+        "trk_id": trk_id,
+        "trk_nat_num": trk_nat_num,
+        "trk_only_meteor": trk_only_meteor,
+        "gt_path": gt_path,
+        "vid_out_path": vid_out_path
+
     }
 
 def default_detect_args() -> dict:       
@@ -330,6 +365,61 @@ def handle_detect_args(
     arg_bool(trk_all, "trk-all")
 
     return args
+
+def handle_visu_args(
+        vid_in_path: str = None,
+        vid_in_start: int = None,
+        vid_in_stop: int = None,
+        vid_in_threads: int = None,
+        trk_path: str = None,
+        trk_bb_path: str = None,
+        trk_id: bool = None,
+        trk_nat_num: bool = None,
+        trk_only_meteor: bool = None,
+        gt_path: str = None,
+        vid_out_path: str = None
+    ) -> list[str]:
+
+
+    fmdt_visu_exe = shutil.which("fmdt-visu")
+    fmdt_visu_found = not fmdt_visu_exe is None
+    assert fmdt_visu_found, "fmdt-visu executable not found"
+
+
+    assert not vid_in_path is None, "No input video specified"
+    assert not trk_path is None, "No input track path"
+    assert not trk_bb_path is None, "No input bounding boxes file"
+
+    args = [fmdt_visu_exe, "--vid-in-path", vid_in_path, "--trk-bb-path", trk_bb_path, "--trk-path", trk_path] 
+
+    if not vid_out_path is None:
+        args.extend(["--vid_out_path", vid_out_path])
+    else:
+        name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
+        new_name = f"{name}_visu.{ext}"
+        args.extend(["--vid_out_path", new_name])
+
+    def add_arg(arg, flag):
+        if not arg is None:
+            args.extend([flag, args])
+
+    add_arg(int(vid_in_start), "--vid-in-start")
+    add_arg(int(vid_in_stop), "--vid-in-stop")
+    add_arg(int(vid_in_threads), "--vid-in-threads")
+    add_arg(gt_path, "--gt-path")
+
+    if trk_id:
+        args.append("--trk-id")
+
+    if trk_nat_num:
+        args.append("--trk-nat-num")
+
+    if trk_only_meteor:
+        args.append("--trk-only-meteor")
+
+    return args
+
+
 
 def detect_args_to_cmd(args: dict) -> list[str]:
     return handle_detect_args(**args)            

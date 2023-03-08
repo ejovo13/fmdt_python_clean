@@ -95,7 +95,7 @@ def detect(
     """
 
     # Wrap up all of the arguments into a dictionary
-    detect_args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
+    detect_args, visu_args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
         ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
@@ -117,9 +117,9 @@ def detect(
     
     # And return the Args object that keeps track of the detect call
     if not trk_out_path is None:
-        out = fmdt.args.Args(fmdt.core.extract_all_information(trk_out_path), detect_args)
+        out = fmdt.args.Args(fmdt.core.extract_all_information(trk_out_path), detect_args, visu_args)
     else:
-        out = fmdt.args.Args(detect_args=detect_args)
+        out = fmdt.args.Args(detect_args=detect_args, visu_args=visu_args)
     
     return out
 
@@ -138,45 +138,23 @@ def visu(
         vid_out_path: str = None
     ) -> fmdt.args.Args:
 
-    fmdt_visu_exe = shutil.which("fmdt-visu")
-    fmdt_visu_found = not fmdt_visu_exe is None
-    assert fmdt_visu_found, "fmdt-visu executable not found"
+    visu_args = fmdt.args.visu_args(vid_in_path, 
+                                    vid_in_start,
+                                    vid_in_stop,
+                                    vid_in_threads,
+                                    trk_path,
+                                    trk_bb_path,
+                                    trk_id,
+                                    trk_nat_num,
+                                    trk_only_meteor,
+                                    gt_path,
+                                    vid_out_path)
 
-    # vid_in_path cannot be none, nor can the trk path, 
-    
-    assert not vid_in_path is None, "No input video specified"
-    assert not trk_path is None, "No input track path"
-    assert not trk_bb_path is None, "No input bounding boxes file"
-
-    args = [fmdt_visu_exe, "--vid-in-path", vid_in_path, "--trk-bb-path", trk_bb_path, "--trk-path", trk_path] 
-
-    if not vid_out_path is None:
-        args.extend(["--vid_out_path", vid_out_path])
-    else:
-        name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
-        new_name = f"{name}_visu.{ext}"
-        args.extend(["--vid_out_path", vid_out_path])
-
-    def add_arg(arg, flag):
-        if not arg is None:
-            args.extend([flag, args])
-
-    add_arg(int(vid_in_start), "--vid-in-start")
-    add_arg(int(vid_in_stop), "--vid-in-stop")
-    add_arg(int(vid_in_threads), "--vid-in-threads")
-    add_arg(gt_path, "--gt-path")
-
-    if trk_id:
-        args.append("--trk-id")
-
-    if trk_nat_num:
-        args.append("--trk-nat-num")
-
-    if trk_only_meteor:
-        args.append("--trk-only-meteor")
+    args = fmdt.args.handle_visu_args(**visu_args)
 
     subprocess.run(args)
 
+    return fmdt.args.Args(visu_args=visu_args)
 
 def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
 

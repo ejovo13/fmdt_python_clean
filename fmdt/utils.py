@@ -68,7 +68,7 @@ def get_video_height(filename: str) -> int:
 def decompose_video_filename(filename: str) -> tuple[str, str]:
     """Separate the name of a video from its extension
 
-    The function call decompose_video_filename("vid.mp4") returns the pair ("vid", "mp4") 
+    Ex: decompose_video_filename("vid.mp4") returns the pair ("vid", "mp4") 
     """
     sep = filename.split('.')
     # assert len(sep) == 2, "Filename has multiply periods"
