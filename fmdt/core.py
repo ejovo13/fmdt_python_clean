@@ -10,6 +10,45 @@ Public API:
 import fmdt.utils as utils
 from enum import Enum
 import math
+from termcolor import colored
+
+red = lambda s: colored(s, "red")
+black = lambda s: colored(s, "black")
+blue = lambda s: colored(s, "blue")
+green = lambda s: colored(s, "green")
+
+
+
+def help() -> None:
+
+    g = green
+    r = red
+    b = blue
+    s = f"    Welcome to the {g('fmdt')} package of fmdt-python"
+
+    print()
+    print(s)
+    print()
+
+    s = f"""    fmdt has several important submodules: fmdt.api, fmdt.args, fmdt.core,
+    fmdt.truth, and fmdt.utils. These submodules manipulate the core types:
+    {b("HumanDetection")}, {b("TrackedObject")}, and {b("Args")}.
+        """
+
+    print(s)
+
+    s = f"""    To get more information about each individual submodule, call the help
+    function of that module. For example:
+        fmdt.api.help()
+    or
+        fmdt.truth.help()"""
+
+
+    print(s)
+    print()
+
+
+
 
 # Structure of tracking output table of fmdt-detect after 
 # each line gets stripped using whitespace as a delimiter
@@ -263,7 +302,49 @@ def split_video_at_meteors(
     ----------
     video_filename (str): Filename of video to split 
     detect_tracks_in (str): Filename of tracks recorded by a call to 
-        fmdt.detect(video_filename, out_track_file=detect_tracks_in)
+        fmdt.detect(video_filename, trk_out_path=detect_tracks_in)
+    nframes_before (int): Number of frames to extract before the meteor sequence begins
+        (Default value of 3)
+    nframes_after (int): Number of frames to extract after the meteor sequence ends
+        (Default value of 3)
+    overwrite (bool): Tells ffmpeg to overwrite (True) the generated output videos if they already
+        exist. If false then ffmpeg will ask for manual confirmation
+        (Default value of False)
+    exact_split (bool): Determine whether to extract the _exact_ frames requested (True) - which requires loading
+        the entire video into memory as a numpy array - or approximate the frames requested using ffmpeg's 
+        seeking functionality (False). For long videos with high resolution, use False otherwise the program 
+        might crash. 
+        (Default value of False)
+    log (bool): When True, print to console the current action being performed
+    """
+    utils.assert_file_exists(detect_tracks_in)
+
+    # Preprocessing of information held in `detect_tracks_in`
+    tracking_list = extract_key_information(detect_tracks_in)
+    tracking_list = utils.retain_meteors(tracking_list)
+    seqs = utils.separate_meteor_sequences(tracking_list)
+
+    split_video_at_intervals(video_filename, seqs, nframes_before, nframes_after, overwrite, exact_split, log, condense=False)
+
+
+def split_video_at_intervals(
+        video_filename: str,
+        start_end: list[tuple[int, int]],
+        nframes_before=3,
+        nframes_after=3,
+        overwrite=False,
+        exact_split: bool = False,
+        log: bool = False,
+        condense: bool = True
+    ) -> None:
+    """
+    Split a video into small segments of length (nframes_before + nframes_after + sequence_length) frames
+    for each meteor detected 
+
+    Parameters
+    ----------
+    video_filename (str): Filename of video to split 
+    start_end (list[tuple[int, int]]): list of (frame_start, frame_end) pairs to split this video at
     nframes_before (int): Number of frames to extract before the meteor sequence begins
         (Default value of 3)
     nframes_after (int): Number of frames to extract after the meteor sequence ends
@@ -279,12 +360,13 @@ def split_video_at_meteors(
     log (bool): When True, print to console the current action being performed
     """
     utils.assert_file_exists(video_filename)
-    utils.assert_file_exists(detect_tracks_in)
 
     # Preprocessing of information held in `detect_tracks_in`
-    tracking_list = extract_key_information(detect_tracks_in)
-    tracking_list = utils.retain_meteors(tracking_list)
-    seqs = utils.separate_meteor_sequences(tracking_list)
+
+    if condense:
+        seqs = utils.condense_start_end(start_end)
+    else:
+        seqs = start_end
     video_name, extension = utils.decompose_video_filename(video_filename) 
 
     # Bookkeeping for formatting the name of the output videos
