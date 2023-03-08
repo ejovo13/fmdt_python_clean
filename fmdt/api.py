@@ -10,6 +10,25 @@ import fmdt.core
 import fmdt.utils
 import fmdt.args
 
+def help():
+    s = """    fmdt.api contains a Python wrapper for the `fmdt-detect` and `fmdt-visu` 
+    executables.
+    
+    fmdt.api contains the public-facing functions (also aliased under fmdt.*):
+        fmdt[.api].count
+        fmdt[.api].detect
+        fmdt[.api].visu
+        fmdt[.api].detect_directory
+
+    fmdt.api.count counts the number of celestial objects specified by the parameters
+    fmdt.api.detect calls `fmdt-detect` with the given arguments
+    fmdt.api.visu calls `fmdt-visu`
+    fmdt.api.detect_directory
+        
+        
+        
+"""
+
 def count(
         trk_bb_path: str,
         stars: bool = False,
@@ -65,8 +84,8 @@ def detect(
         trk_all: bool | None = None,
         trk_bb_path: str | None = None,
         trk_mag_path: str | None = None,
+        trk_out_path: str | None = None,
         log_path: str | None = None,
-        out_track_file: str | None = None,
         log: bool = False
     ) -> fmdt.args.Args:
     """Wrapper to executable fmdt-detect.
@@ -80,25 +99,25 @@ def detect(
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
         ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
-        trk_all, trk_bb_path, trk_mag_path, log_path, out_track_file, log
+        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log
     )
 
     # Spit out the commandline
     args = fmdt.args.handle_detect_args(**detect_args)
 
-    if out_track_file is None:
+    if trk_out_path is None:
         if log:
             print(f"Executing cmd: {' '.join(args)}")
         subprocess.run(args)
     else:
-        with open(out_track_file, 'w') as outfile:
+        with open(trk_out_path, 'w') as outfile:
             if log:
                 print(f"Executing cmd: {' '.join(args)}")
             subprocess.run(args, stdout=outfile)
     
     # And return the Args object that keeps track of the detect call
-    if not out_track_file is None:
-        out = fmdt.args.Args(fmdt.core.extract_all_information(out_track_file), detect_args)
+    if not trk_out_path is None:
+        out = fmdt.args.Args(fmdt.core.extract_all_information(trk_out_path), detect_args)
     else:
         out = fmdt.args.Args(detect_args=detect_args)
     
@@ -106,24 +125,55 @@ def detect(
 
 
 def visu(
-        in_video: str,
-        in_track_file: str,
-        in_bb_file: str,
-        out_visu_file: str | None = None,
-        show_id: bool = False
-    ) -> None:
+        vid_in_path: str = None,
+        vid_in_start: int = None,
+        vid_in_stop: int = None,
+        vid_in_threads: int = None,
+        trk_path: str = None,
+        trk_bb_path: str = None,
+        trk_id: bool = None,
+        trk_nat_num: bool = None,
+        trk_only_meteor: bool = None,
+        gt_path: str = None,
+        vid_out_path: str = None
+    ) -> fmdt.args.Args:
 
     fmdt_visu_exe = shutil.which("fmdt-visu")
     fmdt_visu_found = not fmdt_visu_exe is None
-    assert fmdt_visu_found, "fmdt-visu executable not found"   
+    assert fmdt_visu_found, "fmdt-visu executable not found"
 
-    args = [fmdt_visu_exe, "--in-video", in_video, "--in-tracks", in_track_file, "--in-bb", in_bb_file] 
+    # vid_in_path cannot be none, nor can the trk path, 
+    
+    assert not vid_in_path is None, "No input video specified"
+    assert not trk_path is None, "No input track path"
+    assert not trk_bb_path is None, "No input bounding boxes file"
 
-    if not out_visu_file is None:
-        args.extend(["--out-video", out_visu_file])
+    args = [fmdt_visu_exe, "--vid-in-path", vid_in_path, "--trk-bb-path", trk_bb_path, "--trk-path", trk_path] 
 
-    if show_id:
-        args.append("--show-id")
+    if not vid_out_path is None:
+        args.extend(["--vid_out_path", vid_out_path])
+    else:
+        name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
+        new_name = f"{name}_visu.{ext}"
+        args.extend(["--vid_out_path", vid_out_path])
+
+    def add_arg(arg, flag):
+        if not arg is None:
+            args.extend([flag, args])
+
+    add_arg(int(vid_in_start), "--vid-in-start")
+    add_arg(int(vid_in_stop), "--vid-in-stop")
+    add_arg(int(vid_in_threads), "--vid-in-threads")
+    add_arg(gt_path, "--gt-path")
+
+    if trk_id:
+        args.append("--trk-id")
+
+    if trk_nat_num:
+        args.append("--trk-nat-num")
+
+    if trk_only_meteor:
+        args.append("--trk-only-meteor")
 
     subprocess.run(args)
 
@@ -140,9 +190,9 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     failing_cmds = []
     i = 0
     for v in videos:
-        # res = fmdt.detect(directory + "/" + v, light_min=150, light_max=245, trk_all=True, log=False, out_track_file="tracks.txt")
+        # res = fmdt.detect(directory + "/" + v, light_min=150, light_max=245, trk_all=True, log=False, trk_out_path="tracks.txt")
         # a = fmdt.args.video_input(directory + "/" + v)
-        # a.detect_args["out_track_file"] = "tracks.txt"
+        # a.detect_args["trk_out_path"] = "tracks.txt"
 
         # if i > 10:
         #     break
