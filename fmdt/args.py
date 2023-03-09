@@ -450,12 +450,13 @@ def handle_visu_args(
     args = [fmdt_visu_exe, "--vid-in-path", vid_in_path, "--trk-bb-path", trk_bb_path, "--trk-path", trk_path] 
 
     if not vid_out_path is None:
-        args.extend(["--vid_out_path", vid_out_path])
+        args.extend(["--vid-out-path", vid_out_path])
     else:
         name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
         new_name = f"{name}_visu.{ext}"
-        args.extend(["--vid_out_path", new_name])
+        args.extend(["--vid-out-path", new_name])
 
+    # helper closure to clean up repetitive code
     def add_arg(arg, flag):
         if not arg is None:
             args.extend([flag, str(args)])
