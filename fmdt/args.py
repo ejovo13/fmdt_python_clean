@@ -68,7 +68,8 @@ class Args:
 
     def __repr__(self) -> str:
 
-        d = filter_dict(self.detect_args)
+        if not self.detect_args is None:
+            d = filter_dict(self.detect_args)
 
         # s = ""
         # for (k, v) in self.detect_args.items():
@@ -126,11 +127,43 @@ class Args:
         for k, v in kwargs.items():
             self.visu_args[k] = v
 
-        args = fmdt.api.visu(**self.visu_args)
+        fmdt.api.visu(**self.visu_args)
 
-        return args 
+        return self
+    
+    def vid(self) -> str | None:
+        if not self.detect_args["vid_in_path"] is None:
+            return self.detect_args["vid_in_path"]
+        elif not self.visu_args["vid_in_path"] is None:
+            return self.visu_args["vid_in_path"]
+        else:
+            return None
+        
+    def tracks(self) -> str | None:
+        if not self.detect_args["trk_out_path"] is None:
+            return self.detect_args["trk_out_path"]
+        elif not self.visu_args["trk_path"] is None:
+            return self.visu_args["trk_path"]
+        else:
+            return None
 
+    def bbs(self) -> str | None:
+        if not self.detect_args["trk_bb_path"] is None:
+            return self.detect_args["trk_bb_path"]
+        elif not self.visu_args["trk_bb_path"] is None:
+            return self.visu_args["trk_bb_path"]
+        else:
+            return None
 
+    def split(self, nframes_buffer=3, overwrite=False, exact_split=False, log=False):
+        # Check to see if we have the tracks saved.
+        fmdt.core.split_video_at_meteors(video_filename=self.vid(), 
+                                         detect_tracks_in=self.tracks(),
+                                         nframes_before=nframes_buffer,
+                                         nframes_after=nframes_buffer,
+                                         overwrite=overwrite,
+                                         exact_split=exact_split,
+                                         log=log)
 
     # Take the detect argument dictionary and write out a comma separated value string
     def detect_csv_header(self) -> str:
@@ -157,6 +190,10 @@ class Args:
         assert not self.detect_args["trk_out_path"] is None, "Out track file not stored"
 
         return fmdt.core.extract_all_information(self.detect_args["trk_out_path"])
+    
+    def command(self) -> str:
+        """Return the command used to execute fmdt-detect from a terminal"""
+        return ' '.join(handle_detect_args(**self.detect_args))
 
     # Write the dictionary of fmdt-detect arguments to a csv file
     # def detect_to_csv(self, csv_filename) -> None:
