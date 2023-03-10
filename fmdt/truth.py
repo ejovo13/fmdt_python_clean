@@ -125,11 +125,62 @@ class HumanDetection:
             k_trials=k_trials,
             log=log
         )
+    
+
+    def detect(self, args: fmdt.args.Args) -> bool:
+        """Paired up with an Args object, frun with fmdt-detect and 
+        see if this Truth is registered"""
+        res = args.detect()
+        return is_meteor_detected(self, res.tracking_list)
+        
+
+
+
 
     @staticmethod
     def init_ground_truth(database_filename: str, video_db_dir: str = "./"):
         HumanDetection.GROUND_TRUTH = read_human_detection_csv(database_filename, video_db_dir) 
         return read_human_detection_csv(database_filename, video_db_dir)
+
+# Verite de terrains for a bunch of individually tracked meteors
+class GroundTruth:
+
+    def __init__(self, csv: str, vid_dir: str = './'):
+        self.vid_dir = vid_dir
+        self.meteors = read_human_detection_csv(csv, vid_dir)
+
+    def __str__(self) -> str:
+        return f"GroundTruth with {len(self.meteors)} detections, {self.n_unique_videos()} unique videos, and db dir:\n\t{self.vid_dir}"
+
+    def n_unique_videos(self) -> int:
+        return len(self.vids())
+
+    def try_command(self, args: fmdt.args.Args) -> list[bool]:
+        """Take a set of parameters defined by `args` and apply it to every meteor in this database.
+        
+        Return a list of booleans that are true if the corresponding meteor was
+        detected. 
+        """
+        def try_comm(m: HumanDetection) -> bool:
+
+            args.detect_args["vid_in_path"] = m.video_name
+
+            print(f"Trying args on video {args.vid()}")
+            
+            res = args.detect()
+            is_detected = is_meteor_detected(m, res.tracking_list)
+            if not is_detected:
+                print(f"{res.command()} unsuccessfull ")
+            
+            return is_detected
+
+        return [try_comm(m) for m in self.meteors]
+    
+    def vids(self) -> list[str]:
+        """Return the list of unique videos that appear in this database"""
+        return set([m.video_name for m in self.meteors])
+
+
 
 
 
@@ -155,6 +206,9 @@ def df_row_to_human(row: pd.Series, dir_prepend: str = "") -> HumanDetection:
     # like do any of these fields even actually exist 
     # in our data frame??
 
+    if dir_prepend[-1] != "/":
+        dir_prepend = dir_prepend + "/"
+
     return HumanDetection(dir_prepend + row["video_name"],
                           int(row["start_frame"]),
                           int(row["end_frame"]),
@@ -167,8 +221,9 @@ def read_human_detection_csv(csv_filename: str, db_dir: str = "") -> list[HumanD
     df = pd.read_csv(csv_filename)
     return [df_row_to_human(df.iloc[i], db_dir) for i in range(len(df.index))]
 
-def init_ground_truth(database_filename: str, vid_db_dir: str = "./") -> list[HumanDetection]:
-    return HumanDetection.init_ground_truth(database_filename, video_db_dir=vid_db_dir)
+def init_ground_truth(csv_filename: str = "human_detections.csv", vid_db_dir: str = "./") -> GroundTruth:
+    return GroundTruth(csv=csv_filename, vid_dir=vid_db_dir)
+
 
 # GROUND_TRUTH : list[HumanDetection] = None
 
@@ -179,6 +234,9 @@ def init_ground_truth(database_filename: str, vid_db_dir: str = "./") -> list[Hu
 # GROUND_TRUTH = read_human_detection_csv("human_detections.csv")
 
 def is_meteor_detected(meteor: HumanDetection, tracking_list: list[TrackedObject]) -> bool:
+
+    if tracking_list is None:
+        return False
 
     # keep only meteors
     detected_m = [m for m in tracking_list if m.is_meteor()]
