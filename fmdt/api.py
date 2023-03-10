@@ -9,6 +9,7 @@ import subprocess
 import fmdt.core
 import fmdt.utils
 import fmdt.args
+from termcolor import colored
 
 def help():
     s = """    fmdt.api contains a Python wrapper for the `fmdt-detect` and `fmdt-visu` 
@@ -57,6 +58,8 @@ def count(
     return len(tracked)
     
 
+FMDT_TIMEOUT = 1
+
 def detect(
         vid_in_path: str, 
         vid_in_start: int | None = None,
@@ -86,7 +89,8 @@ def detect(
         trk_mag_path: str | None = None,
         trk_out_path: str | None = None,
         log_path: str | None = None,
-        log: bool = False
+        log: bool = False,
+        timeout: float = None
     ) -> fmdt.args.Args:
     """Wrapper to executable fmdt-detect.
 
@@ -108,12 +112,31 @@ def detect(
     if trk_out_path is None:
         if log:
             print(f"Executing cmd: {' '.join(args)}")
-        subprocess.run(args)
+
+        if not timeout is None:
+            try:
+                subprocess.run(args, timeout=timeout)
+            except:
+                print(f"Subprocess timed out for {colored(' '.join(args), 'red')}")
+        else:
+            subprocess.run(args)
+
     else:
         with open(trk_out_path, 'w') as outfile:
             if log:
                 print(f"Executing cmd: {' '.join(args)}")
-            subprocess.run(args, stdout=outfile)
+
+            if not timeout is None:
+                try: 
+                    subprocess.run(args, stdout=outfile, timeout=timeout)
+                except:
+                    print("==================================================================")
+                    print("")
+                    print(f"Subprocess timed out for \n\t{colored(' '.join(args), 'blue')}")
+                    print("")
+                    print("==================================================================")
+            else:
+                subprocess.run(args, stdout=outfile)
     
     # And return the Args object that keeps track of the detect call
     if not trk_out_path is None:
