@@ -17,39 +17,6 @@ black = lambda s: colored(s, "black")
 blue = lambda s: colored(s, "blue")
 green = lambda s: colored(s, "green")
 
-
-
-def help() -> None:
-
-    g = green
-    r = red
-    b = blue
-    s = f"    Welcome to the {g('fmdt')} package of fmdt-python"
-
-    print()
-    print(s)
-    print()
-
-    s = f"""    fmdt has several important submodules: fmdt.api, fmdt.args, fmdt.core,
-    fmdt.truth, and fmdt.utils. These submodules manipulate the core types:
-    {b("HumanDetection")}, {b("TrackedObject")}, and {b("Args")}.
-        """
-
-    print(s)
-
-    s = f"""    To get more information about each individual submodule, call the help
-    function of that module. For example:
-        fmdt.api.help()
-    or
-        fmdt.truth.help()"""
-
-
-    print(s)
-    print()
-
-
-
-
 # Structure of tracking output table of fmdt-detect after 
 # each line gets stripped using whitespace as a delimiter
 class TrackingTable:
@@ -65,6 +32,7 @@ class TrackingTable:
 
 
 class ObjectType(Enum):
+    """Simple Enum to distinguish between meteor, star and noise TrackedObjects"""
     METEOR = 0
     STAR   = 1
     NOISE  = 2
@@ -82,7 +50,26 @@ class ObjectType(Enum):
 
     
 class TrackedObject:
+    """A `TrackedObject` is used to store the celestial objects detected by `fmdt-detect`
 
+    If we call `fmdt-detect` and store the track results to a file with:
+
+    >>> fmdt.detect("demo.mp4", trk_out_path="tracks.txt")  
+
+    Then we can load in the detected objects as a list of `TrackedObject`:
+
+    >>> objects = fmdt.read_tracks_file("tracks.txt")
+
+    We are effectively loading in the tracking table:
+
+    # -------||---------------------------||---------------------------||---------
+    #  Track ||           Begin           ||            End            ||  Object
+    # -------||---------------------------||---------------------------||---------
+    # -------||---------|--------|--------||---------|--------|--------||---------
+    #     Id || Frame # |      x |      y || Frame # |      x |      y ||    Type
+    # -------||---------|--------|--------||---------|--------|--------||---------
+       {tid} ||  {fbeg} | {xbeg} | {ybeg} ||  {fend} | {xend} | {yend} || {otype}
+    """
     def __init__(
         self,
         id: int,
@@ -114,6 +101,7 @@ class TrackedObject:
         return self.type == ObjectType.NOISE
     
     def type_str(self) -> str:
+        """Return the ObjectType of this object as a string"""
         if self.is_meteor():
             return "Meteor" 
         elif self.is_star():
@@ -164,13 +152,6 @@ class TrackedObject:
         yi = self.start_y + (self.dx() * self.slope()) * f_prime
         return (xi, yi)
 
-    # @staticmethod
-    # def from_tracking_file(filename: str):
-    #     pass
-    #     # all_info = extract_all_information()
-
-# class TrackingList:
-#     """A list of TrackedObjects"""
 
 def read_tracks_file(tracks_filename: str) -> list[TrackedObject]:
     return extract_all_information(tracks_filename)
@@ -184,7 +165,7 @@ def extract_key_information(detect_tracks_in: str) -> list[dict]:
 
     Parameters
     ----------
-    detect_tracks_in (str): The name of a file whose content is the output
+    `detect_tracks_in` (str): The name of a file whose content is the output
         of fmdt_detect
 
     Returns
@@ -229,12 +210,12 @@ def extract_all_information(detect_tracks_in: str) -> list[TrackedObject]:
 
     Parameters
     ----------
-    detect_tracks_in (str): The name of a file whose content is the output
+    `detect_tracks_in` (str): The name of a file whose content is the output
         of fmdt_detect
 
     Returns
     -------
-    dict_array (list[dict]): A list of dictionaries of the form
+    list_objects (list[TrackedObject]): A list of TrackedObject
         { 
             "id":           <int>,
             "start_frame":  <int>,
@@ -300,22 +281,22 @@ def split_video_at_meteors(
 
     Parameters
     ----------
-    video_filename (str): Filename of video to split 
-    detect_tracks_in (str): Filename of tracks recorded by a call to 
+    `video_filename` (str): Filename of video to split 
+    `detect_tracks_in` (str): Filename of tracks recorded by a call to 
         fmdt.detect(video_filename, trk_out_path=detect_tracks_in)
-    nframes_before (int): Number of frames to extract before the meteor sequence begins
+    `nframes_before` (int): Number of frames to extract before the meteor sequence begins
         (Default value of 3)
-    nframes_after (int): Number of frames to extract after the meteor sequence ends
+    `nframes_after` (int): Number of frames to extract after the meteor sequence ends
         (Default value of 3)
-    overwrite (bool): Tells ffmpeg to overwrite (True) the generated output videos if they already
+    `overwrite` (bool): Tells ffmpeg to overwrite (True) the generated output videos if they already
         exist. If false then ffmpeg will ask for manual confirmation
         (Default value of False)
-    exact_split (bool): Determine whether to extract the _exact_ frames requested (True) - which requires loading
+    `exact_split` (bool): Determine whether to extract the _exact_ frames requested (True) - which requires loading
         the entire video into memory as a numpy array - or approximate the frames requested using ffmpeg's 
         seeking functionality (False). For long videos with high resolution, use False otherwise the program 
         might crash. 
         (Default value of False)
-    log (bool): When True, print to console the current action being performed
+    `log` (bool): When True, print to console the current action being performed
     """
     utils.assert_file_exists(detect_tracks_in)
 
@@ -343,21 +324,40 @@ def split_video_at_intervals(
 
     Parameters
     ----------
-    video_filename (str): Filename of video to split 
-    start_end (list[tuple[int, int]]): list of (frame_start, frame_end) pairs to split this video at
-    nframes_before (int): Number of frames to extract before the meteor sequence begins
+    `video_filename` (str): Filename of video to split 
+    `start_end` (list[tuple[int, int]]): list of (frame_start, frame_end) pairs to split this video at
+    `nframes_before` (int): Number of frames to extract before the meteor sequence begins
         (Default value of 3)
-    nframes_after (int): Number of frames to extract after the meteor sequence ends
+    `nframes_after` (int): Number of frames to extract after the meteor sequence ends
         (Default value of 3)
-    overwrite (bool): Tells ffmpeg to overwrite (True) the generated output videos if they already
+    `overwrite` (bool): Tells ffmpeg to overwrite (True) the generated output videos if they already
         exist. If false then ffmpeg will ask for manual confirmation
         (Default value of False)
-    exact_split (bool): Determine whether to extract the _exact_ frames requested (True) - which requires loading
+    `exact_split` (bool): Determine whether to extract the _exact_ frames requested (True) - which requires loading
         the entire video into memory as a numpy array - or approximate the frames requested using ffmpeg's 
         seeking functionality (False). For long videos with high resolution, use False otherwise the program 
         might crash. 
         (Default value of False)
-    log (bool): When True, print to console the current action being performed
+    `log` (bool): When True, print to console the current action being performed
+
+    Examples
+    --------
+
+    Create two segments from frames [~10, ~20] and [~100, ~200]    
+
+    >>> fmdt.split_video_at_intervals("demo.mp4", start_end=[(10, 20), (100, 200)])
+
+    Create two segments split exactly at [10, 20] and [100, 200] 
+
+    >>> fmdt.split_video_at_intervals(
+            "demo.mp4",
+            start_end=[(10, 20), (100, 200)],
+            exact_split=True,
+            nframes_before = 0,
+            nframes_after = 0
+        )
+
+
     """
     utils.assert_file_exists(video_filename)
 

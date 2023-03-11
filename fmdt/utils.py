@@ -23,7 +23,7 @@ def separate_meteor_sequences(tracking_list: list[dict], frame_buffer = 5) -> li
 
     return condense_start_end(start_end, frame_buffer)
 
-def condense_start_end(start_end: list[tuple[int, int]], frame_buffer) -> list[tuple[int, int]]:
+def condense_start_end(start_end: list[tuple[int, int]], frame_buffer = 5) -> list[tuple[int, int]]:
     """Condense a list of (f_start, f_end) frame pairs into a small sequence of 
     non-overlapping sequences
     """

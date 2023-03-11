@@ -31,19 +31,37 @@ def help():
 """
 
 def count(
-        trk_bb_path: str,
+        trk_path: str,
         stars: bool = False,
         meteors: bool = True,
         noise: bool = False,
         all: bool = False
     ) -> int:
-    """Count the number of meteors detected in a tracks_bb file"""
+    """Count the number of objects detected in a tracks_bb file
+
+    Parameters
+    ----------
+    trk_path (str): Path to file that stores the tracks (stdout of `fmdt-detect`) of detected objects
+    stars (bool): When True, include star objects in our count (Default False)
+    meteors (bool): When True, include meteor objects in our count (Default True)
+    noise (bool): When True, include noise objects in our count (Default False)
+    all (bool): When True, include all objects in the count
+    
+    Examples
+    --------
+    >>> fmdt.detect(vid_in_path="demo.mp4", trk_out_path="tracks.txt") # Store tracks in tracking file
+    >>> fmdt.count("tracks.txt")  # Count meteors only
+
+    >>> fmdt.count("tracks.txt", all=True) # Count stars, meteors, and noise
+
+    >>> fmdt.count("tracks.txt", stars=True, meteors=False, noise=True) # Count stars and noise 
+    """
     if all:
         stars = True
         meteors = True
         noise = True
 
-    tracked = fmdt.core.extract_key_information(trk_bb_path)
+    tracked = fmdt.core.extract_key_information(trk_path)
 
     # If we shouldn't keep this object type, filter it out
     def refine(obj_type: bool, type_str: str) -> None: 
