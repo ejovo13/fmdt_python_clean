@@ -9,6 +9,6 @@ To get familiar with the project:
 
 - [install fmdt](installation.md)
 - check out the [source code](https://github.com/ejovo13/fmdt_python_clean/tree/build)
-- work through some [tutorials](tutorials/detecting_meteors.md)
+- work through some [tutorials](tutorials/1_detecting_meteors.md)
 
 If you'd like to contribute to fmdt or fmdt-python, check out the developer docs.
