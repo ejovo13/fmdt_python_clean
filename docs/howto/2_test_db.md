@@ -22,10 +22,10 @@ To create a new `GroundTruth`, we have to pass in the name of the database file 
 to where those videos are stored on your machine.
 
 ```
-vid_dir_path = "~/Videos/Watec6mm"        # Path to draco6 videos on my machine
-draco6_db    = "human_detections_draco6.csv"
+vid_dir   = "~/Videos/Watec6mm"        # Path to draco6 videos on my machine
+draco6_db = "human_detections_draco6.csv"
 
-gt6 = fmdt.GroundTruth(csv=draco6_db, vid_dir_path=vid_dir_path)
+gt6 = fmdt.GroundTruth(csv=draco6_db, vid_dir=vid_dir)
 ```
 
 The operation we are performing is the following:
