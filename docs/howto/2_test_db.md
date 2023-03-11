@@ -1,4 +1,7 @@
 # GroundTruth Testing
+Companion script: [test_ground_truth.py]()
+
+---
 
 In this guide you'll learn how to use `fmdt` to test the performance of `fmdt-detect`. The relevant
 functions for ground truth testing are stored in the `fmdt.truth` module.
