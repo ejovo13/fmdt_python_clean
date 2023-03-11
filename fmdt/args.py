@@ -7,7 +7,7 @@ import subprocess
 import pandas as pd
 
 def filter_dict(d: dict):
-
+    """Filter out None values in a dict, returning a new dict"""
     out = {}
 
     for (k, v) in d.items():
@@ -123,7 +123,6 @@ class Args:
         # Do we have visu arguments?
         assert not self.visu_args is None, "No visu args for this object"
 
-        
         for k, v in kwargs.items():
             self.visu_args[k] = v
 
@@ -132,6 +131,7 @@ class Args:
         return self
     
     def vid(self) -> str | None:
+        """Return the name of the video, if it exists"""
         if not self.detect_args["vid_in_path"] is None:
             return self.detect_args["vid_in_path"]
         elif not self.visu_args["vid_in_path"] is None:
@@ -140,6 +140,7 @@ class Args:
             return None
         
     def tracks(self) -> str | None:
+        """Return the name of the tracks file, if it exists"""
         if not self.detect_args["trk_out_path"] is None:
             return self.detect_args["trk_out_path"]
         elif not self.visu_args["trk_path"] is None:
@@ -148,6 +149,7 @@ class Args:
             return None
 
     def bbs(self) -> str | None:
+        """Return the name of the bounding boxes (BBs) file, if it exists"""
         if not self.detect_args["trk_bb_path"] is None:
             return self.detect_args["trk_bb_path"]
         elif not self.visu_args["trk_bb_path"] is None:
@@ -167,6 +169,7 @@ class Args:
 
     # Take the detect argument dictionary and write out a comma separated value string
     def detect_csv_header(self) -> str:
+        """Return the header line used in a csv file storing multiple argument configurations"""
         header = ""
         for k in self.detect_args.keys():
             if k == "log":
@@ -176,6 +179,7 @@ class Args:
         return header[:-1] + "\n"
 
     def detect_to_csv_row(self) -> str:
+        """Return the csv representation of a detect_args dict"""
         csv = ""
         for v in self.detect_args.values():
             if v is None:
@@ -186,13 +190,14 @@ class Args:
         # Drop the last comma
         return csv[:-1] + "\n"
     
-    def get_tracking_list(self) -> list[dict]:
+    def get_tracking_list(self) -> list[fmdt.core.TrackedObject]:
+        """Retreive the list of TrackedObject that is stored in the trk_out_path file"""
         assert not self.detect_args["trk_out_path"] is None, "Out track file not stored"
 
         return fmdt.core.extract_all_information(self.detect_args["trk_out_path"])
     
     def command(self) -> str:
-        """Return the command used to execute fmdt-detect from a terminal"""
+        """Return the command used to execute fmdt-detect with this configuration"""
         return ' '.join(handle_detect_args(**self.detect_args))
 
     # Write the dictionary of fmdt-detect arguments to a csv file

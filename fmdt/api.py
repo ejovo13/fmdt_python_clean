@@ -4,7 +4,6 @@ are on the system path
 """
 
 from os import listdir
-import shutil
 import subprocess
 import fmdt.core
 import fmdt.utils
@@ -79,6 +78,7 @@ def count(
 FMDT_TIMEOUT = 1
 
 def detect(
+        #=================== fmdt-detect parameters ================
         vid_in_path: str, 
         vid_in_start: int | None = None,
         vid_in_stop: int | None = None,
@@ -105,15 +105,24 @@ def detect(
         trk_all: bool | None = None,
         trk_bb_path: str | None = None,
         trk_mag_path: str | None = None,
-        trk_out_path: str | None = None,
         log_path: str | None = None,
+        #================== Additional Parameters ====================
+        trk_out_path: str | None = None,
         log: bool = False,
         timeout: float = None
     ) -> fmdt.args.Args:
     """Wrapper to executable fmdt-detect.
 
+    Parameters
+    ----------
+    Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/detect.html#
 
-    
+    Wrapper Parameters
+    ------------------
+    trk_out_path (str): path to redirect stdout of `fmdt-detect`
+    log (bool): Print logging messages to stdout (True) or do nothing (False). Default False.
+    timeout (float): timeout in seconds of the Python subprocess executing `fmdt-detect`. Default None. 
+        Used to speed up ground truth testing.
     """
 
     # Wrap up all of the arguments into a dictionary
@@ -178,7 +187,12 @@ def visu(
         gt_path: str = None,
         vid_out_path: str = None
     ) -> fmdt.args.Args:
+    """Wrapper to executable fmdt-detect.
 
+    Parameters
+    ----------
+    Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/visu.html
+    """
     visu_args = fmdt.args.visu_args(vid_in_path, 
                                     vid_in_start,
                                     vid_in_stop,
@@ -198,6 +212,15 @@ def visu(
     return fmdt.args.Args(visu_args=visu_args)
 
 def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
+    """Call `fmdt-detect` on all videos in the directory `dir_name` using the settings stored in `args`
+    
+    Parameters
+    ----------
+    dir_name (str): Path to the directory of videos that you'd like to detect
+    args: (fmdt.args.Args): Configuration of parameters used to call fmdt.detect    
+    
+    
+    """
 
     entries = listdir(dir_name)
     is_video_fn = lambda v: v[-3:] == "mp4" or v[-3:] == "avi"
@@ -228,5 +251,3 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
 
     for c in failing_cmds:
         print(c)
-
-# Launch multiple processes of 
