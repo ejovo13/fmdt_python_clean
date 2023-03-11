@@ -1,6 +1,11 @@
-A series of Python scripts to facilitate the processing of [fmdt's](https://github.com/alsoc/fmdt) output
 
 Scripts for video editing rely on [ffmpeg-python's](https://github.com/kkroening/ffmpeg-python) simple Python bindings to ffmpeg. Make sure you install `ffmpeg-python` before trying any of the video editing functionality.
+
+### Introduction
+
+`fmdt` is a Python package used to analyze the performance of the [Fast Meteor Detection Toolbox](https://github.com/alsoc/fmdt)'s executables.
+
+This branch contains the `fmdt`'s documentation and a series of scripts that showcase `fmdt`'s functionality.
 
 ### Installation
 
@@ -8,18 +13,18 @@ Scripts for video editing rely on [ffmpeg-python's](https://github.com/kkroening
 pip install fmdt-python
 ```
 
-`fmdt/core.py` should contain the functions that are called directly in scripts.
-`fmdt/utils.py` contains utility functions that `fmdt.core` makes use of.
+In order to use the functions `fmdt.detect` and `fmdt.visu` (to call `fmdt-detect` and `fmdt-visu`, respectively) you need to have `fmdt-detect` and `fmdt-visu` compiled and locatable via your system's 
+`PATH`.
 
-Example to split a video using tracking information already provided by `fmdt-detect`:
+### Example Usage
 
 ```
 import fmdt
 
+fmdt.detect("demo.mp4", trk_out_path="ex1_detect_tracks.txt")
 fmdt.split_video_at_meteors("demo.mp4", "ex1_detect_tracks.txt")
 ```
 
-#### TODO
+### Documentation
 
-- [x] Upload fmdt to pip so that we can download fmdt and call scripts from anywhere
-- [x] Add API to call fmdt executables like `fmdt-detect` and `fmdt-visu`
+Comprehensive documentation is hosted at (readthedocs)[https://fmdt-python-clean.readthedocs.io/en/latest/]
