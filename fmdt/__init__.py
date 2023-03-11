@@ -31,5 +31,8 @@ from fmdt.truth import (
 
 # from fmdt.truth import HumanDetection
 
-__version__ = "0.0.22"
+MAJOR_VERSION = 0
+MINOR_VERSION = 0
+PATCH         = 23
 
+VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
