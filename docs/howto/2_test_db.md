@@ -1,5 +1,5 @@
 # GroundTruth Testing
-Companion script: [test_ground_truth.py]()
+Companion script: [test_ground_truth.py](https://github.com/ejovo13/fmdt_python_clean/blob/main/test_ground_truth.py)
 
 ---
 
@@ -22,7 +22,7 @@ To create a new `GroundTruth`, we have to pass in the name of the database file 
 to where those videos are stored on your machine.
 
 ```
-vid_dir   = "~/Videos/Watec6mm"        # Path to draco6 videos on my machine
+vid_dir   = "/your/dir/here/"        # Path to draco6 videos
 draco6_db = "human_detections_draco6.csv"
 
 gt6 = fmdt.GroundTruth(csv=draco6_db, vid_dir=vid_dir)
@@ -84,9 +84,12 @@ include a `timeout` parameter for our `detect_args`:
 
 ```
 d_args = {
-    "light_min": 150,
-    "light_max": 200,
-    "trk_meteor_min": 5,
+    "light_min": 250,
+    "light_max": 253,
     "timeout": 1          # timeout in seconds for the fmdt-detect subprocess
 }
+
+gt6.try_command(fmdt.Args(detect_args=d_args))
 ```
+
+This set of parameters will detect up to 6 of the ground truth meteors in the draco6 database.
