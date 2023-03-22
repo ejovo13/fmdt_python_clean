@@ -19,7 +19,7 @@ vid    = 'demo.mp4'
 tracks = 'demo_tracks.txt'
 bb     = 'demo_bb.txt'
 
-fmdt.detect(vid_in_path=vid, trk_in_path=tracks, trk_bb_path=bb)
+fmdt.detect(vid_in_path=vid, trk_out_path=tracks, trk_bb_path=bb)
 ```
 We execute `fmdt-detect` using the function `fmdt.detect`
 
