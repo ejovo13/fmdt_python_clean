@@ -132,7 +132,8 @@ class HumanDetection:
         see if this Truth is registered"""
         res = args.detect()
         return is_meteor_detected(self, res.tracking_list)
-        
+
+     
 
 
 
@@ -180,8 +181,91 @@ class GroundTruth:
         """Return the list of unique videos that appear in this database"""
         return set([m.video_name for m in self.meteors])
 
+    def test_span(self, light_min_min, light_min_max, diff):
+        # Record the pairs that are successful, and the number of meteors detected 
+
+        min_max = []
+        dets = []
+        successes = []
+
+        d_args = {
+            "trk_out_path": "trk.txt",
+            "trk_bb_path": "bb.txt",
+            "timeout":  1
+        }
+
+        args = fmdt.args.Args(detect_args=d_args)
+
+        for lmin in np.linspace(light_min_min, light_min_max, 2):
+
+            # Get the list
+            args.detect_args["light_min"] = lmin
+            args.detect_args["light_max"] = lmin + diff 
+
+            success_list = self.try_command(args)
+
+            ndets = sum(success_list)
+
+            min_max.append((lmin, lmin + diff)) 
+            dets.append(ndets)
+            successes.append(success_list)
+
+        return min_max, dets, successes
+    
+    def draw_heatmap(self, lmin_min, lmax_max, n_intervals):
+
+        successes = []
+        diff = (lmax_max - lmin_min) / (n_intervals)
+
+        min_max, _, successes = self.test_span(lmin_min, lmax_max, diff)
+
+        plot_gt(min_max, successes)
 
 
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+def plot_gt(minmax: list[tuple[float, float]], successes: list[list[bool]]):
+
+    lmin_min = minmax[0][0]
+    lmin_max = minmax[-1][1]
+
+    _, ax = plt.subplots()
+    num_gt = len(successes[0])
+    
+    print(f"Num intervals: {len(minmax)}")
+    print(f"Num ground truths: {num_gt}")
+
+    y_ticks = []
+
+    for i in range(len(minmax)):
+        lmin = minmax[i][0]
+        lmax = minmax[i][1]
+        y_ticks.append(lmin)
+        h = lmax - lmin
+        w = 1
+        print(f"lmin: {lmin}")
+
+        # Now iterate horizontally
+        for id in range(num_gt):
+            if successes[i][id]:
+                # print("Rect")
+                ax.add_patch(Rectangle((id, lmin), w, h, facecolor = "green"))
+            else:
+                ax.add_patch(Rectangle((id, lmin), w, h, facecolor = "black"))
+
+    y_ticks.append(lmin_max)
+
+    plt.xlim([0, num_gt])
+    plt.ylim([lmin_min, lmin_max])
+    plt.yticks(y_ticks)
+    plt.show()
+
+# for d in range(len(MIN_MAX)):
+#     plot_gt(MIN_MAX[d], SUCCESS[d])
+
+
+# I want a function that automatically draws that heat map given lmin_min, lmin_max, and n
 
 
 
