@@ -18,13 +18,10 @@ import fmdt
 vid    = 'demo.mp4'
 tracks = 'demo_tracks.txt'
 bb     = 'demo_bb.txt'
-```
 
-To actually launch `fmdt-detect`, we call the Python function `fmdt.detect`.
-
-```
 fmdt.detect(vid_in_path=vid, trk_in_path=tracks, trk_bb_path=bb)
 ```
+We execute `fmdt-detect` using the function `fmdt.detect`
 
 Open up a terminal and lauch this script (or type in the previous statements in an interactive session)
 ```{bash}

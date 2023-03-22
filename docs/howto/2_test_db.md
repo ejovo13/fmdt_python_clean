@@ -10,7 +10,7 @@ functions for ground truth testing are stored in the `fmdt.truth` module.
 
 Currently there are two ground truth databases accessible. Files of the form 
 `Draconids-6mm*` (denoted draco6) and `Draconids-12mm*` (denoted draco12) have their
-ground truths stored in the [draco6](https://github.com/ejovo13/fmdt_python_clean/blob/build/human_detections_draco12.csv) and [draco12](https://github.com/ejovo13/fmdt_python_clean/blob/build/human_detections_draco6.csv) csv files. 
+ground truths stored in the [draco6](https://github.com/ejovo13/fmdt_python_clean/blob/build/human_detections_draco6.csv) and [draco12](https://github.com/ejovo13/fmdt_python_clean/blob/build/human_detections_draco12.csv) csv files. 
 
 These two database files contain the ground truth values that will be loaded into python as
 `GroundTruth` objects, which are essentially a list of `HumanDetection` paired with helpful
