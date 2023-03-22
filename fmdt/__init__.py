@@ -14,6 +14,9 @@ from fmdt.api import (
 
 from fmdt.args import (
     Args,
+    DetectArgs,
+    VisuArgs,
+    Video
 )
 
 from fmdt.utils import (
