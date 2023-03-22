@@ -5,6 +5,9 @@ import fmdt.utils
 import shutil
 import subprocess
 import pandas as pd
+from enum import Enum
+
+    
 
 def filter_dict(d: dict):
     """Filter out None values in a dict, returning a new dict"""
@@ -24,6 +27,189 @@ def row_to_dict(row: pd.Series) -> dict:
             out[k] = row[k]
     
     return out
+
+class VideoType(Enum):
+    DRACO6 = 0,
+    DRACO12 = 1,
+    WINDOW = 2
+
+    def __str__(self) -> str:
+        if self == VideoType.DRACO6:
+            return "DRACO6"
+        elif self == VideoType.DRACO12:
+            return "DRACO12"
+        else:
+            return "WINDOW"
+        
+    def __repr__(self) -> str:
+        return self.__str__()
+    
+    @staticmethod
+    def from_str(str):
+        if str == "DRACO6":
+            return VideoType.DRACO6 
+        elif str == "DRACO12":
+            return VideoType.DRACO12
+        else:
+            return VideoType.WINDOW
+
+# Or maybe recording, night sky watching, stargazing, video of night sky
+# type is an enum { draco6, draco12, window}
+class Video:
+
+    csv_hdr = "id,name,type\n"
+    
+    def __init__(self, name: str, type: VideoType = None):
+        self.name = name
+        self.type = type
+
+    def to_csv(self) -> str:
+        return f"{self.name},{self.type}\n"
+    
+    def __str__(self) -> str:
+        return f"{self.name}"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
+    @staticmethod
+    def from_pd_row(ser: pd.Series):
+        out = Video(ser["name"], VideoType.from_str(ser["type"]))
+        return out
+
+# Take a list of Videos and turn it into a data base.
+def videos_to_csv(videos: list[Video], csv_filename: str) -> None:
+    # First get the header
+    hdr = "id,name,type\n"
+
+    with open(csv_filename, "w") as csv:
+        csv.write(hdr)
+        
+        i = 0
+        for v in videos:
+            csv.write(f"{i},{v.name},{v.type}\n")
+            i += 1
+
+def csv_to_videos(csv_filename: str) -> list[Video]:
+
+    df = pd.read_csv(csv_filename)
+    return [Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
+
+
+    
+class DetectArgs:
+
+    def __init__( 
+        self,
+        vid_in_path: Video, 
+        vid_in_start: int | None = None,
+        vid_in_stop: int | None = None,
+        vid_in_skip: int | None = None,
+        vid_in_buff: bool | None = None,
+        vid_in_loop: int | None = None,
+        vid_in_threads: int | None = None,
+        light_min: int | None = None,
+        light_max: int | None = None,
+        ccl_fra_path: str | None = None,
+        ccl_fra_id: bool | None = None,
+        mrp_s_min: int | None = None,
+        mrp_s_max: int | None = None,
+        knn_k: int | None = None,
+        knn_d: int | None = None,
+        knn_s: int | None = None,
+        trk_ext_d: int | None = None,
+        trk_ext_o: int | None = None,
+        trk_angle: float | None = None,
+        trk_star_min: int | None = None,
+        trk_meteor_min: int | None = None,
+        trk_meteor_max: int | None = None,
+        trk_ddev: float | None = None,
+        trk_all: bool | None = None,
+        trk_bb_path: str | None = None,
+        trk_mag_path: str | None = None,
+        log_path: str | None = None,
+        trk_out_path: str | None = None,
+    ):
+
+        self.vid_in_path = vid_in_path
+        self.vid_in_start = vid_in_start
+        self.vid_in_stop = vid_in_stop
+        self.vid_in_skip = vid_in_skip
+        self.vid_in_buff = vid_in_buff
+        self.vid_in_loop = vid_in_loop
+        self.vid_in_threads = vid_in_threads
+        self.light_min = light_min 
+        self.light_max = light_max 
+        self.ccl_fra_path = ccl_fra_path
+        self.ccl_fra_id = ccl_fra_id
+        self.mrp_s_min = mrp_s_min
+        self.mrp_s_max = mrp_s_max
+        self.knn_k = knn_k
+        self.knn_d = knn_d
+        self.knn_s = knn_s
+        self.trk_ext_d = trk_ext_d
+        self.trk_ext_o = trk_ext_o
+        self.trk_angle = trk_angle
+        self.trk_star_min = trk_star_min
+        self.trk_meteor_min = trk_meteor_min
+        self.trk_meteor_max = trk_meteor_max
+        self.trk_ddev = trk_ddev
+        self.trk_all = trk_all
+        self.trk_bb_path = trk_bb_path
+        self.trk_mag_path = trk_mag_path
+        self.trk_out_path = trk_out_path
+        self.log_path = log_path
+
+    def to_dict(self) -> dict:
+        return {
+            "vid_in_path": self.vid_in_path, 
+            "vid_in_start": self.vid_in_start,
+            "vid_in_stop": self.vid_in_stop,
+            "vid_in_skip": self.vid_in_skip,
+            "vid_in_buff": self.vid_in_buff,
+            "vid_in_loop": self.vid_in_loop,
+            "vid_in_threads": self.vid_in_threads,
+            "light_min": self.light_min,
+            "light_max": self.light_max,
+            "ccl_fra_path": self.ccl_fra_path,
+            "ccl_fra_id": self.ccl_fra_id,
+            "mrp_s_min": self.mrp_s_min,
+            "mrp_s_max": self.mrp_s_max,
+            "knn_k": self.knn_k,
+            "knn_d": self.knn_d,
+            "knn_s": self.knn_s,
+            "trk_ext_d": self.trk_ext_d,
+            "trk_ext_o": self.trk_ext_o,
+            "trk_angle": self.trk_angle,
+            "trk_star_min": self.trk_star_min,
+            "trk_meteor_min": self.trk_meteor_min,
+            "trk_meteor_max": self.trk_meteor_max,
+            "trk_ddev": self.trk_ddev,
+            "trk_all": self.trk_all,
+            "trk_bb_path": self.trk_bb_path,
+            "trk_mag_path": self.trk_mag_path,
+            "log_path": self.log_path,
+            "trk_out_path": self.trk_out_path 
+        }
+    
+    def to_red_dict(self) -> dict:
+        d = self.to_dict()
+        out = {}
+        for (k, v) in d.items():
+            if not v is None:
+                out[k] = v
+        
+        return out
+
+
+class VisuArgs:
+
+
+
+    pass
+
+
+
 
 class Args:
     """Args keeps track of a configuration of parameters for all of fmdt's executables
@@ -51,15 +237,78 @@ class Args:
     """
 
     def __init__(
-            self, 
-            tracking_list: str | None = None, 
-            detect_args: dict | None = None,
-            visu_args: dict | None = None
-        ):
+        self,
+        vid_in_path: str, 
+        vid_in_start: int | None = None,
+        vid_in_stop: int | None = None,
+        vid_in_skip: int | None = None,
+        vid_in_buff: bool | None = None,
+        vid_in_loop: int | None = None,
+        vid_in_threads: int | None = None,
+        light_min: int | None = None,
+        light_max: int | None = None,
+        ccl_fra_path: str | None = None,
+        ccl_fra_id: bool | None = None,
+        mrp_s_min: int | None = None,
+        mrp_s_max: int | None = None,
+        knn_k: int | None = None,
+        knn_d: int | None = None,
+        knn_s: int | None = None,
+        trk_ext_d: int | None = None,
+        trk_ext_o: int | None = None,
+        trk_angle: float | None = None,
+        trk_star_min: int | None = None,
+        trk_meteor_min: int | None = None,
+        trk_meteor_max: int | None = None,
+        trk_ddev: float | None = None,
+        trk_all: bool | None = None,
+        trk_bb_path: str | None = None,
+        trk_mag_path: str | None = None,
+        log_path: str | None = None,
+        trk_out_path: str | None = None,
+    ):
 
-        self.tracking_list = tracking_list
-        self.detect_args = detect_args
-        self.visu_args = visu_args
+        det_args = DetectArgs(vid_in_path=vid_in_path,
+                              vid_in_start=vid_in_start,
+                              vid_in_stop=vid_in_stop,
+                              vid_in_skip=vid_in_skip,
+                              vid_in_buff=vid_in_buff,
+                              vid_in_loop=vid_in_loop,
+                              vid_in_threads=vid_in_threads,
+                              light_min =light_min ,
+                              light_max =light_max ,
+                              ccl_fra_path=ccl_fra_path,
+                              ccl_fra_id=ccl_fra_id,
+                              mrp_s_min=mrp_s_min,
+                              mrp_s_max=mrp_s_max,
+                              knn_k=knn_k,
+                              knn_d=knn_d,
+                              knn_s=knn_s,
+                              trk_ext_d=trk_ext_d,
+                              trk_ext_o=trk_ext_o,
+                              trk_angle=trk_angle,
+                              trk_star_min=trk_star_min,
+                              trk_meteor_min=trk_meteor_min,
+                              trk_meteor_max=trk_meteor_max,
+                              trk_ddev=trk_ddev,
+                              trk_all=trk_all,
+                              trk_bb_path=trk_bb_path,
+                              trk_mag_path=trk_mag_path,
+                              trk_out_path=trk_out_path,
+                              log_path=log_path)
+        
+        
+
+    # def __init__(
+    #         self, 
+    #         tracking_list: str | None = None, 
+    #         detect_args: dict | None = None,
+    #         visu_args: dict | None = None
+    #     ):
+
+    #     self.tracking_list = tracking_list
+    #     self.detect_args = detect_args
+    #     self.visu_args = visu_args
 
     # We should change this to print out only the arguments that are not none
     # def __str__(self) -> str:
@@ -202,6 +451,21 @@ class Args:
 
     # Write the dictionary of fmdt-detect arguments to a csv file
     # def detect_to_csv(self, csv_filename) -> None:
+
+class FMDTResult:
+
+    def __init__(self, arg_err: list[float] = None, ecarts_type: list[float] = None, rois: list[int] = None, args: Args = None):
+        self.arg_err = arg_err
+        self.ecarts_type = ecarts_type
+        self.rois = rois
+        self.args = args
+
+# Need some functions to retrieve the results from a log thing
+
+
+
+
+
 
 def list_args_to_csv(lst: list[Args], csv_file: str):
 
