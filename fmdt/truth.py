@@ -13,6 +13,7 @@ import fmdt.args
 from fmdt.core import TrackedObject
 import numpy as np
 import os
+from termcolor import colored
 
 WATEC6_DIR:  str = "./"
 WATEC12_DIR: str = "./"
@@ -147,10 +148,17 @@ class GroundTruth:
 
     def __init__(self, csv: str, vid_dir: str = './'):
         self.vid_dir = vid_dir
+
         self.meteors = read_human_detection_csv(csv, vid_dir)
 
     def __str__(self) -> str:
         return f"GroundTruth with {len(self.meteors)} detections, {self.n_unique_videos()} unique videos, and db dir:\n\t{self.vid_dir}"
+    
+    def __len__(self) -> int:
+        return len(self.meteors)
+    
+    def __getitem__(self, key):
+        return self.meteors[key]
 
     def n_unique_videos(self) -> int:
         return len(self.vids())
@@ -163,17 +171,20 @@ class GroundTruth:
         """
         def try_comm(m: HumanDetection) -> bool:
 
-            args.detect_args["vid_in_path"] = m.video_name
+            args.detect_args.vid_in_path = m.video_name
 
             print(f"Trying args on video {args.vid()}")
             
             res = args.detect()
-            is_detected = is_meteor_detected(m, res.tracking_list)
+            is_detected = is_meteor_detected(m, res.trk_list)
             if not is_detected:
-                print(f"{res.command()} unsuccessfull ")
+                print(f"{res.args.detect_args.cmd()} {colored('unsuccessful', 'red')}")
+            else:
+                print(f"{res.args.detect_args.cmd()} {colored('successful', 'green')}")
             
             return is_detected
 
+        # return [try_comm(m) for m in self.meteors if os.path.exists(m.video_name)]
         return [try_comm(m) for m in self.meteors]
     
     def vids(self) -> list[str]:
