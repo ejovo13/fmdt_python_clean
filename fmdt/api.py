@@ -2,9 +2,11 @@
 API to call fmdt executables. Assumes that fmdt-detect and other executables
 are on the system path
 """
-
+import fmdt.res
+import random
 from os import listdir
 import subprocess
+import os
 import fmdt.core
 import fmdt.utils
 import fmdt.args
@@ -77,6 +79,66 @@ def count(
 
 FMDT_TIMEOUT = 1
 
+def run_detect_stdout(argv: list[str], timeout: float, log: bool) -> tuple[list[fmdt.core.TrackedObject], int]:
+
+    if log:
+        print(f"Executing cmd: {' '.join(argv)}")
+
+    
+    # Store this data in a tmp file and then use that to get the tracking list.
+    tmp_filename = "fmdt_detect_tmp.txt"
+    tmp_file = open(tmp_filename, "w")
+
+    if not timeout is None:
+
+        try:
+            res = subprocess.run(argv, timeout=timeout, stdout=tmp_file)
+            tmp_file.close()
+
+        except:
+            print(f"Subprocess timed out for {colored(' '.join(argv), 'red')}")
+            tmp_file.close()
+            os.remove(tmp_file)
+            return [], 0
+    else:
+        subprocess.run(argv, stdout=tmp_file)
+
+    if log: 
+        with open(tmp_filename) as tmp_file:
+            print(tmp_file.read())
+
+    trk_list = fmdt.core.extract_all_information(tmp_filename)
+    nframes = fmdt.core.nframes_processed(tmp_filename)
+
+    os.remove(tmp_filename)
+
+    return trk_list, nframes
+
+def run_detect_trk_path(trk_out_path, argv, timeout, log) -> tuple[list[fmdt.core.TrackedObject], int]:
+
+    with open(trk_out_path, 'w') as outfile:
+        if log:
+            print(f"Executing cmd: {' '.join(argv)}")
+
+        if not timeout is None:
+            try: 
+                subprocess.run(argv, stdout=outfile, timeout=timeout)
+            except:
+                print("==================================================================")
+                print("")
+                print(f"Subprocess timed out for \n\t{colored(' '.join(argv), 'blue')}")
+                print("")
+                print("==================================================================")
+                return [], 0
+        else:
+            subprocess.run(argv, stdout=outfile)
+        
+        trk_list = fmdt.core.extract_all_information(trk_out_path)
+        nframes = fmdt.core.nframes_processed(trk_out_path)
+
+    return trk_list, nframes
+    
+
 def detect(
         #=================== fmdt-detect parameters ================
         vid_in_path: str, 
@@ -110,7 +172,7 @@ def detect(
         trk_out_path: str | None = None,
         log: bool = False,
         timeout: float = None
-    ) -> fmdt.args.Args:
+    ) -> fmdt.res.DetectionResult:
     """Wrapper to executable fmdt-detect.
 
     Parameters
@@ -125,55 +187,33 @@ def detect(
         Used to speed up ground truth testing.
     """
 
-    # Wrap up all of the arguments into a dictionary
-    detect_args, visu_args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
+    # Wrap up all of the arguments into an Args object
+    args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
         ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
-        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log
-    )
+        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log)
 
-    # Spit out the commandline
-    args = fmdt.args.handle_detect_args(**detect_args)
+    # Spit out the commandline arguments for fmdt-detect
+    argv = args.detect_args.argv()
 
+    #============ Retrieve Tracked list ===========================================#
     if trk_out_path is None:
-        if log:
-            print(f"Executing cmd: {' '.join(args)}")
-
-        if not timeout is None:
-            try:
-                subprocess.run(args, timeout=timeout)
-            except:
-                print(f"Subprocess timed out for {colored(' '.join(args), 'red')}")
-        else:
-            subprocess.run(args)
-
+        trk_list, nframes = run_detect_stdout(argv, timeout, log) 
     else:
-        with open(trk_out_path, 'w') as outfile:
-            if log:
-                print(f"Executing cmd: {' '.join(args)}")
+        trk_list, nframes = run_detect_trk_path(trk_out_path, argv, timeout, log) 
 
-            if not timeout is None:
-                try: 
-                    subprocess.run(args, stdout=outfile, timeout=timeout)
-                except:
-                    print("==================================================================")
-                    print("")
-                    print(f"Subprocess timed out for \n\t{colored(' '.join(args), 'blue')}")
-                    print("")
-                    print("==================================================================")
-            else:
-                subprocess.run(args, stdout=outfile)
-    
-    # And return the Args object that keeps track of the detect call
-    if not trk_out_path is None:
-        out = fmdt.args.Args(fmdt.core.extract_all_information(trk_out_path), detect_args, visu_args)
+    #============= Recover data if log_path =======================================#
+    if not log_path is None:
+        nrois, nassocs, mean_errs, std_devs = fmdt.res.retrieve_log_info(log_path) 
     else:
-        out = fmdt.args.Args(detect_args=detect_args, visu_args=visu_args)
-    
-    return out
+        nrois = []
+        nassocs = []
+        mean_errs = []
+        std_devs = []
 
-
+    return fmdt.res.DetectionResult(nframes, nrois, [0] + nassocs, [0.0] + mean_errs, [0.0] + std_devs, args, trk_list)   
+            
 def visu(
         vid_in_path: str = None,
         vid_in_start: int = None,

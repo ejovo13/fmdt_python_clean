@@ -16,7 +16,8 @@ from fmdt.args import (
     Args,
     DetectArgs,
     VisuArgs,
-    Video
+    Video,
+    detect_args
 )
 
 from fmdt.utils import (
@@ -32,10 +33,23 @@ from fmdt.truth import (
     GroundTruth
 )
 
+from fmdt.download import (
+    download_csvs,
+    download_demo_mp4
+)
+
+from fmdt.config import (
+    init,
+    load_gt12,
+    load_gt6,
+    get_draco12,
+    get_draco6
+)
+
 # from fmdt.truth import HumanDetection
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 23
+PATCH         = 25
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)

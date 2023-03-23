@@ -6,11 +6,12 @@ Public API:
     extract_all_information
     split_video_at_meteors
 """
-
+import os
 import fmdt.utils as utils
 from enum import Enum
 import math
 from termcolor import colored
+import re
 
 red = lambda s: colored(s, "red")
 black = lambda s: colored(s, "black")
@@ -205,6 +206,22 @@ def extract_key_information(detect_tracks_in: str) -> list[dict]:
 
     return dict_array
 
+def nframes_processed(detect_tracks_in: str) -> int:
+
+    if not os.path.exists(detect_tracks_in):
+        return 0
+
+    with open(detect_tracks_in) as file:
+
+        lines = [l for l in file.readlines() if "-> Processed frames =" in l]
+        if len(lines) == 0:
+            return 0
+        line_split = lines[0].split()
+        out = int(line_split[-1])
+
+    return out
+
+
 def extract_all_information(detect_tracks_in: str) -> list[TrackedObject]:
     """Extract all tracking information from a detect_tracks.txt file.
 
@@ -244,6 +261,9 @@ def extract_all_information(detect_tracks_in: str) -> list[TrackedObject]:
     #         "type":         split_line[TrackingTable.OBJECT_TYPE]
     #     }
 
+    if not os.path.exists(detect_tracks_in):
+        return []
+
     def line_to_obj(split_line: list[str]) -> TrackedObject:
         return TrackedObject(int  (split_line[TrackingTable.OBJECT_ID]),
                              int  (split_line[TrackingTable.START_FRAME]),
@@ -262,6 +282,7 @@ def extract_all_information(detect_tracks_in: str) -> list[TrackedObject]:
     # Processing of the actual file
     file_tracks = open(detect_tracks_in)
     file_lines  = file_tracks.readlines()
+    file_tracks.close()
 
     return [line_to_obj(line.split()) for line in file_lines if interesting_line(line)]
 
