@@ -1,5 +1,6 @@
 """Arguments Class to store shared parameters when calling a chain of .detect(args).visu().split()"""
 import fmdt.api
+# import fmdt.res
 import fmdt.core
 import fmdt.utils
 import shutil
@@ -7,6 +8,8 @@ import subprocess
 import pandas as pd
 from enum import Enum
 
+class Result:
+    pass
     
 
 def filter_dict(d: dict):
@@ -101,7 +104,7 @@ class DetectArgs:
 
     def __init__( 
         self,
-        vid_in_path: Video, 
+        vid_in_path: str, 
         vid_in_start: int | None = None,
         vid_in_stop: int | None = None,
         vid_in_skip: int | None = None,
@@ -192,7 +195,7 @@ class DetectArgs:
             "trk_out_path": self.trk_out_path 
         }
     
-    def to_red_dict(self) -> dict:
+    def to_reduced_dict(self) -> dict:
         d = self.to_dict()
         out = {}
         for (k, v) in d.items():
@@ -200,13 +203,73 @@ class DetectArgs:
                 out[k] = v
         
         return out
+    
+    def argv(self) -> list[str]:
+        """Return a list of arguments that will be used to execute fmdt-detect"""
+        return handle_detect_args(**self.to_dict())
 
+    def cmd(self) -> str:
+        return ' '.join(handle_detect_args(**self.to_dict()))
+    
+    def exec(self, log: bool = False, timeout: float = None):
+        res = fmdt.api.detect(**self.to_dict(), log=log, timeout=timeout)
+        return res
 
 class VisuArgs:
 
+    def __init__(
+            self, 
+            vid_in_path: str, 
+            trk_path: str,
+            trk_bb_path: str,
+            vid_out_path: str,
+            vid_in_start: int | None = None, 
+            vid_in_stop: int | None = None, 
+            vid_in_threads: int | None = None, 
+            trk_id: bool = False,
+            trk_nat_num: bool = False,
+            trk_only_meteor: bool = False,
+            gt_path: str | None = None
+        ):
 
+        self.vid_in_path = vid_in_path
+        self.vid_in_start = vid_in_start
+        self.vid_in_stop = vid_in_stop
+        self.vid_in_threads = vid_in_threads
+        self.trk_path = trk_path
+        self.trk_bb_path = trk_bb_path
+        self.trk_id = trk_id
+        self.trk_nat_num = trk_nat_num
+        self.trk_only_meteor = trk_only_meteor
+        self.gt_path = gt_path
+        self.vid_out_path = vid_out_path
 
-    pass
+    def to_dict(self) -> dict:
+        return {
+
+            "vid_in_path": self.vid_in_path,
+            "vid_in_start": self.vid_in_start,
+            "vid_in_stop": self.vid_in_stop,
+            "vid_in_threads": self.vid_in_threads,
+            "trk_path": self.trk_path,
+            "trk_bb_path": self.trk_bb_path,
+            "trk_id": self.trk_id,
+            "trk_nat_num": self.trk_nat_num,
+            "trk_only_meteor": self.trk_only_meteor,
+            "gt_path": self.gt_path,
+            "vid_out_path": self.vid_out_path
+        }
+    
+    def to_reduced_dict(self) -> dict:
+        d = self.to_dict()
+        out = {}
+        for (k, v) in d.items():
+            if not v is None:
+                out[k] = v
+        
+        return out
+    
+
 
 
 
@@ -233,12 +296,33 @@ class Args:
 
     This class is therefore a collection of dictionaries of parameters and interfaces to
     the fmdt.api functions.
-    
+
+    ==================
+
+    Args has the fields
+
+    detect_args: DetectArgs
+    visu_args: VisuArgs
+    log: bool
+    timeout: float
     """
 
     def __init__(
         self,
-        vid_in_path: str, 
+        detect_args: DetectArgs,
+        visu_args: VisuArgs,
+        log: bool = False,
+        timeout: float | None = None
+    ):
+        self.detect_args = detect_args
+        self.visu_args = visu_args
+        self.log = log
+        self.timeout = timeout
+
+    @staticmethod
+    def new(
+        #=================== DetectArgs =============================
+        vid_in_path: str = "default.mp4", 
         vid_in_start: int | None = None,
         vid_in_stop: int | None = None,
         vid_in_skip: int | None = None,
@@ -266,9 +350,18 @@ class Args:
         trk_mag_path: str | None = None,
         log_path: str | None = None,
         trk_out_path: str | None = None,
+        #=================== VisuArgs =================================
+        trk_id: bool | None = None,
+        trk_nat_num: bool| None = None,
+        trk_only_meteor: bool | None = None,
+        gt_path: str | None = None,
+        vid_out_path: str | None = None,
+        #================== PythonArgs================================
+        log: bool | None = False, 
+        timeout: float | None = None,
     ):
 
-        det_args = DetectArgs(vid_in_path=vid_in_path,
+        detect_args = DetectArgs(vid_in_path=vid_in_path,
                               vid_in_start=vid_in_start,
                               vid_in_stop=vid_in_stop,
                               vid_in_skip=vid_in_skip,
@@ -297,53 +390,54 @@ class Args:
                               trk_out_path=trk_out_path,
                               log_path=log_path)
         
+
+        if vid_out_path is None:
+            name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
+            vid_out_path = f"{name}_visu.{ext}"
+
+        visu_args = VisuArgs(vid_in_path=vid_in_path,
+                            vid_in_start=vid_in_start,
+                            vid_in_stop=vid_in_stop,
+                            vid_in_threads=vid_in_threads,
+                            trk_path=trk_out_path,
+                            trk_bb_path=trk_bb_path,
+                            trk_id=trk_id,
+                            trk_nat_num=trk_nat_num,
+                            trk_only_meteor=trk_only_meteor,
+                            gt_path=gt_path,
+                            vid_out_path=vid_out_path)
         
+        return Args(detect_args, visu_args, log, timeout) 
 
-    # def __init__(
-    #         self, 
-    #         tracking_list: str | None = None, 
-    #         detect_args: dict | None = None,
-    #         visu_args: dict | None = None
-    #     ):
+    # def __str__(self) -> str:
 
-    #     self.tracking_list = tracking_list
-    #     self.detect_args = detect_args
-    #     self.visu_args = visu_args
 
     # We should change this to print out only the arguments that are not none
     # def __str__(self) -> str:
     #     if not self.detect_args:
     #         f"detect_args:"
 
-    def __repr__(self) -> str:
+    # def __repr__(self) -> str:
 
-        if not self.detect_args is None:
-            d = filter_dict(self.detect_args)
+    #     if not self.detect_args is None:
+    #         d = filter_dict(self.detect_args)
 
-        # s = ""
-        # for (k, v) in self.detect_args.items():
-            # if not v is None:
-                # s += f'"{k}": {v}, ' 
+    #     # s = ""
+    #     # for (k, v) in self.detect_args.items():
+    #         # if not v is None:
+    #             # s += f'"{k}": {v}, ' 
         
-        # return "{" + s[:-2] + "}"
-        return d.__repr__()
-    
-    # def to_csv
+    #     # return "{" + s[:-2] + "}"
+    #     return d.__repr__()
     
     def detect(self):
         """OOP Interface to calling fmdt.api.detect()"""
 
         # Make sure the detecting arguments are not none
         if self.detect_args is None:
-            self.detect_args = default_detect_args()
+            self.detect_args = DetectArgs(**default_detect_args())
         
-        # Convert the list of detect args to a single command
-        args = fmdt.api.detect(**self.detect_args)
-
-        if not args.detect_args["trk_out_path"] is None:
-            args.tracking_list = args.get_tracking_list()
-
-        return args
+        return self.detect_args.exec()
     
     def does_detect_fail(self, log=False) -> bool:
         """Returns true if the stderr pipe of a call to fmdt-detect is not empty"""
@@ -381,28 +475,28 @@ class Args:
     
     def vid(self) -> str | None:
         """Return the name of the video, if it exists"""
-        if not self.detect_args["vid_in_path"] is None:
-            return self.detect_args["vid_in_path"]
-        elif not self.visu_args["vid_in_path"] is None:
-            return self.visu_args["vid_in_path"]
+        if not self.detect_args.vid_in_path is None:
+            return self.detect_args.vid_in_path
+        elif not self.visu_args.vid_in_path is None:
+            return self.visu_args.vid_in_path
         else:
             return None
         
     def tracks(self) -> str | None:
         """Return the name of the tracks file, if it exists"""
-        if not self.detect_args["trk_out_path"] is None:
-            return self.detect_args["trk_out_path"]
-        elif not self.visu_args["trk_path"] is None:
-            return self.visu_args["trk_path"]
+        if not self.detect_args.trk_out_path is None:
+            return self.detect_args.trk_out_path
+        elif not self.visu_args.trk_path is None:
+            return self.visu_args.trk_path
         else:
             return None
 
     def bbs(self) -> str | None:
         """Return the name of the bounding boxes (BBs) file, if it exists"""
-        if not self.detect_args["trk_bb_path"] is None:
-            return self.detect_args["trk_bb_path"]
-        elif not self.visu_args["trk_bb_path"] is None:
-            return self.visu_args["trk_bb_path"]
+        if not self.detect_args.trk_bb_path is None:
+            return self.detect_args.trk_bb_path
+        elif not self.visu_args.trk_bb_path is None:
+            return self.visu_args.trk_bb_path
         else:
             return None
 
@@ -441,23 +535,23 @@ class Args:
     
     def get_tracking_list(self) -> list[fmdt.core.TrackedObject]:
         """Retreive the list of TrackedObject that is stored in the trk_out_path file"""
-        assert not self.detect_args["trk_out_path"] is None, "Out track file not stored"
+        assert not self.detect_args.trk_out_path is None, "Out track file not stored"
 
-        return fmdt.core.extract_all_information(self.detect_args["trk_out_path"])
+        return fmdt.core.extract_all_information(self.detect_args.trk_out_path)
     
     def command(self) -> str:
         """Return the command used to execute fmdt-detect with this configuration"""
         return ' '.join(handle_detect_args(**self.detect_args))
-
+    
     # Write the dictionary of fmdt-detect arguments to a csv file
     # def detect_to_csv(self, csv_filename) -> None:
 
 class FMDTResult:
 
-    def __init__(self, arg_err: list[float] = None, ecarts_type: list[float] = None, rois: list[int] = None, args: Args = None):
+    def __init__(self, arg_err: list[float] = None, ecarts_type: list[float] = None, nrois: list[int] = None, args: Args = None):
         self.arg_err = arg_err
         self.ecarts_type = ecarts_type
-        self.rois = rois
+        self.nrois = nrois
         self.args = args
 
 # Need some functions to retrieve the results from a log thing
@@ -485,17 +579,13 @@ def csv_to_list_args(csv_file: str) -> list[Args]:
 def video_input(filename: str) -> Args:
     a = Args()
     a.detect_args = default_detect_args()
-    a.detect_args["vid_in_path"] = filename
+    a.detect_args.vid_in_path = filename
     return a
 
-class ArgList:
-    """This class allows us to read in the arguments to calls to fmdt-detect from a csv file"""
-    pass
 
-
-
+# Create an Args object from the fmdt-detect parameters
 def detect_args(
-        vid_in_path: str, 
+        vid_in_path: str = "default.mp4", 
         vid_in_start: int | None = None,
         vid_in_stop: int | None = None,
         vid_in_skip: int | None = None,
@@ -523,57 +613,31 @@ def detect_args(
         trk_mag_path: str | None = None,
         log_path: str | None = None,
         trk_out_path: str | None = None,
-        log: bool = False
-    ) -> tuple[dict, dict]:
-    """Convert the parameters used in fmdt.detect into a dictionary"""
-
-    d_args = {
-        "vid_in_path": vid_in_path, 
-        "vid_in_start": vid_in_start,
-        "vid_in_stop": vid_in_stop,
-        "vid_in_skip": vid_in_skip,
-        "vid_in_buff": vid_in_buff,
-        "vid_in_loop": vid_in_loop,
-        "vid_in_threads": vid_in_threads,
-        "light_min": light_min,
-        "light_max": light_max,
-        "ccl_fra_path": ccl_fra_path,
-        "ccl_fra_id": ccl_fra_id,
-        "mrp_s_min": mrp_s_min,
-        "mrp_s_max": mrp_s_max,
-        "knn_k": knn_k,
-        "knn_d": knn_d,
-        "knn_s": knn_s,
-        "trk_ext_d": trk_ext_d,
-        "trk_ext_o": trk_ext_o,
-        "trk_angle": trk_angle,
-        "trk_star_min": trk_star_min,
-        "trk_meteor_min": trk_meteor_min,
-        "trk_meteor_max": trk_meteor_max,
-        "trk_ddev": trk_ddev,
-        "trk_all": trk_all,
-        "trk_bb_path": trk_bb_path,
-        "trk_mag_path": trk_mag_path,
-        "log_path": log_path,
-        "trk_out_path": trk_out_path 
-    }
+        log: bool = False,
+        timeout: float = None
+    ) -> Args:
+    """Convert the parameters used in fmdt.detect into an Args object"""
 
     assert not vid_in_path is None, "vid_in_path cannot be None"
 
+    d_args = DetectArgs(vid_in_path, vid_in_start, vid_in_stop, vid_in_skip, vid_in_buff,
+                        vid_in_loop, vid_in_threads, light_min, light_max, ccl_fra_path,
+                        ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
+                        trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max,
+                        trk_ddev, trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path)
+    
     name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
     visu_name = f"{name}_visu.{ext}"
 
-    v_args = {
-        "vid_in_path": vid_in_path,
-        "vid_in_start": vid_in_start,
-        "vid_in_stop": vid_in_stop,
-        "vid_in_threads": vid_in_threads,
-        "trk_path": trk_out_path,
-        "trk_bb_path": trk_bb_path,
-        "vid_out_path": visu_name
-    }
-
-    return d_args, v_args
+    v_args = VisuArgs(vid_in_path=vid_in_path,
+                      vid_in_start=vid_in_start,
+                      vid_in_stop=vid_in_stop,
+                      vid_in_threads=vid_in_threads,
+                      trk_path=trk_out_path,
+                      trk_bb_path=trk_bb_path,
+                      vid_out_path=visu_name)
+    
+    return Args(d_args, v_args, log, timeout)
 
 def visu_args(
         vid_in_path: str = None,
@@ -668,17 +732,12 @@ def handle_detect_args(
         trk_bb_path: str | None = None,
         trk_mag_path: str | None = None,
         log_path: str | None = None,
-        trk_out_path: str | None = None,
-        log: bool = False
+        **args
     ) -> list[str]:
     """Convert the arguments needed for fmdt-detect into a fmdt-detect command-line call
-    
-     
-    
-    
+
+        
     """
-
-
 
     fmdt_detect_exe = shutil.which("fmdt-detect")
     fmdt_detect_found = not fmdt_detect_exe is None
