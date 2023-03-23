@@ -1,6 +1,6 @@
-# Split a video
+# Spliting Videos
 
-In this section you'll learn the various ways to split a video using `fmdt` and 
+This how-to guide showcases various ways to split a video using `fmdt`, using 
 [demo.mp4](https://lip6.fr/adrien.cassagne/data/tauh/in/2022_05_31_tauh_34_meteors.mp4)
 as our sample video
 
@@ -21,7 +21,7 @@ def split_video_at_intervals(
     ) -> None:
 ```
 
-Thus if we wanted to make two frame-perfect cuts of our video demo.mp4, say with the 
+If we wanted to make two frame-perfect cuts of our video demo.mp4, say with the 
 two pairs (5, 20) and (100, 200), we would call:
 
 ```
@@ -34,8 +34,8 @@ fmdt.split_video_at_intervals(vid, start_end, 0, 0, True, exact_split=True)
 ```
 
 When `exact_split` is set to `True` we load in the entire video as a numpy array and 
-are able to make frame-perfect cuts. Therefore, if we are dealing with a large video
-we shouldn't use `exact_split=True`.
+are able to make frame-perfect cuts. We can quickly run out of RAM when dealing with large videos
+so in general we should avoid `exact_split=True` unless the video is only a few seconds long.
 
 ### Split video at meteors
 

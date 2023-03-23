@@ -1,37 +1,50 @@
-# Your first meteor
+# 1. Your first meteor
 
-In this tutorials we'll learn how to detect meteors using the python module `fmdt`.
+Learning outcome: Learn how to launch `fmdt-detect` using `fmdt`
 
-In order to follow this tutorial you need to 
+---
 
-- have `fmdt-python` installed (see [installation](../installation.md) if not)
-- have `fmdt-detect` installed (follow [this link](https://fmdt.readthedocs.io/en/latest/user/installation.html) if not)
-- have `fmdt-detect` on your system's `PATH` 
+## Prerequisites
 
-We'll start off by retrieving a sample [video](https://lip6.fr/adrien.cassagne/data/tauh/in/2022_05_31_tauh_34_meteors.mp4), saving it as `demo.mp4`.
+In order to follow this tutorial you need to have 
 
-Let's open up a new Python script and jot down
+- `fmdt-python` installed (see [installation](../installation.md) if not)
+- `fmdt-detect` installed (follow [this link](https://fmdt.readthedocs.io/en/latest/user/installation.html) if not)
+- `fmdt-detect` on your system's `PATH` 
+
+## Start
+
+In this tutorial we are going to learn how to detect meteors using the python module `fmdt`. We'll start off by retrieving a sample [video](https://lip6.fr/adrien.cassagne/data/tauh/in/2022_05_31_tauh_34_meteors.mp4), saving it as `demo.mp4`.
+
+Let's open up a new Python script and jot down the following snippet.
 ```
-"""detect.py - A sample program to call `fmdt-detect` using fmdt-python"""
+"""first_detection.py - A sample program to call `fmdt-detect` using fmdt-python"""
 import fmdt
 
 vid    = 'demo.mp4'
-tracks = 'demo_tracks.txt'
-bb     = 'demo_bb.txt'
+trk    = 'trk.txt'
+bb     = 'bb.txt'
 
-fmdt.detect(vid_in_path=vid, trk_out_path=tracks, trk_bb_path=bb)
+fmdt.detect(vid_in_path=vid, trk_out_path=trk, trk_bb_path=bb)
 ```
-We execute `fmdt-detect` using the function `fmdt.detect`
+The last line executes `fmdt-detect` with the equivalent bash command:
+```{bash}
+fmdt-detect --vid-in-path demo.mp4 --trk-bb-path bb.txt > trk.txt
+```
 
 Open up a terminal and lauch this script (or type in the previous statements in an interactive session)
 ```{bash}
-python3 demo.py
+python3 first_detection.py
 ```
 
 
 The function `fmdt.detect` uses the same parameters as the command-line utility `fmdt-detect`,
 the only difference being that flags like have their dashes `-` transformed into underscores `_` 
-because Python interprets dashes as minus signs. As such, the usual flag `--vid-in-path` is encoded 
+since Python interprets dashes as minus signs. As such, the usual flag `--vid-in-path` is encoded 
 as the python argument `vid_in_path`.
 
 For a complete list of parameters, see [API](../fmdt/modules/api.md).
+
+## Conclusion
+
+Congrats! You've detected your first meteor! 38 of them, if everything went as planned. Go ahead and follow the [next tutorial](./2_Load_Tracked_Objects.md) to find out how to inspect the tracked objects.
