@@ -50,6 +50,6 @@ from fmdt.config import (
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 25
+PATCH         = 26
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
