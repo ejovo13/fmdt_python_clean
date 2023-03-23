@@ -194,24 +194,29 @@ class GroundTruth:
 
     def test_span(self, light_min_min, light_min_max, diff):
         # Record the pairs that are successful, and the number of meteors detected 
+        
+        # n = (light_min_min - light_min_max) // diff
+        print(f"test_span({light_min_min}, {light_min_max}, {diff})")
 
         min_max = []
         dets = []
         successes = []
 
-        d_args = {
-            "trk_out_path": "trk.txt",
-            "trk_bb_path": "bb.txt",
-            "timeout":  1
-        }
+        n = (light_min_max - light_min_min) / diff + 1
 
-        args = fmdt.args.Args(detect_args=d_args)
+        # d_args = {
+        #     "trk_out_path": "trk.txt",
+        #     "trk_bb_path": "bb.txt",
+        #     "timeout":  1
+        # }
 
-        for lmin in np.linspace(light_min_min, light_min_max, 2):
+        args = fmdt.args.detect_args(timeout=0.5)
+
+        for lmin in np.linspace(light_min_min, light_min_max, int(n)):
 
             # Get the list
-            args.detect_args["light_min"] = lmin
-            args.detect_args["light_max"] = lmin + diff 
+            args.detect_args.light_min = lmin
+            args.detect_args.light_max = lmin + diff 
 
             success_list = self.try_command(args)
 
@@ -228,7 +233,7 @@ class GroundTruth:
         successes = []
         diff = (lmax_max - lmin_min) / (n_intervals)
 
-        min_max, _, successes = self.test_span(lmin_min, lmax_max, diff)
+        min_max, _, successes = self.test_span(lmin_min, lmax_max - diff, diff)
 
         plot_gt(min_max, successes)
 
