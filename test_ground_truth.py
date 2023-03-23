@@ -1,28 +1,35 @@
-"""Companion script for https://fmdt-python-clean.readthedocs.io/en/latest/howto/2_test_db/"""
+"""Companion script for https://fmdt-python-clean.readthedocs.io/en/latest/howto/2_test_db/
+
+    !========== Attention ============!
+    You must change the d6_dir, d12_dir, and win_dir variables
+    to where the videos are stored on your machine
+
+"""
 import fmdt
-import os
+import time
 
-vid_dir = "DATABASE_DIR_NOT_SET"        # Path to draco6 videos on my machine
-draco6_db = "human_detections_draco6.csv"
 
-if not os.path.exists(vid_dir):
-    print("Please specify the database directory")
+#! ================== Need to change these variables =============== !#
+d6_dir  = None # ex: "/home/ejovo/Videos/Watec6mm"
+d12_dir = None #     "/home/ejovo/Videos/Watec12mm"
+win_dir = None #     "/home/ejovo/Videos"
+#! ================== Need to change these variables =============== !#
 
-assert os.path.exists(vid_dir), f"vid_dir: '{vid_dir}' not a path"
-assert os.path.exists(draco6_db), f"draco6_db: '{draco6_db}' does not exist"
+assert not d6_dir is None, "Change the directory to where the videos are locally stored"
 
-gt6 = fmdt.GroundTruth(csv=draco6_db, vid_dir=vid_dir)
+fmdt.init(d6_dir, d12_dir, win_dir)
+fmdt.download_csvs()
 
-d_args = {
-    "light_min": 250,
-    "light_max": 253,
-    "trk_out_path": "trk.txt",
-    "trk_bb_path": "bb.txt",
-    "timeout": 1          # timeout in seconds for the fmdt-detect subprocess
-}
+gt6 = fmdt.load_gt6()
+gt12 = fmdt.load_gt12()
 
-args = fmdt.Args(detect_args=d_args)
+args = fmdt.detect_args(light_min=253, light_max=255)
 success_list = gt6.try_command(args)
 
 print(success_list)
 print(f"GroundTruths detected: {sum(success_list)}")
+
+print("Finished applying args to ground truth videos.")
+time.sleep(2)
+
+gt6.draw_heatmap(246, 255, 3)
