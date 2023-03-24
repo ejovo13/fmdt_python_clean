@@ -45,6 +45,17 @@ as the python argument `vid_in_path`.
 
 For a complete list of parameters, see [API](../fmdt/modules/api.md).
 
+## Visualizing
+
+We can visualize the tracked meteors with a call to `fmdt.visu`.
+
+```
+fmdt.visu(vid_in_path=vid, vid_out_path="demo_v.mp4", trk_path=trk, trk_bb_path=bb)
+```
+
+In order to visualize, we need to tell `fmdt` where we stored the tracking list (`trk_path`) as well
+as the bounding boxes (`trk_bb_path`)
+
 ## Conclusion
 
 Congrats! You've detected your first meteor! 38 of them, if everything went as planned. Go ahead and follow the [next tutorial](./2_Load_Tracked_Objects.md) to find out how to inspect the tracked objects.
