@@ -4,6 +4,7 @@ import os
 from appdirs import AppDirs
 import fmdt.truth
 import fmdt.download
+import pandas as pd
 
 dirs = AppDirs("fmdt_python")
 config_file = "config.json"
@@ -70,6 +71,12 @@ def is_draco12(filename: str) -> bool:
 def is_window(filename: str) -> bool:
     return is_video(filename) and "window" in filename
 
+def listdir() -> list[str]:
+    return os.listdir(dirs.user_data_dir)
+
+def dir() -> str:
+    return dirs.user_data_dir
+
 def get_draco6() -> list[str]:
     """Return a list of videos that are found in the Watec6mm directory"""
     con = load_config()
@@ -120,6 +127,7 @@ def load_gt12() -> fmdt.truth.GroundTruth:
 
     fmdt.download.download_draco12_csv(db)
     return fmdt.GroundTruth(db, con.d12)
+
 
 def main():
 

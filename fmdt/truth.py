@@ -137,7 +137,17 @@ class HumanDetection:
      
 
 
-
+    @staticmethod
+    def from_pd_row(row: pd.Series, dir_prepend = ""):
+        # if dir_prepend[-1] != "/":
+            # dir_prepend = dir_prepend + "/"
+        return HumanDetection(dir_prepend + row["video_name"],
+                            int(row["start_frame"]),
+                            int(row["end_frame"]),
+                            float(row["start_x"]),
+                            float(row["start_y"]),
+                            float(row["end_x"]),
+                            float(row["end_y"]))
 
     @staticmethod
     def init_ground_truth(database_filename: str, video_db_dir: str = "./"):
