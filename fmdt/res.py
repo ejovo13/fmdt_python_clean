@@ -87,6 +87,10 @@ def retrieve_log_info(log_path: str) -> tuple[list[int], list[int], list[float],
 
     return nrois, nassocs, mean_errs, std_devs
 
+class CheckingResult:
+
+    def __init__(self):
+        pass
  
 class DetectionResult:
 

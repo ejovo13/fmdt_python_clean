@@ -1,6 +1,9 @@
 """Module dealing with the database stuff"""
 
 import fmdt.config
+import fmdt.args
+import fmdt.truth
+import fmdt.download
 
 import pandas as pd
 import sqlite3
@@ -35,7 +38,7 @@ class VideoType(Enum):
             return con.d6
         elif self == VideoType.DRACO12:
             return con.d12
-        elif self == VideoType.DRACO6:
+        elif self == VideoType.WINDOW:
             return con.win
         else:
             return "./"
@@ -99,8 +102,50 @@ class Video:
         
         return df.iat[0,0]
     
+    def full_path(self) -> str:
+        return self.dir() + "/" + self.name
+    
     def meteors(self) -> list[fmdt.HumanDetection]:
         return retrieve_meteors(self.name)
+    
+    def has_meteors(self) -> bool:
+        return len(self.meteors()) > 0
+
+    def exists(self) -> bool:
+        """Check whether the video path in self.full_path() exists on disk"""
+        return os.path.exists(self.full_path())
+
+    def evaluate_args(self, args: fmdt.Args, meteors: list[fmdt.truth.HumanDetection], rerun: bool = False, tmp_gt_file = "tmp_meteors.txt"):
+        """Call fmdt-detect and fmdt-check to evaluate how well a given set of arguments detects our ground truth
+        
+        Parameters
+        ----------
+        
+        args (fmdt.Args): The set of fmdt-detect parameters that we want to evaluate
+        meteors (list[fmdt.HumanDetection]): The list of meteors in our ground truth
+        rerun (bool): Used to determine if we should rerun fmdt-detect when the trk_out_path file
+            already exists
+        """
+        assert not args.detect_args.trk_out_path is None, "Missing `trk_out_path` from `args: fmdt.Args` required for evaluation"
+        # assert not args.detect_args.vid_in_path  is None, "Missing `vid_in_path` required to evaluate an fmdt.Args"
+        args.detect_args.vid_in_path = self.full_path()
+
+        if rerun:
+            args.detect()
+
+        # Check if the trk_out_path file already exists
+        if not os.path.exists(args.detect_args.trk_out_path):
+            args.detect()
+
+        # We guarentee that the file exist at this point
+
+        # Let's write the data from meteors to a temp file
+        fmdt.truth.save_meteors_file(tmp_gt_file, meteors)
+
+        # Then call fmdt_check
+
+        fmdt.check(args.detect_args.trk_out_path, tmp_gt_file)
+
 
     @staticmethod
     def from_pd_row(ser: pd.Series):
@@ -144,8 +189,9 @@ def load_in_videos(db_filename: str = "videos.db", dir = fmdt.download.__DATA_DI
 
     return [fmdt.Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
 
-def load_draco6(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
-    vids = load_in_videos(db_filename, db_dir)
+def load_draco6(filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
+    """Load draco6 `Video` objects that are stored in the `db_dir`/`filename` .db file"""
+    vids = load_in_videos(filename, db_dir)
     return [v for v in vids if v.is_draco6()]
 
 def load_draco12(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
@@ -175,5 +221,58 @@ def retrieve_meteors(video_name: str, db_filename: str = "videos.db", dir = fmdt
     return [fmdt.HumanDetection.from_pd_row(df.iloc[i]) for i in range(len(df))]
     # return df
 
+def get_video_diagnostics(vids: list[Video]) -> tuple[int, int]:
+    """Print information about the local environment"""
+    # d6 = fmdt.load_draco6()/
+    on_disc = [v for v in vids if v.exists()]
+    has_meteors = [v for v in on_disc if v.has_meteors()]
+
+    n_exist = len(on_disc)
+    n_with_meteors = len(has_meteors)
+
+    return n_exist, n_with_meteors
+
+def print_diagnostics(vids: list[Video]):
+
+    n_exist, n_with_meteors = get_video_diagnostics(vids)
+
+
+    print(f"{n_exist} videos exist on disc out of the {len(vids)} videos in our database")
+    print(f"{n_with_meteors} of which have ground truths out of {len([v for v in vids if v.has_meteors()])} ground truths in our database")
+
+def print_diagnostics_d6():
+    print("================================================================================")
+    print(f"Draconids-6mm*.avi videos configured with dir: {fmdt.config.draco6_dir()}")
+    print("================================================================================")
+    print_diagnostics(fmdt.load_draco6())
+    
+def print_diagnostics_d12():
+    print("================================================================================")
+    print(f"Draconids-12mm*.avi videos configured with dir: {fmdt.config.draco12_dir()}")
+    print("================================================================================")
+    print_diagnostics(fmdt.load_draco12())
+
+def print_diagnostics_win():
+    print("================================================================================")
+    print(f"window*.mp4 videos configured with dir: {fmdt.config.window_dir()}")
+    print("================================================================================")
+    print_diagnostics(fmdt.load_window())
+
+def print_diagnostics_all():
+    """Print diagnostic information for the three class of videos in our database, Draco6, Draco12, and window
+
+    We compare the number of videos that are present on disk with the number of videos in our database. 
+    
+    """
+    print("Printing information about the local environment")
+    print_diagnostics_d6()
+    print()
+    print_diagnostics_d12()
+    print()
+    print_diagnostics_win()
+    print()
+
+def info():
+    print_diagnostics_all()
 
 

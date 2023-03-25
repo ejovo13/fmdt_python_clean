@@ -328,6 +328,8 @@ def split_video_at_meteors(
 
     split_video_at_intervals(video_filename, seqs, nframes_before, nframes_after, overwrite, exact_split, log, condense=False)
 
+def get_dir(filename: str):
+    return '/'.join(filename.split()[:-1])
 
 def split_video_at_intervals(
         video_filename: str,
@@ -402,7 +404,7 @@ def split_video_at_intervals(
         frame_rate = utils.get_avg_frame_rate(video_filename)
         total_frames, _, _, _ = frames.shape
         seq_video_name = lambda seq: (
-            f'{video_name}_f{format(seq[0], format_str)}-{format(seq[1], format_str)}.{extension}'
+            f'{video_name}/f{format(seq[0], format_str)}-{format(seq[1], format_str)}.{extension}'
         )
 
         def exact_splitting(seq) -> None:
@@ -419,7 +421,7 @@ def split_video_at_intervals(
     else:
 
         seq_video_name = lambda seq: (
-            f'{video_name}_f{format(seq[0], format_str)}-{format(seq[1], format_str)}_.{extension}'
+            f'{video_name}/f{format(seq[0], format_str)}-{format(seq[1], format_str)}_.{extension}'
         )
 
         def approx_splitting(seq) -> None:

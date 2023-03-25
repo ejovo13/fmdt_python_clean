@@ -165,11 +165,11 @@ def detect(
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = None,
+        trk_bb_path: str | None = "bb.txt",
         trk_mag_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
-        trk_out_path: str | None = None,
+        trk_out_path: str | None = "trk.txt",
         log: bool = False,
         timeout: float = None
     ) -> fmdt.res.DetectionResult:
@@ -245,11 +245,18 @@ def visu(
                                     gt_path,
                                     vid_out_path)
 
-    args = fmdt.args.handle_visu_args(**visu_args)
+    argv = fmdt.args.handle_visu_args(**visu_args.to_dict())
 
-    subprocess.run(args)
+    subprocess.run(argv)
 
-    return fmdt.args.Args(visu_args=visu_args)
+    return fmdt.args.Args(visu_args=visu_args, detect_args=None)
+
+def check(
+    trk_path: str, gt_path: str
+    ) -> fmdt.res.CheckingResult:
+
+    argv = ["fmdt-check", "--trk-path", trk_path, "--gt-path", gt_path]
+    subprocess.run(argv)
 
 def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     """Call `fmdt-detect` on all videos in the directory `dir_name` using the settings stored in `args`

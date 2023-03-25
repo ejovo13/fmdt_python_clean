@@ -4,6 +4,7 @@ import os
 from appdirs import AppDirs
 import fmdt.truth
 import fmdt.download
+import fmdt.res
 import pandas as pd
 
 dirs = AppDirs("fmdt_python")
@@ -21,6 +22,7 @@ class Config:
         self.win = windows_dir
 
     def __str__(self) -> str:
+        s0= "============================\n"
         h = "           Config           \n"
         s0= "============================\n"
         s = f"Draco6   {self.d6}\nDraco12  {self.d12}\nWindow   {self.win}"
@@ -53,6 +55,31 @@ def load_config() -> Config:
         with open(full_path, "r") as file:
             content = file.read()
             return Config.from_json(content)
+    else: # WE HAVENT SET UP OUR CONFIG!!!
+
+        raise Exception(f"""
+            ============================================================
+                            Config not yet initialized!
+            ============================================================
+
+            In order to initialize your config, call 
+
+            >>> fmdt.init(d6_dir="/your/draco6/dir", d12_dir="your/draco12/dir",
+                         win_dir="/your/window/dir")
+
+            You only ever have to do this ONE time! 
+            
+            For example, for a unix user ejovo we could have:
+
+            >>> fmdt.init("/home/ejovo/Videos/Watec6mm", "/home/ejovo/Vidoes/Watec12mm",
+                          "/home/ejovo/Videos/Window")
+
+            output:
+
+                Saved config to /home/ejovo/.local/share/fmdt_python/config.json
+
+
+        """)
 
 
 def init(d6_dir: str, d12_dir: str, win_dir: str):
@@ -77,32 +104,47 @@ def listdir() -> list[str]:
 def dir() -> str:
     return dirs.user_data_dir
 
-def get_draco6() -> list[str]:
+def setdir_draco6(d6_dir: str):
+    con = load_config()
+    con.d6 = d6_dir
+    con.save()
+
+def setdir_draco12(d12_dir: str):
+    con = load_config()
+    con.d12 = d12_dir
+    con.save()
+
+def setdir_window(win_dir: str):
+    con = load_config()
+    con.win = win_dir
+    con.save()
+
+def listdir_draco6() -> list[str]:
     """Return a list of videos that are found in the Watec6mm directory"""
     con = load_config()
 
     d6 = [v for v in os.listdir(con.d6) if is_draco6(v)]
     return d6
 
-def get_draco12() -> list[str]:
+def listdir_draco12() -> list[str]:
     """Return a list of videos that are found in the Watec12mm directory"""
     con = load_config()
 
     d12 = [v for v in os.listdir(con.d12) if is_draco12(v)]
     return d12
 
-def get_window() -> list[str]:
+def listdir_window() -> list[str]:
     """Return a list of videos that are in the Window directory and start with "window" """
     con = load_config()
 
     win = [v for v in os.listdir(con.win) if is_window(v)]
     return win 
 
-def get_local_vids() -> list[str]:
+def listdir_all() -> list[str]:
 
-    d6 = get_draco6()
-    d12 = get_draco12()
-    win = get_window()
+    d6 = listdir_draco6()
+    d12 = listdir_draco12()
+    win = listdir_window()
 
     all = []
 
@@ -129,6 +171,23 @@ def load_gt12() -> fmdt.truth.GroundTruth:
     return fmdt.GroundTruth(db, con.d12)
 
 
+
+# if check_for_config_file():
+    # con = load_config()
+    
+def draco6_dir():
+    con = load_config()
+    return con.d6
+
+def draco12_dir():
+    con = load_config()
+    return con.d12
+
+def window_dir():
+    con = load_config()
+    return con.win
+    
+
 def main():
 
     # config = Config("/home/ejovo/Videos/Watec6mm", "/home/ejovo/Videos/Watec12mm", "/home/ejovo/Videos/Window")
@@ -137,11 +196,11 @@ def main():
     con = Config.load()
     print(con)
 
-    print(get_draco6())
-    print(get_draco12())
-    print(get_window())
+    print(listdir_draco6())
+    print(listdir_draco12())
+    print(listdir_window())
 
-    print(get_local_vids())
+    print(listdir())
 
     gt6 = load_gt6()
     gt12 = load_gt12()

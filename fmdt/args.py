@@ -140,7 +140,7 @@ class DetectArgs:
         return handle_detect_args(**self.to_dict())
 
     def cmd(self) -> str:
-        return ' '.join(handle_detect_args(**self.to_dict()))
+        return ' '.join(self.argv())
     
     def exec(self, log: bool = False, timeout: float = None):
         res = fmdt.api.detect(**self.to_dict(), log=log, timeout=timeout)
@@ -200,7 +200,16 @@ class VisuArgs:
         
         return out
     
+    def argv(self) -> list[str]:
+        """Return a list of arguments that will be used to execute fmdt-detect"""
+        return handle_visu_args(**self.to_dict())
 
+    def cmd(self) -> str:
+        return ' '.join(self.argv())
+    
+    def exec(self, log: bool = False, timeout: float = None):
+        res = fmdt.api.visu(**self.to_dict())
+        return res
 
 
 
@@ -397,10 +406,7 @@ class Args:
         # Do we have visu arguments?
         assert not self.visu_args is None, "No visu args for this object"
 
-        for k, v in kwargs.items():
-            self.visu_args[k] = v
-
-        fmdt.api.visu(**self.visu_args)
+        self.visu_args.exec() 
 
         return self
     
@@ -582,10 +588,10 @@ def visu_args(
         trk_only_meteor: bool = None,
         gt_path: str = None,
         vid_out_path: str = None
-    ) -> dict:
+    ) -> VisuArgs:
 
-    return {
-
+    # wtf man
+    return VisuArgs( **{
         "vid_in_path": vid_in_path,
         "vid_in_start": vid_in_start,
         "vid_in_stop": vid_in_stop,
@@ -597,8 +603,8 @@ def visu_args(
         "trk_only_meteor": trk_only_meteor,
         "gt_path": gt_path,
         "vid_out_path": vid_out_path
-
     }
+    )
 
 def default_detect_args() -> dict:       
     # Hi 
