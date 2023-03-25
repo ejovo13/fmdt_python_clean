@@ -60,6 +60,6 @@ from fmdt.db import (
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 27
+PATCH         = 28
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
