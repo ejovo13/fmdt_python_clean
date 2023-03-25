@@ -14,6 +14,7 @@ from fmdt.core import TrackedObject
 import numpy as np
 import os
 from termcolor import colored
+from deprecated import deprecated
 
 WATEC6_DIR:  str = "./"
 WATEC12_DIR: str = "./"
@@ -134,8 +135,13 @@ class HumanDetection:
         res = args.detect()
         return is_meteor_detected(self, res.tracking_list)
 
-     
+    def to_alsoc_format(self) -> str:
+        """Convert a HumanDetection into a string specified by the format:
 
+            "{otype} {fbeg} {xbeg} {ybeg} {fend} {xend} {yend}\n"
+
+        """
+        return f"meteor {self.start_frame} {self.start_x} {self.start_y} {self.end_frame} {self.end_x} {self.end_y}\n"
 
     @staticmethod
     def from_pd_row(row: pd.Series, dir_prepend = ""):
@@ -150,9 +156,40 @@ class HumanDetection:
                             float(row["end_y"]))
 
     @staticmethod
+    def from_alsoc_format(video_name, alsoc: str):
+
+        lst = alsoc.strip().split()
+
+        return HumanDetection(video_name, start_frame=int(lst[1]), start_x=float(lst[2]), start_y=float(lst[3]),
+                              end_frame=int(lst[4]), end_x=float(lst[5]), end_y = float(lst[6]))
+
+
+
+    @deprecated(version="0.25.0", reason="We should load in our GroundTruth's with the fmdt.load_gt6() and fmdt.load_gt12() functions")
+    @staticmethod
     def init_ground_truth(database_filename: str, video_db_dir: str = "./"):
+        """"""
         HumanDetection.GROUND_TRUTH = read_human_detection_csv(database_filename, video_db_dir) 
         return read_human_detection_csv(database_filename, video_db_dir)
+    
+def load_meteors_file(filename: str) -> list[HumanDetection]:
+    """Load in a meteors file (ex: https://github.com/alsoc/fmdt/blob/develop/validation/2022_05_31_tauh_34_meteors.txt)
+    as a list of `HumanDetection`"""
+
+    with open(filename) as file:
+        lines = file.readlines()
+
+        out = [HumanDetection.from_alsoc_format("demo.mp4", l) for l in lines]
+
+    return out
+
+def save_meteors_file(filename: str, meteors: list[HumanDetection]):
+
+    with open(filename, "w") as file:
+
+        for m in meteors:
+            file.write(m.to_alsoc_format())
+
 
 # Verite de terrains for a bunch of individually tracked meteors
 class GroundTruth:
