@@ -15,7 +15,7 @@ authors = [
 description = "utlity functions for fast meteor detection toolbox"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy", "ffmpeg-python", "requests", "termcolor", "matplotlib", "pandas", "jsonpickle", "appdirs"]
+dependencies = ["numpy", "ffmpeg-python", "requests", "termcolor", "matplotlib", "pandas", "jsonpickle", "appdirs", "Deprecated"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
