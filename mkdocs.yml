@@ -6,5 +6,7 @@ site_author: Evan Voyles
 repo_url: https://github.com/ejovo13/fmdt_python_clean
 
 theme:
+  features:
+    - content.code.copy
   name: readthedocs
   # hljs_style: monokai

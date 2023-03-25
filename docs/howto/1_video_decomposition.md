@@ -72,3 +72,39 @@ fmdt.detect(vid_in_path=vid, trk_out_path=tracks, trk_bb_path=bb).visu().split()
 
 which will apply the split to the video that contains bounding boxes on objects 
 detected by `fmdt-detect`.
+
+### Real Example
+
+In this section we are going to show a real example using `fmdt.split_video_at_intervals`. 
+
+```
+intervals = [(785, 790), (1222, 1250), (1426, 1439), (2288, 2323), (2836, 2850),
+             (2810, 2888), (2928, 2933), (3426, 3434), (3857, 3862), (4155, 4179), 
+             (4262, 4268), (4447, 4460), (5323, 5330), (6790, 6811), (7199, 7207)]
+```
+
+These are the intervals of interest. In this specific case the frames aren't precise so
+when we call `split_video_at_intervals` we add a -15 frame buffer "before" our intended start plus a 
+50 frame buffer after our intended stop frame.
+
+If you have [initialized your config](0_initialization.md) and have all of the correct windows videos then we can go ahead and load up the first one:
+
+```
+import fmdt
+v = fmdt.load_window()[0]
+```
+
+```
+#============ Real interactive session ==================#
+>>> v 
+window_3_sony_0400-0405UTC.mp4
+
+>>> v.full_path()
+'/home/ejovo/Videos/Window/window_3_sony_0400-0405UTC.mp4'
+```
+
+We then split the video with one line:
+
+```
+fmdt.split_video_at_intervals(v.full_path(), intervals, nframes_before=-15, nframes_after=50)
+```
