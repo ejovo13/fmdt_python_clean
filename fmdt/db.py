@@ -418,4 +418,7 @@ def print_diagnostics_all():
 def info():
     print_diagnostics_all()
 
-
+#!============================== Modifying our data base ============================
+def add_human_detection_to_gt(meteor: fmdt.HumanDetection):
+    pass
+    
