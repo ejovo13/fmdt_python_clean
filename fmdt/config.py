@@ -6,6 +6,7 @@ import fmdt.truth
 import fmdt.download
 import fmdt.res
 import pandas as pd
+import shutil
 
 dirs = AppDirs("fmdt_python")
 config_file = "config.json"
@@ -27,6 +28,9 @@ class Config:
         s0= "============================\n"
         s = f"Draco6   {self.d6}\nDraco12  {self.d12}\nWindow   {self.win}"
         return h + s0 + s
+    
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def to_json(self) -> str:
         return jsonpickle.encode(self)
@@ -45,6 +49,18 @@ class Config:
     @staticmethod
     def load():
         return load_config()
+    
+    @staticmethod
+    def gt6_csv() -> str:
+        return dirs.user_data_dir + "/gt6.csv"
+    
+    @staticmethod
+    def gt12_csv() -> str:
+        return dirs.user_data_dir + "/gt12.csv"
+    
+    # @staticmethod
+    # def gt612_csv() -> str:
+    #     return dirs.user_data_dir + "/gt12.csv"
 
 def check_for_config_file() -> bool:
     """Return True is a fmdt_config.json file exists in the user_data_dir"""
@@ -160,7 +176,7 @@ def load_gt6() -> fmdt.truth.GroundTruth:
     db = "gt6.csv"
 
     fmdt.download.download_draco6_csv(db)
-    return fmdt.GroundTruth(db, con.d6)
+    return fmdt.GroundTruth(con.gt6_csv(), con.d6)
 
 def load_gt12() -> fmdt.truth.GroundTruth:
 
@@ -168,8 +184,7 @@ def load_gt12() -> fmdt.truth.GroundTruth:
     db = "gt12.csv"
 
     fmdt.download.download_draco12_csv(db)
-    return fmdt.GroundTruth(db, con.d12)
-
+    return fmdt.GroundTruth(con.gt12_csv(), con.d12)
 
 
 # if check_for_config_file():
@@ -186,7 +201,92 @@ def draco12_dir():
 def window_dir():
     con = load_config()
     return con.win
+
+def cache_dir():
+    return dirs.user_cache_dir
+
+def count_files_in_dir(dir: str) -> int:
+    total = 0
+    for _, _, files in os.walk(dir):
+        total += len(files)
+
+    return total
+
+def size_dir(start_path = '.'):
+    """Return the size of the contents of a directory in terms of bytes"""
+    total_size = 0
+    for dirpath, _, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+
+    return total_size
+
+def size_cache():
+    return size_dir(cache_dir())
+
+def bytes_format(x: int) -> str:
+    """print 1024 as 1KB"""
+
+    if abs(x) < 1024:
+        return str(x) + "B"
     
+    if abs(x) < 1024 * 1024:
+        return str(x // 1024) + "KB"
+
+    if abs(x) < 1024 * 1024 * 1024:
+        return str(x // (1024 * 1024)) + "MB"
+    
+    if abs(x) < 1024 * 1024 * 1024 * 1024:
+        return str(x // (1024 * 1024 * 1024)) + "GB"
+    
+    if abs(x) < 1024 * 1024 * 1024 * 1024 * 1024:
+        return str(x // (1024 * 1024 * 1024 * 1024)) + "TB"
+
+def clear_cache() -> int:
+    """Return the total number of files and folders removed"""
+
+    cd = cache_dir()
+    paths = os.listdir(cd)
+    size_cache_init = size_cache()
+
+    files_removed = 0
+    top_level_dir_removed = 0
+
+    for p in paths:
+
+        full_path = cd + "/" + p
+
+        print(f"Treating file {p}...")
+
+        # shutil.rmtree(full_path)
+
+        if os.path.isfile(full_path):
+            os.remove(full_path)
+            print("file")
+            files_removed += 1
+            continue
+    
+        if os.path.isdir(full_path):
+            files_removed += count_files_in_dir(p)
+            print("dir")
+            top_level_dir_removed += 1
+            shutil.rmtree(full_path)
+            continue
+
+    print(f"{cache_dir()} cleared: {files_removed} total files and {top_level_dir_removed} top-level directories removed from cache ({bytes_format(size_cache_init - size_cache())} cleared)")
+
+def init_cache() -> None:
+    if not os.path.exists(cache_dir()):
+        os.mkdir(cache_dir())
+
+def listdir_cache() -> list[str]:
+    return os.listdir(cache_dir())
+
+def cache_info():
+    print(f"Cache: {cache_dir()} has {bytes_format(size_cache())}")
 
 def main():
 

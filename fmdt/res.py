@@ -10,7 +10,6 @@ def retrieve_all_nroi(log_path: str) -> list[int]:
     Assumes the format: '# Frame n°00247 (t) -- Regions of interest (RoI) [64]: \n'
     """
     frames = os.listdir(log_path)
-
     rxp = r'\[(\d*)\]'
 
     rxp_comp = re.compile(rxp)
@@ -80,6 +79,9 @@ def retrieve_all_std_devs(log_path: str) -> list[float]:
 
 def retrieve_log_info(log_path: str) -> tuple[list[int], list[int], list[float], list[float]]:
     """Return [nrois], [nassocs], [mean_errs], [std_devs]"""
+
+    print(f"Trying to retrieve log info here: {log_path}")
+
     nrois = retrieve_all_nroi(log_path)
     nassocs = retrieve_all_nassociations(log_path)
     mean_errs = retrieve_all_mean_errs(log_path)
@@ -105,17 +107,27 @@ class DetectionResult:
         self.args = args 
         self.trk_list = trk_list
 
+    def lists_are_same_size(self) -> bool:
+        return len(self.nrois) == len(self.nassociations) and len(self.nassociations) == len(self.mean_errs) and len(self.mean_errs) == len(self.std_devs)
+
     def to_dataframe(self) -> pd.Series:
 
         if self.nframes == 0:
             return None
 
-        return pd.DataFrame({
-            'nrois': self.nrois,
-            'nassocs': self.nassociations,
-            'mean_errs': self.mean_errs,
-            'std_devs': self.std_devs
-        })
+        if self.lists_are_same_size():
+
+            return pd.DataFrame({
+                'nrois': self.nrois,
+                'nassocs': self.nassociations,
+                'mean_errs': self.mean_errs,
+                'std_devs': self.std_devs
+            })
+        
+        else:
+
+            return None
+
 
     def detect(self):
         return self.args.detect()

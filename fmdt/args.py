@@ -7,6 +7,10 @@ import shutil
 import subprocess
 import pandas as pd
 from enum import Enum
+import pickle
+import hashlib
+import copy
+
 
 class Result:
     pass
@@ -142,9 +146,43 @@ class DetectArgs:
     def cmd(self) -> str:
         return ' '.join(self.argv())
     
-    def exec(self, log: bool = False, timeout: float = None):
-        res = fmdt.api.detect(**self.to_dict(), log=log, timeout=timeout)
+    def exec(self, log: bool = False, timeout: float = None, cache: bool = False):
+        res = fmdt.api.detect(**self.to_dict(), log=log, timeout=timeout, cache=cache)
         return res
+    
+    def strip(self):
+        """Strip Args of path variables that don't affect execution"""
+
+        c = copy.deepcopy(self)
+        c.ccl_fra_path = None
+        c.log_path = None
+        c.trk_bb_path = None
+        c.trk_mag_path = None
+        c.trk_out_path = None
+
+        return c
+        
+
+    def to_bytes(self) -> bytes:
+        """Convert to bytes, removing influence of all path variables"""
+        return pickle.dumps(self.strip())
+    
+    def digest(self) -> str:
+        return hashlib.md5(self.to_bytes()).hexdigest()
+
+    def __hash__(self) -> int:
+        # return int.from_bytes(pickle.dumps(self), "big")
+        return int(self.digest, 16)
+    
+    def gen_unique_dir(self) -> str:
+        return self.digest()[0:16] 
+    
+    def cache_dir(self) -> str:
+        return fmdt.cache_dir() + "/" + self.gen_unique_dir()
+
+    def cache_trk(self) -> str:
+        """Generate the full path to a unique file to store the results of this detection"""
+        return self.cache_dir() + "_trk.txt"
 
 class VisuArgs:
 
@@ -370,14 +408,20 @@ class Args:
     #     # return "{" + s[:-2] + "}"
     #     return d.__repr__()
     
-    def detect(self):
-        """OOP Interface to calling fmdt.api.detect()"""
+    def detect(self, cache: bool = False):
+        """OOP Interface to calling fmdt.api.detect()
+        
+        Parameters
+        ----------
+        cache (bool): When true, store the output of fmdt-detect in a unique 
+            file corresponding to the set of parameters 
+        """
 
         # Make sure the detecting arguments are not none
         if self.detect_args is None:
             self.detect_args = DetectArgs(**default_detect_args())
         
-        return self.detect_args.exec()
+        return self.detect_args.exec(self.log, self.timeout)
     
     def does_detect_fail(self, log=False) -> bool:
         """Returns true if the stderr pipe of a call to fmdt-detect is not empty"""
@@ -479,6 +523,20 @@ class Args:
     def command(self) -> str:
         """Return the command used to execute fmdt-detect with this configuration"""
         return ' '.join(handle_detect_args(**self.detect_args))
+    
+    def digest(self) -> str:
+        return hashlib.md5(pickle.dumps(self)).hexdigest()
+
+    def __hash__(self) -> int:
+        # return int.from_bytes(pickle.dumps(self), "big")
+        return int(hashlib.md5(pickle.dumps(self)).hexdigest(), 16)
+    
+    def gen_unique_trk(self) -> str:
+        """Generate a unique trk file corresponding to this set of parameters"""
+
+        h = self.digest()
+        return "trk_" + h[0:16] + ".txt" 
+
     
     # Write the dictionary of fmdt-detect arguments to a csv file
     # def detect_to_csv(self, csv_filename) -> None:
@@ -716,7 +774,6 @@ def handle_detect_args(
     arg_str(vid_in_stop, "vid-in-stop")
     arg_str(trk_bb_path, "trk-bb-path")
     arg_str(vid_in_loop, "vid-in-loop")
-    arg_str(log_path, "log-path")
 
     # ======== Arguments of the form --toggle
     arg_bool(vid_in_buff, "vid_in_buff")

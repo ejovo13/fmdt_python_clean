@@ -4,6 +4,7 @@ import fmdt.config
 import fmdt.args
 import fmdt.truth
 import fmdt.download
+import fmdt.utils
 
 import pandas as pd
 import sqlite3
@@ -83,7 +84,134 @@ class Video:
     
     def dir(self) -> str:
         return self.type.dir()
-        
+    
+    def visu_name(self) -> str:
+
+        beg, ext = fmdt.utils.decompose_video_filename(self.name)
+
+        return beg + "_visu." + ext
+    
+    def prefix(self) -> str:
+
+        pre, _ = fmdt.utils.decompose_video_filename(self.name)
+        return pre
+
+    def suffix(self) -> str:
+        _, suffix = fmdt.utils.decompose_video_filename(self.name)
+        return suffix
+    
+    def default_trk_path(self, dir: str = "."):
+        return dir + "/" + self.prefix() + "_trk.txt" 
+
+
+
+    # def visu
+
+    
+    def detect(self,
+        #=================== fmdt-detect parameters ================
+        vid_in_start: int | None = None,
+        vid_in_stop: int | None = None,
+        vid_in_skip: int | None = None,
+        vid_in_buff: bool | None = None,
+        vid_in_loop: int | None = None,
+        vid_in_threads: int | None = None,
+        light_min: int | None = None,
+        light_max: int | None = None,
+        ccl_fra_path: str | None = None,
+        ccl_fra_id: bool | None = None,
+        mrp_s_min: int | None = None,
+        mrp_s_max: int | None = None,
+        knn_k: int | None = None,
+        knn_d: int | None = None,
+        knn_s: int | None = None,
+        trk_ext_d: int | None = None,
+        trk_ext_o: int | None = None,
+        trk_angle: float | None = None,
+        trk_star_min: int | None = None,
+        trk_meteor_min: int | None = None,
+        trk_meteor_max: int | None = None,
+        trk_ddev: float | None = None,
+        trk_all: bool | None = None,
+        trk_bb_path: str | None = "bb.txt",
+        trk_mag_path: str | None = None,
+        log_path: str | None = None,
+        #================== Additional Parameters ====================
+        trk_out_path: str | None = "trk.txt",
+        log: bool = False,
+        timeout: float = None
+    ) -> fmdt.res.DetectionResult:
+        """Call fmdt-detect with the provided parameters"""
+
+        args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
+        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
+        ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
+        trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
+        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log, timeout=timeout)
+
+        return args.detect()
+    
+    def check_args(self, args: fmdt.Args) -> list[bool]: 
+        """Check which meteors are detected by this choice of args using our internal python implementation to check if
+        a meteor and tracked object are the same
+
+        Returns
+        -------
+
+        success_list (list[bool]): a list indicating which meteors were detected by this set of parameters
+        """
+
+        args.detect_args.vid_in_path = self.full_path()
+        res = args.detect()
+
+        return [m.is_detected_in_list(res.trk_list) for m in self.meteors()] 
+
+
+    def evaluate(self,        
+        #=================== fmdt-detect parameters ================
+        vid_in_start: int | None = None,
+        vid_in_stop: int | None = None,
+        vid_in_skip: int | None = None,
+        vid_in_buff: bool | None = None,
+        vid_in_loop: int | None = None,
+        vid_in_threads: int | None = None,
+        light_min: int | None = None,
+        light_max: int | None = None,
+        ccl_fra_path: str | None = None,
+        ccl_fra_id: bool | None = None,
+        mrp_s_min: int | None = None,
+        mrp_s_max: int | None = None,
+        knn_k: int | None = None,
+        knn_d: int | None = None,
+        knn_s: int | None = None,
+        trk_ext_d: int | None = None,
+        trk_ext_o: int | None = None,
+        trk_angle: float | None = None,
+        trk_star_min: int | None = None,
+        trk_meteor_min: int | None = None,
+        trk_meteor_max: int | None = None,
+        trk_ddev: float | None = None,
+        trk_all: bool | None = None,
+        trk_bb_path: str | None = "bb.txt",
+        trk_mag_path: str | None = None,
+        log_path: str | None = None,
+        #================== Additional Parameters ====================
+        trk_out_path: str | None = "trk.txt",
+        log: bool = False,
+        timeout: float = None):
+
+        args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
+        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
+        ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
+        trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
+        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log, timeout=timeout)
+
+        res = args.detect()
+
+        self.evaluate_args(args, res.trk_list)
+
+
+
     # Lookup the id in our default database file.
     def id(self) -> int:
 
@@ -189,18 +317,33 @@ def load_in_videos(db_filename: str = "videos.db", dir = fmdt.download.__DATA_DI
 
     return [fmdt.Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
 
-def load_draco6(filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
+def has_meteors(vids: list[Video]) -> list[Video]:
+    return [v for v in vids if v.has_meteors()]
+
+def load_draco6(filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False) -> list[Video]:
     """Load draco6 `Video` objects that are stored in the `db_dir`/`filename` .db file"""
     vids = load_in_videos(filename, db_dir)
-    return [v for v in vids if v.is_draco6()]
+    d6 = [v for v in vids if v.is_draco6()]
+    if require_gt:
+        return [v for v in d6 if v.has_meteors()]
+    else:
+        return d6
 
-def load_draco12(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
+def load_draco12(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False) -> list[Video]:
     vids = load_in_videos(db_filename, db_dir)
-    return [v for v in vids if v.is_draco12()]
+    d12 = [v for v in vids if v.is_draco12()]
+    if require_gt:
+        return [v for v in d12 if v.has_meteors()]
+    else:
+        return d12
 
-def load_window(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
+def load_window(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False) -> list[Video]:
     vids = load_in_videos(db_filename, db_dir)
-    return [v for v in vids if v.is_window()]
+    win = [v for v in vids if v.is_window()]
+    if require_gt:
+        return [v for v in win if v.has_meteors()]
+    else:
+        return win
 
 def retrieve_meteors(video_name: str, db_filename: str = "videos.db", dir = fmdt.download.__DATA_DIR) -> list[fmdt.HumanDetection]:
 
