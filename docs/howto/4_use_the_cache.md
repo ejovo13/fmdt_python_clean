@@ -11,5 +11,8 @@ res = fmdt.detect(vid_in_path="demo.mp4", cache=True)
 which produces the following files in `fmdt.cache_dir()`:
 
 ```
+>>> fmdt.cache_dir()
+'/home/ejovo/.cache/fmdt_python'
+
 
 ```
