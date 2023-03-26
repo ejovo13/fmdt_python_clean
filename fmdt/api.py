@@ -221,7 +221,7 @@ def detect(
     cache_file = None
 
     if cache:
-        cache_file = fmdt.cache_dir() + "/" + args.detect_args.gen_unique_trk()
+        cache_file = args.detect_args.cache_trk()
 
     #============ Retrieve Tracked list ===========================================#
     if trk_out_path is None:

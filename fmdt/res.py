@@ -96,44 +96,40 @@ class CheckingResult:
  
 class DetectionResult:
 
-    def __init__(self, nframes: int, nrois: list[int], nassociations: list[int], mean_errs: list[float],
-                 std_devs: list[float], args: fmdt.args.Args, trk_list: list[fmdt.core.TrackedObject]):
+    def __init__(self, nframes: int, df: pd.DataFrame, args: fmdt.args.Args, trk_list: list[fmdt.core.TrackedObject]):
 
         self.nframes = nframes
-        self.nrois = nrois
-        self.nassociations = nassociations
-        self.mean_errs = mean_errs
-        self.std_devs = std_devs
+        self.df = df
         self.args = args 
         self.trk_list = trk_list
-
-    def lists_are_same_size(self) -> bool:
-        return len(self.nrois) == len(self.nassociations) and len(self.nassociations) == len(self.mean_errs) and len(self.mean_errs) == len(self.std_devs)
-
-    def to_dataframe(self) -> pd.Series:
-
-        if self.nframes == 0:
-            return None
-
-        if self.lists_are_same_size():
-
-            return pd.DataFrame({
-                'nrois': self.nrois,
-                'nassocs': self.nassociations,
-                'mean_errs': self.mean_errs,
-                'std_devs': self.std_devs
-            })
-        
-        else:
-
-            return None
-
 
     def detect(self):
         return self.args.detect()
 
     def visu(self):
         return self.args.visu()
+
+    def n_meteors_detected(self) -> int:
+        return len([m for m in self.trk_list if m.is_meteor()])
+
+    def n_stars_detected(self) -> int:
+        return len([s for s in self.trk_list if s.is_star()])
+
+    def n_noise_detected(self) -> int:
+        return len([n for n in self.trk_list if n.is_noise()])
+
+    def trk_list_summary(self) -> str:
+        return f"objects in trk_list: {self.n_meteors_detected()} meteor(s), {self.n_stars_detected()} star(s), {self.n_noise_detected()} noise"
+    
+    def __str__(self) -> str:
+        a = f"fmdt.res.DetectionResult with args digest: {self.args.detect_args.digest()[0:16]}"
+        b = f"\n{self.trk_list_summary()}"
+        
+        c = ""
+        if not self.df is None:
+            c = f"\n{str(self.df)}"
+
+        return a + b + c
     
     # @staticmethod
     # def from_detect(args: fmdt.args.Args):
