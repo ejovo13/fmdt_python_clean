@@ -1,4 +1,4 @@
-# Loading Videos
+# Load Videos
 
 This guide will show you how to load and play with videos loaded via the `fmdt.load_draco6()`, `fmdt.load_draco12()`, and `fmdt.load_window()` functions.
 
