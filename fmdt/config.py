@@ -278,9 +278,21 @@ def clear_cache() -> int:
 
     print(f"{cache_dir()} cleared: {files_removed} total files and {top_level_dir_removed} top-level directories removed from cache ({bytes_format(size_cache_init - size_cache())} cleared)")
 
+
+_KB = 1024
+_MB = 1024 * _KB
+_GB = 1024 * _MB
+
+_CACHE_LIMIT_BYTES = 100 * _MB
+
+
 def init_cache() -> None:
     if not os.path.exists(cache_dir()):
         os.mkdir(cache_dir())
+
+    if size_cache() > _CACHE_LIMIT_BYTES:
+        print(f"Cache too large! ({bytes_format(size_cache)})")
+        clear_cache()
 
 def listdir_cache() -> list[str]:
     return os.listdir(cache_dir())

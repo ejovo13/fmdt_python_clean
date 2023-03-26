@@ -146,8 +146,8 @@ class DetectArgs:
     def cmd(self) -> str:
         return ' '.join(self.argv())
     
-    def exec(self, log: bool = False, timeout: float = None, cache: bool = False):
-        res = fmdt.api.detect(**self.to_dict(), log=log, timeout=timeout, cache=cache)
+    def exec(self, log: bool = False, timeout: float = None, cache: bool = False, save_df: bool = False):
+        res = fmdt.api.detect(**self.to_dict(), log=log, timeout=timeout, cache=cache, save_df=save_df)
         return res
     
     def strip(self):
@@ -387,7 +387,14 @@ class Args:
         
         return Args(detect_args, visu_args, log, timeout) 
 
-    # def __str__(self) -> str:
+    def __str__(self) -> str:
+
+        a0 = "<fmdt.args.Args object>"
+        a1 = "\n===================="
+        a2 = "\nDetect parameters: \n"
+        a = str(self.detect_args.to_reduced_dict())
+
+        return a0 + a1 + a2 + a
 
 
     # We should change this to print out only the arguments that are not none
@@ -408,7 +415,7 @@ class Args:
     #     # return "{" + s[:-2] + "}"
     #     return d.__repr__()
     
-    def detect(self, cache: bool = False):
+    def detect(self, cache: bool = False, save_df: bool = False):
         """OOP Interface to calling fmdt.api.detect()
         
         Parameters
@@ -421,7 +428,7 @@ class Args:
         if self.detect_args is None:
             self.detect_args = DetectArgs(**default_detect_args())
         
-        return self.detect_args.exec(self.log, self.timeout)
+        return self.detect_args.exec(self.log, self.timeout, cache, save_df)
     
     def does_detect_fail(self, log=False) -> bool:
         """Returns true if the stderr pipe of a call to fmdt-detect is not empty"""

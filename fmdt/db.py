@@ -139,7 +139,10 @@ class Video:
         #================== Additional Parameters ====================
         trk_out_path: str | None = "trk.txt",
         log: bool = False,
-        timeout: float = None
+        timeout: float = None,
+        #================== Parameters for logging ===================
+        cache: bool = False,
+        save_df: bool = False
     ) -> fmdt.res.DetectionResult:
         """Call fmdt-detect with the provided parameters"""
 
@@ -149,7 +152,7 @@ class Video:
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
         trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log, timeout=timeout)
 
-        return args.detect()
+        return args.detect(cache=cache, save_df=save_df)
     
     def check_args(self, args: fmdt.Args) -> list[bool]: 
         """Check which meteors are detected by this choice of args using our internal python implementation to check if
@@ -344,6 +347,13 @@ def load_window(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DI
         return [v for v in win if v.has_meteors()]
     else:
         return win
+    
+def load_demo(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
+    vids = load_in_videos(db_filename, db_dir)
+    win = [v for v in vids if v.name == "2022_05_31_tauh_34_meteors.mp4"]
+
+    return win[0]
+
 
 def retrieve_meteors(video_name: str, db_filename: str = "videos.db", dir = fmdt.download.__DATA_DIR) -> list[fmdt.HumanDetection]:
 

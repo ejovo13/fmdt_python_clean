@@ -12,6 +12,7 @@ import fmdt.utils
 import fmdt.args
 from termcolor import colored
 import shutil
+import pandas as pd
 
 def help():
     s = """    fmdt.api contains a Python wrapper for the `fmdt-detect` and `fmdt-visu` 
@@ -194,6 +195,7 @@ def detect(
         log: bool = False,
         timeout: float = None,
         cache: bool = False,
+        save_df: bool = False
     ) -> fmdt.res.DetectionResult:
     """Wrapper to executable fmdt-detect.
 
@@ -209,12 +211,17 @@ def detect(
         Used to speed up ground truth testing.
     """
 
+
     # Wrap up all of the arguments into an Args object
     args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
         ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
         trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log)
+    
+    if save_df and log_path is None:
+        print("Save_df activated in final detect call")
+        args.detect_args.log_path = args.detect_args.cache_dir()
 
     # Spit out the commandline arguments for fmdt-detect
     argv = args.detect_args.argv()
@@ -230,15 +237,27 @@ def detect(
         trk_list, nframes = _run_detect_trk_path(trk_out_path, argv, timeout, log, cache, cache_file) 
 
     #============= Recover data if log_path =======================================#
-    if not log_path is None:
-        nrois, nassocs, mean_errs, std_devs = fmdt.res.retrieve_log_info(log_path) 
+    if not args.detect_args.log_path is None:
+        nrois, nassocs, mean_errs, std_devs = fmdt.res.retrieve_log_info(args.detect_args.log_path) 
     else:
         nrois = []
         nassocs = []
         mean_errs = []
         std_devs = []
 
-    return fmdt.res.DetectionResult(nframes, nrois, [0] + nassocs, [0.0] + mean_errs, [0.0] + std_devs, args, trk_list)   
+    # Now construct the result object
+
+    if len(nrois) == 0:
+        df = None
+    else:
+        df =  pd.DataFrame({
+                'nroi': nrois,
+                'nassoc': [0] + nassocs,
+                'mean_err': [0.0] + mean_errs,
+                'std_dev': [0.0] + std_devs
+            })
+
+    return fmdt.res.DetectionResult(nframes, df, args, trk_list)   
             
 def visu(
         vid_in_path: str = None,
