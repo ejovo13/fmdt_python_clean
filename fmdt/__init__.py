@@ -21,7 +21,7 @@ from fmdt.args import (
 )
 
 from fmdt.utils import (
-    condense_start_end,
+    condense_start_end
 )
 
 from fmdt.truth import (
@@ -49,7 +49,12 @@ from fmdt.config import (
     listdir_window,
     setdir_draco6,
     setdir_draco12,
-    setdir_window
+    setdir_window,
+    init_cache,
+    clear_cache,
+    cache_dir,
+    cache_info,
+    listdir_cache
 )
 
 from fmdt.db import (
@@ -62,10 +67,12 @@ from fmdt.db import (
     info as db_info
 )
 
+init_cache()
+
 # from fmdt.truth import HumanDetection
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 29
+PATCH         = 30 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)

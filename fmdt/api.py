@@ -11,6 +11,7 @@ import fmdt.core
 import fmdt.utils
 import fmdt.args
 from termcolor import colored
+import shutil
 
 def help():
     s = """    fmdt.api contains a Python wrapper for the `fmdt-detect` and `fmdt-visu` 
@@ -79,12 +80,18 @@ def count(
 
 FMDT_TIMEOUT = 1
 
-def run_detect_stdout(argv: list[str], timeout: float, log: bool) -> tuple[list[fmdt.core.TrackedObject], int]:
+def _run_detect_stdout(
+        argv: list[str],
+        timeout: float,
+        log: bool,
+        cache: bool,
+        cache_file: str = None
+    ) -> tuple[list[fmdt.core.TrackedObject], int]:
+    """Handle the final logic of calling `fmdt-detect` when not storing the track list in a file"""
 
     if log:
         print(f"Executing cmd: {' '.join(argv)}")
 
-    
     # Store this data in a tmp file and then use that to get the tracking list.
     tmp_filename = "fmdt_detect_tmp.txt"
     tmp_file = open(tmp_filename, "w")
@@ -92,7 +99,7 @@ def run_detect_stdout(argv: list[str], timeout: float, log: bool) -> tuple[list[
     if not timeout is None:
 
         try:
-            res = subprocess.run(argv, timeout=timeout, stdout=tmp_file)
+            subprocess.run(argv, timeout=timeout, stdout=tmp_file)
             tmp_file.close()
 
         except:
@@ -106,6 +113,9 @@ def run_detect_stdout(argv: list[str], timeout: float, log: bool) -> tuple[list[
     if log: 
         with open(tmp_filename) as tmp_file:
             print(tmp_file.read())
+    
+    if cache:
+        shutil.copyfile(src=tmp_file, dst=cache_file)
 
     trk_list = fmdt.core.extract_all_information(tmp_filename)
     nframes = fmdt.core.nframes_processed(tmp_filename)
@@ -114,9 +124,17 @@ def run_detect_stdout(argv: list[str], timeout: float, log: bool) -> tuple[list[
 
     return trk_list, nframes
 
-def run_detect_trk_path(trk_out_path, argv, timeout, log) -> tuple[list[fmdt.core.TrackedObject], int]:
+def _run_detect_trk_path(
+        trk_out_path: str,
+        argv: list[str],
+        timeout: float,
+        log: bool,
+        cache: bool,
+        cache_file: str
+    ) -> tuple[list[fmdt.core.TrackedObject], int]:
 
     with open(trk_out_path, 'w') as outfile:
+
         if log:
             print(f"Executing cmd: {' '.join(argv)}")
 
@@ -135,6 +153,9 @@ def run_detect_trk_path(trk_out_path, argv, timeout, log) -> tuple[list[fmdt.cor
         
         trk_list = fmdt.core.extract_all_information(trk_out_path)
         nframes = fmdt.core.nframes_processed(trk_out_path)
+            
+    if cache:
+        shutil.copyfile(src=trk_out_path, dst=cache_file)
 
     return trk_list, nframes
     
@@ -171,7 +192,8 @@ def detect(
         #================== Additional Parameters ====================
         trk_out_path: str | None = "trk.txt",
         log: bool = False,
-        timeout: float = None
+        timeout: float = None,
+        cache: bool = False,
     ) -> fmdt.res.DetectionResult:
     """Wrapper to executable fmdt-detect.
 
@@ -196,12 +218,16 @@ def detect(
 
     # Spit out the commandline arguments for fmdt-detect
     argv = args.detect_args.argv()
+    cache_file = None
+
+    if cache:
+        cache_file = fmdt.cache_dir() + "/" + args.detect_args.gen_unique_trk()
 
     #============ Retrieve Tracked list ===========================================#
     if trk_out_path is None:
-        trk_list, nframes = run_detect_stdout(argv, timeout, log) 
+        trk_list, nframes = _run_detect_stdout(argv, timeout, log, cache, cache_file) 
     else:
-        trk_list, nframes = run_detect_trk_path(trk_out_path, argv, timeout, log) 
+        trk_list, nframes = _run_detect_trk_path(trk_out_path, argv, timeout, log, cache, cache_file) 
 
     #============= Recover data if log_path =======================================#
     if not log_path is None:
