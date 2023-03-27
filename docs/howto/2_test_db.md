@@ -9,35 +9,10 @@ Version `0.0.25` of `fmdt-python` updated the way we access the database.
 
 In this guide you'll learn how to use `fmdt` to test the performance of `fmdt-detect`. The relevant
 functions for ground truth testing are stored in the `fmdt.truth` module.
+## Config
 
-# > 0.0.25
+If you haven't already configured `fmdt` (or you don't know that that means), follow [this guide](../howto/0_initialization.md).
 
-## Initial config
-
-You must perform the steps in this section once and only once.
-
-- Call the function `fmdt.init` to inform `fmdt-python` where you have stored the Draconids-6mm, Draconids-12mm, and window videos from our database.
-
-
-**prototype**
-
-```
-import fmdt
-fmdt.init(d6_dir  = "/your/dir/Videos/Watec6mm",
-          d12_dir = "/your/dir/Videos/Watec12mm",
-          win_dir = "/your/dir/Videos")
-```
-
-**real example**
-```
->>> import fmdt
->>> fmdt.init(d6_dir  = "/home/ejovo/Videos/Watec6mm",
-...           d12_dir = "/home/ejovo/Videos/Watec12mm",
-...           win_dir = "/home/ejovo/Videos")
-Saved config to /home/ejovo/.local/share/fmdt_python/config.json
-```
-
-That's it.
 
 ## Loading GroundTruths 
 
