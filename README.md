@@ -1,6 +1,3 @@
-
-Scripts for video editing rely on [ffmpeg-python's](https://github.com/kkroening/ffmpeg-python) simple Python bindings to ffmpeg. Make sure you install `ffmpeg-python` before trying any of the video editing functionality.
-
 ### Introduction
 
 `fmdt` is a Python package used to analyze the performance of the [Fast Meteor Detection Toolbox](https://github.com/alsoc/fmdt)'s executables.
@@ -18,6 +15,9 @@ In order to use the functions `fmdt.detect` and `fmdt.visu` (to call `fmdt-detec
 
 ### Example Usage
 
+In order to actually use `fmdt` you need to have installed the [Fast Meteor Detection Toolbox](https://github.com/alsoc/fmdt)
+and have the executables `fmdt-detect`, `fmdt-visu`, and `fmdt-check` on your system `PATH`.
+
 ```
 import fmdt
 
@@ -27,4 +27,4 @@ fmdt.split_video_at_meteors("demo.mp4", "ex1_detect_tracks.txt")
 
 ### Documentation
 
-Comprehensive documentation is hosted at (readthedocs)[https://fmdt-python-clean.readthedocs.io/en/latest/]
+Comprehensive documentation is hosted at [readthedocs](https://fmdt-python-clean.readthedocs.io/en/latest/)

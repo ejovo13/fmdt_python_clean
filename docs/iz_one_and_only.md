@@ -132,7 +132,7 @@ The movement statistics are stored in the `df` member of our `fmdt.res.Detection
 [256 rows x 4 columns]
 ```
 
-When running multiple diffent videos with the same core set of arguments, it might be a good idea to isolate log_paths. To automatically cache the log information in a unique folder, call `detect` with the `safe_df` parameter set to `True` instead of using `log_path`:
+When running multiple diffent videos with the same core set of arguments, it might be a good idea to isolate log_paths. To automatically cache the log information in a unique folder, call `detect` with the `save_df` parameter set to `True` instead of using `log_path`:
 
 ```
 >>> res = v.detect(save_df=True)
