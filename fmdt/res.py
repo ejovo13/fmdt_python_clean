@@ -103,12 +103,6 @@ def retrieve_log_df(log_path: str) -> pd.DataFrame:
         "std_dev": [0.0] + std_dev
     })
 
-
-class CheckingResult:
-
-    def __init__(self):
-        pass
- 
 class DetectionResult:
 
     def __init__(self, nframes: int, df: pd.DataFrame, args: fmdt.args.Args, trk_list: list[fmdt.core.TrackedObject], video = None):
@@ -147,7 +141,7 @@ class DetectionResult:
 
         return a + b + c
     
-    def check(self, gt_path: str = None, stdout: str = None):
+    def check(self, gt_path: str = None, stdout: str = "check.txt", log = False):
         """Call fmdt-check with these results
         
         Parameters
@@ -166,10 +160,10 @@ class DetectionResult:
 
             assert self.video.has_meteors(), f"Video {self.video} has no gts in our data base. Specify a meteors file with the `gt_path` argument"
 
-            self.video.evaluate_args(self.args, self.video.meteors(), stdout=stdout)
+            return self.video.evaluate_args(self.args, self.video.meteors(), stdout=stdout, log=log)
 
         else:
-            fmdt.check(self.args.detect_args.trk_out_path, gt_path, stdout=stdout)
+            return fmdt.check(self.args.detect_args.trk_out_path, gt_path, stdout=stdout, log=log)
 
     # @staticmethod
     # def from_file(trk_path: str, log_path: str):
@@ -283,6 +277,121 @@ def load_check_gt_table(check_stdout: str) -> pd.DataFrame:
         "stops": stops,
         "tracks": tracks
     })
+
+CHECK_NGT = "- Number of GT objs"      
+CHECK_NTRACK = "- Number of tracks"
+CHECK_TPOS = "- True positives"
+CHECK_FPOS = "- False positives"
+CHECK_TNEG = "- True negative"
+CHECK_FNEG = "- False negative"
+CHECK_TRACK_RATE = "- tracking rate"
+
+def check_line_to_tuple(line: str) -> tuple[int, int, int, int]:
+    """Convert '- Number of GT objs = ['meteor':   34, 'star':    0, 'noise':    0, 'all':   34]' to a 4-tuple of numbers """
+
+    # Find the first instance of []
+    line = line.strip()
+
+    for (i, el) in enumerate(line):
+        if line[i] == "[":
+            break
+
+    array_interior = line[i + 1:-1] # drop the brackets
+
+    content = array_interior.split()
+
+    m = int(content[1][:-1]) # drop comma at the end
+    s = int(content[3][:-1]) # drop comma at the end
+    n = int(content[5][:-1])
+    a = int(content[7])
+
+    return m, s, n, a
+
+def check_tracking_rate_line(line: str) -> tuple[int, int, int, int]:
+    """Convert '- Number of GT objs = ['meteor':   34, 'star':    0, 'noise':    0, 'all':   34]' to a 4-tuple of numbers """
+
+    # Find the first instance of []
+    line = line.strip()
+
+    for (i, el) in enumerate(line):
+        if line[i] == "[":
+            break
+
+    array_interior = line[i + 1:-1] # drop the brackets
+
+    content = array_interior.split()
+
+    m = float(content[1][:-1]) # drop comma at the end
+    s = float(content[3][:-1]) # drop comma at the end
+    n = float(content[5][:-1])
+    a = float(content[7])
+
+    return m, s, n, a
+
+
+def load_check_stats(check_stdout: str) -> pd.DataFrame:
+
+    with open(check_stdout) as file:
+        lines = file.readlines()
+
+        # iterate through lines until the we get to the Id line
+        for (i, el) in enumerate(lines):
+            if CHECK_NGT in el:
+                break
+
+        ms = []; ss = []; ns = []; alls = [];
+        mat = [ms, ss, ns, alls] # these are our rows and we need to get the matrix as column
+
+        for j in range(6):
+            m, s, n, a = check_line_to_tuple(lines[i + j])
+            ms.append(m); ss.append(s); ns.append(n); alls.append(a)
+        
+        m, s, n, a = check_tracking_rate_line(lines[i + 6])
+        ms.append(m); ss.append(s); ns.append(n); alls.append(a)
+
+        ngts = []; ntrks = []; tpos = []; fpos = []; tneg = []; fneg = []; trk_rate = []
+
+        names = ["meteor", "star", "noise", "all"]
+
+        for r in mat:
+
+            ngts.append(r[0])
+            ntrks.append(r[1])
+            tpos.append(r[2])
+            fpos.append(r[3])
+            tneg.append(r[4])
+            fneg.append(r[5])
+            trk_rate.append(r[6])
+    
+    return pd.DataFrame({
+        "type": names,
+        "gt": ngts,
+        "ntrk": ntrks,
+        "tpos": tpos,
+        "fpos": fpos,
+        "tneg": tneg,
+        "fneg": fneg,
+        "trk_rate": trk_rate
+    })
+
+class CheckResult:
+
+    def __init__(self, gt_table: pd.DataFrame = None, stats: pd.DataFrame = None):
+        self.gt_table = gt_table
+        self.stats = stats
+
+    def meteor_stats(self) -> pd.Series:
+        return self.stats[self.stats["type"] == "meteor"].iloc[0]
+
+    def noise_stats(self) -> pd.Series:
+        return self.stats[self.stats["type"] == "noise"].iloc[0]
+
+    def star_stats(self) -> pd.Series:
+        return self.stats[self.stats["type"] == "star"].iloc[0]
+
+    def all_stats(self) -> pd.Series:
+        return self.stats[self.stats["type"] == "all"].iloc[0]
+
 
 def main():
     file = "test_check_one.txt"

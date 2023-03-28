@@ -236,7 +236,8 @@ class Video:
         log: bool = False,
         timeout: float = None,
         #================== Check ====================================
-        stdout: str = None 
+        stdout: str = None,
+        log_check = False
         ):
 
         args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
@@ -247,7 +248,7 @@ class Video:
 
         res = args.detect()
 
-        self.evaluate_args(args, res.trk_list, stdout)
+        self.evaluate_args(args, res.trk_list, stdout, log=log_check)
 
 
 
@@ -282,7 +283,15 @@ class Video:
         """Check whether the video path in self.full_path() exists on disk"""
         return os.path.exists(self.full_path())
 
-    def evaluate_args(self, args: fmdt.Args, meteors: list[fmdt.truth.HumanDetection], rerun: bool = False, tmp_gt_file = "tmp_meteors.txt", stdout: str = None):
+    def evaluate_args(
+            self,
+            args: fmdt.Args,
+            meteors: list[fmdt.truth.HumanDetection],
+            rerun: bool = False,
+            tmp_gt_file = "tmp_meteors.txt",
+            stdout: str = None,
+            log = False
+        ):
         """Call fmdt-detect and fmdt-check to evaluate how well a given set of arguments detects our ground truth
         
         Parameters
@@ -311,7 +320,7 @@ class Video:
 
         # Then call fmdt_check
 
-        fmdt.check(args.detect_args.trk_out_path, tmp_gt_file, stdout)
+        return fmdt.check(args.detect_args.trk_out_path, tmp_gt_file, stdout, log)
 
 
     @staticmethod

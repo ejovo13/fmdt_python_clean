@@ -8,7 +8,7 @@ packages = [
   { include = "fmdt" },
   { include = "fmdt/tests"}
 ]
-version = "0.0.32"
+version = "0.0.33"
 authors = [
   { name="Evan Voyles", email="ejovo13@yahoo.com" },
 ]

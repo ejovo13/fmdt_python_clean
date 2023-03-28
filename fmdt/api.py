@@ -297,8 +297,8 @@ def visu(
     return fmdt.args.Args(visu_args=visu_args, detect_args=None)
 
 def check(
-    trk_path: str, gt_path: str, stdout: str = None
-    ) -> fmdt.res.CheckingResult:
+    trk_path: str, gt_path: str, stdout: str = None, log = False
+    ) -> fmdt.res.CheckResult:
     """Call fmdt-check
     
     Parameters
@@ -311,11 +311,23 @@ def check(
     file_content = res.stdout.decode()
 
     if not stdout is None:
-        print("stdout not none")
         with open(stdout, "w") as file:
             file.write(file_content)
 
-    print(file_content)
+        stats = fmdt.res.load_check_stats(stdout)
+        gt_table = fmdt.res.load_check_gt_table(stdout)
+    
+    else:
+
+        stats = None
+        gt_table = None
+
+    if (log):
+        print(file_content)
+
+    return fmdt.res.CheckResult(gt_table=gt_table, stats=stats)
+
+
 
 def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     """Call `fmdt-detect` on all videos in the directory `dir_name` using the settings stored in `args`
