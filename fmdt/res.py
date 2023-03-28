@@ -89,6 +89,21 @@ def retrieve_log_info(log_path: str) -> tuple[list[int], list[int], list[float],
 
     return nrois, nassocs, mean_errs, std_devs
 
+
+def retrieve_log_df(log_path: str) -> pd.DataFrame:
+
+    assert os.path.exists(log_path), f"log_path {log_path} does not exist"
+
+    nroi, nassoc, mean_err, std_dev = retrieve_log_info(log_path)
+
+    return pd.DataFrame({
+        "nroi": nroi,
+        "nassoc": [0] + nassoc,
+        "mean_err": [0.0] + mean_err,
+        "std_dev": [0.0] + std_dev
+    })
+
+
 class CheckingResult:
 
     def __init__(self):
@@ -96,12 +111,13 @@ class CheckingResult:
  
 class DetectionResult:
 
-    def __init__(self, nframes: int, df: pd.DataFrame, args: fmdt.args.Args, trk_list: list[fmdt.core.TrackedObject]):
+    def __init__(self, nframes: int, df: pd.DataFrame, args: fmdt.args.Args, trk_list: list[fmdt.core.TrackedObject], video = None):
 
         self.nframes = nframes
         self.df = df
         self.args = args 
         self.trk_list = trk_list
+        self.video = video
 
     def detect(self):
         return self.args.detect()
@@ -131,6 +147,34 @@ class DetectionResult:
 
         return a + b + c
     
+    def check(self, gt_path: str = None):
+        """Call fmdt-check with these results
+        
+        Parameters
+        ----------
+        gt_path (str): Full path to ground truth file. Used when dealing with a call to fmdt.detect directly and not
+            interfacing with a Video object. When calling with the function chain Video.detect().check(), we don't need
+            to pass in the gt_path
+        
+        """
+
+        assert not self.args.detect_args.trk_out_path is None, "To call fmdt.check we must specify the `trk_out_path`"
+
+        if gt_path is None:
+            # If we dont have ground truth meteors, assure that the meteor acutally exists
+            assert not self.video is None, "When calling DetectionResult.check() specify the gt_path or use a video like v.detect().check()"
+
+            assert self.video.has_meteors(), f"Video {self.video} has no gts in our data base. Specify a meteors file with the `gt_path` argument"
+
+            self.video.evaluate_args(self.args, self.video.meteors())
+
+        else:
+            fmdt.check(self.args.detect_args.trk_out_path, gt_path)
+
+    # @staticmethod
+    # def from_file(trk_path: str, log_path: str):
+
+    
     # @staticmethod
     # def from_detect(args: fmdt.args.Args):
 
@@ -153,5 +197,20 @@ class DetectionResult:
     #     return DetectionResult(rois, [0] + nassocs, [0.0] + mean_errs, [0.0] + std_devs, args, trk_list)
         
     
+# load a DetectionResult object from a trk_path and a log_path
+def load_det_result(trk_path: str, log_path: str) -> DetectionResult:
+    """Load a det_result object whose content is stored in trk_path and log_path"""
 
-    # I want to be able to 
+    if os.path.exists(trk_path):
+        trk_list = fmdt.core.extract_all_information(trk_path) 
+        n_frames = fmdt.core.nframes_processed(trk_path)
+    else:
+        trk_list = []
+        n_frames = 0
+
+    if os.path.exists(log_path):
+        df = retrieve_log_df(log_path)
+    else:
+        df = None
+
+    return DetectionResult(n_frames, df, None, trk_list)

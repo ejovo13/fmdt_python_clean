@@ -6,7 +6,7 @@ import fmdt.truth
 og = "2022_05_31_tauh_34_meteors.mp4"
 
 args = fmdt.detect_args(trk_out_path="trk.txt")
-meteors = fmdt.truth.load_meteors_file("meteors.txt")
+meteors = fmdt.truth.load_meteors_file("meteors.txt", "2022_05_31_tauh_34_meteors.mp4")
 
 print(meteors)
 

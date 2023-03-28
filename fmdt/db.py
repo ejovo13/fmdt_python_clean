@@ -5,6 +5,8 @@ import fmdt.args
 import fmdt.truth
 import fmdt.download
 import fmdt.utils
+import fmdt.res
+import fmdt.api
 
 import pandas as pd
 import sqlite3
@@ -106,8 +108,6 @@ class Video:
 
 
     # def visu
-
-    
     def detect(self,
         #=================== fmdt-detect parameters ================
         vid_in_start: int | None = None,
@@ -152,7 +152,38 @@ class Video:
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
         trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log, timeout=timeout)
 
-        return args.detect(cache=cache, save_df=save_df)
+        res = args.detect(cache=cache, save_df=save_df)
+        res.video = self
+
+        return res
+
+# import os
+
+    # def check(
+    #         self,
+    #         **kwargs
+    #         # args: fmdt.args.Args = None # Optional
+    #     ) -> fmdt.res.CheckingResult:
+    #     """Call fmdt-check after a call to fmdt-detect with detection parameters `args`"""
+
+    #     assert self.has_meteors(), f"Cannot call Video.check() because {self.name} has no ground truths in our database"
+
+    #     args = fmdt.detect_args(**kwargs)
+        
+    #     # I want to see if we have a cached trk list
+    #     cached_trk_path = args.detect_args.cache_trk()
+    #     cached_met_path = args.detect_args.cache_dir() + "_meteors.txt"
+
+
+    #     if not os.path.exists(cached_trk_path):
+    #         # Then we can directly call fmdt.check
+    #         args.detect()
+    #         # gen tmp file using meteors
+        
+
+    #     pass
+
+
     
     def check_args(self, args: fmdt.Args) -> list[bool]: 
         """Check which meteors are detected by this choice of args using our internal python implementation to check if
@@ -168,6 +199,8 @@ class Video:
         res = args.detect()
 
         return [m.is_detected_in_list(res.trk_list) for m in self.meteors()] 
+    
+
 
 
     def evaluate(self,        

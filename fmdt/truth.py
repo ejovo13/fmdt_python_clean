@@ -172,14 +172,21 @@ class HumanDetection:
         HumanDetection.GROUND_TRUTH = read_human_detection_csv(database_filename, video_db_dir) 
         return read_human_detection_csv(database_filename, video_db_dir)
     
-def load_meteors_file(filename: str) -> list[HumanDetection]:
+def load_meteors_file(filename: str, video_name: str) -> list[HumanDetection]:
     """Load in a meteors file (ex: https://github.com/alsoc/fmdt/blob/develop/validation/2022_05_31_tauh_34_meteors.txt)
-    as a list of `HumanDetection`"""
+    as a list of `HumanDetection`
+    
+    Parameters
+    ----------
+
+    filename (str): path to the containing the ground truths in alsoc format
+    video_name (str): name of the video that these ground truths are associated with
+    """
 
     with open(filename) as file:
         lines = file.readlines()
 
-        out = [HumanDetection.from_alsoc_format("demo.mp4", l) for l in lines]
+        out = [HumanDetection.from_alsoc_format(video_name=video_name, alsoc=l) for l in lines]
 
     return out
 
