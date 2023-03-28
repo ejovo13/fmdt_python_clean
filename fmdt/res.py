@@ -147,7 +147,7 @@ class DetectionResult:
 
         return a + b + c
     
-    def check(self, gt_path: str = None):
+    def check(self, gt_path: str = None, stdout: str = None):
         """Call fmdt-check with these results
         
         Parameters
@@ -166,10 +166,10 @@ class DetectionResult:
 
             assert self.video.has_meteors(), f"Video {self.video} has no gts in our data base. Specify a meteors file with the `gt_path` argument"
 
-            self.video.evaluate_args(self.args, self.video.meteors())
+            self.video.evaluate_args(self.args, self.video.meteors(), stdout=stdout)
 
         else:
-            fmdt.check(self.args.detect_args.trk_out_path, gt_path)
+            fmdt.check(self.args.detect_args.trk_out_path, gt_path, stdout=stdout)
 
     # @staticmethod
     # def from_file(trk_path: str, log_path: str):
@@ -214,3 +214,79 @@ def load_det_result(trk_path: str, log_path: str) -> DetectionResult:
         df = None
 
     return DetectionResult(n_frames, df, None, trk_list)
+
+#===================== Fonctions dealing with check ============================
+
+# I want to parse the file.
+# Let's start off by parsing the first table
+
+# start after Id|    Type 
+# end at Statistics
+
+CHECK_TABLE_HEADER = "#   Id |    Type || Detect |  GT || Start |  Stop ||      #"
+
+CTBL_ID = 0
+CTBL_TYPE = 2
+CTBL_DETECT = 4
+CTBL_GT = 6
+CTBL_START = 8
+CTBL_STOP = 10
+CTBL_TRACKS = 12
+
+def load_check_gt_table(check_stdout: str) -> pd.DataFrame:
+
+
+    with open(check_stdout) as file:
+        lines = file.readlines()
+
+        hdr_line_nmbr  = -1
+        stat_line_nmbr = -1
+
+        # iterate through lines until the we get to the Id line
+        for (i, el) in enumerate(lines):
+            if el.strip() == CHECK_TABLE_HEADER:
+                hdr_line_nmbr = i
+                break
+
+        for (i, el) in enumerate(lines):
+            if "Statistics:" in el:
+                stat_line_nmbr= i 
+
+        table = lines[(hdr_line_nmbr + 2):stat_line_nmbr] 
+
+
+        ids = []
+        types = []
+        detects = []
+        gts = []
+        starts = []
+        stops = []
+        tracks = []
+
+        for line in table:
+            s = line.split()
+
+            ids.append(int(s[CTBL_ID]))
+            types.append(s[CTBL_TYPE])
+            detects.append(int(s[CTBL_DETECT]))
+            gts.append(int(s[CTBL_GT]))
+            starts.append(int(s[CTBL_START]))
+            stops.append(int(s[CTBL_STOP]))
+            tracks.append(int(s[CTBL_TRACKS]))
+        
+    return pd.DataFrame({
+        "id": ids,
+        "types": types,
+        "detects": detects,
+        "gts": gts,
+        "starts": starts,
+        "stops": stops,
+        "tracks": tracks
+    })
+
+def main():
+    file = "test_check_one.txt"
+
+    df = load_check_gt_table(file) 
+
+
