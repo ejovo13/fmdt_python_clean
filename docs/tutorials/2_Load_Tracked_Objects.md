@@ -82,4 +82,4 @@ noise   = res.noise()
 
 ### Conclusion
 
-This tutorial taught you how to load, filter, and examine the list of objects that are detected by `fmdt-detect` (and stored in the `trk_out_path` file). We will use this tracking list often when evaluating the performance of `fmdt-detect` with our database of videos. Keep following along to [the next section](3_Playing_with_args.md) to learn how to play around with different argument combinations or read up on the `DetectionResult` class [here](../fmdt/modules/res.md)
+This tutorial taught you how to load, filter, and examine the list of objects that are detected by `fmdt-detect` (and stored in the `trk_out_path` file). We will use this tracking list often when evaluating the performance of `fmdt-detect` with our database of videos. Keep following along to [the next section](3_Playing_with_args.md) to learn how to play around with different argument combinations or read up on the `DetectionResult` class [here](../reference/res.md)

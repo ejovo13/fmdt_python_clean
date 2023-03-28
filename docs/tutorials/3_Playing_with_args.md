@@ -4,7 +4,7 @@ Learning Goal: Understand the role of the `Args` class.
 
 ---
 
-Before you get started, it might not be a bad idea to check out the [fmdt.args](../fmdt/modules/args.md) module to read up on the `Args` class and it's composition. Nevertheless, we are going to begin with a simple example.
+Before you get started, it might not be a bad idea to check out the [fmdt.args](../reference/args.md) module to read up on the `Args` class and it's composition. Nevertheless, we are going to begin with a simple example.
 
 In previous tutorials, we've been passing our arguments directly to `fmdt.detect` like so:
 

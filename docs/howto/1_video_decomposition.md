@@ -1,4 +1,4 @@
-# Spliting Videos
+# Splitting Videos
 
 This how-to guide showcases various ways to split a video using `fmdt`, using 
 [demo.mp4](https://lip6.fr/adrien.cassagne/data/tauh/in/2022_05_31_tauh_34_meteors.mp4)

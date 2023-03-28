@@ -43,7 +43,7 @@ the only difference being that flags like have their dashes `-` transformed into
 since Python interprets dashes as minus signs. As such, the usual flag `--vid-in-path` is encoded 
 as the python argument `vid_in_path`.
 
-For a complete list of parameters, see [API](../fmdt/modules/api.md).
+For a complete list of parameters, see [API](../reference/api.md).
 
 ## Visualizing
 

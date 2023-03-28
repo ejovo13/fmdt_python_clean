@@ -10,3 +10,25 @@ theme:
     - content.code.copy
   name: readthedocs
   # hljs_style: monokai
+
+nav:
+    - Home: 'index.md'
+    - Comprehensive Guide: "iz_one_and_only.md"
+    - Explanation:
+        - 'Video Database': 'explanation/video_database.md'
+        - 'Overview': 'explanation/index.md'
+    - Tutorials:
+        - '0. Getting Started': 'tutorials/0_start.md'
+        - '1. Your First Meteor': 'tutorials/1_detecting_meteors.md'
+        - '2. Loading Tracked Objects': 'tutorials/2_Load_Tracked_Objects.md'
+        - '3. Playing with Args': 'tutorials/Playing_with_args.md'
+        - '4. Accessing Movement Statistics': 'tutorials/Retrieving_numerical_results.md'
+    - How-to:
+        - 'Configure fmdt': 'howto/0_initialization.md'
+        - 'Split Videos': 'howto/1_video_decomposition.md'
+        - 'Test our Ground Truth Database': 'howto/2_test_db.md'
+        - 'Load Videos from our Database': 'howto/3_load_videos.md'
+        - 'Cache Detection Results': 'howto/4_use_the_cache.md'
+        - 'Use a Video to call fmdt-detect': 'howto/5_use_video.md'
+    - Reference:
+        - 'fmdt': "reference/home.md"
