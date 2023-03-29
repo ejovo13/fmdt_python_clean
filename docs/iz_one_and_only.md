@@ -47,13 +47,15 @@ fmdt.init(d6_dir: str, d12_dir: str, win_dir: str)
 
 `fmdt.init` notifies `fmdt` where our video database files are stored. If, for example, we have a unix user `ejovo` with videos stored on a remote hard drive `Seagate Portable Drive` then we could configure `fmdt` with:
 
-```
-fmdt.init(d6_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor",
-         d12_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor",
-         win_dir="/run/media/ejovo/Seagate Portable Drive/Meteors")
-```
+=== "code"
 
-??? example "output"
+    ```
+    fmdt.init(d6_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor",
+            d12_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor",
+            win_dir="/run/media/ejovo/Seagate Portable Drive/Meteors")
+    ```
+
+=== "output"
 
     ```
     Saved config to /home/ejovo/.local/share/fmdt_python/config.json
@@ -61,11 +63,13 @@ fmdt.init(d6_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteo
 
 
 We can compare what files we have in our local config compared to the files listed in our [database](./explanation/video_database.md) with the function `local_info()`:
-```
-fmdt.local_info()
-```
 
-??? example "output"
+=== "code"
+    ```
+    fmdt.local_info()
+    ```
+
+=== "output"
 
     ``` 
     Printing information about the local environment
@@ -90,17 +94,15 @@ fmdt.local_info()
 
 ## Video interface
 
-We start by loading in our demo with `fmdt.load_demo()`
+The `Video` class allows use to call our FMDT executables using a very succinct syntax. Let's get familiar with how we use this class by loading in our demo video `2022_05_31_tauh_34_meteors.mp4` using `fmdt.load_demo()`
 
+=== "code"
 
-``` py
-v = fmdt.load_demo() # (1)!
-```
+    ``` py
+    v = fmdt.load_demo() 
+    ```
 
-1. `fmdt.load_demo()` loads in the `Video` object associated with 2022_05_31_tauh_34_meteors.mp4. The existence of this object does not imply
-that the actual video file exists on disk
-
-??? example "output"
+=== "example"
 
     ``` 
     >>> v
@@ -108,89 +110,256 @@ that the actual video file exists on disk
 
     >>> type(v)
     <class 'fmdt.db.Video'>
-
-    >>> v.full_path()
-    '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4'
     ```
 
-And we can run a detection with `detect()`:
+
+??? warning
+
+    This operation instantiates a `Video` object associated with 2022_05_31_tauh_34_meteors.mp4 from our `video.db` file. The presence of `v` does not imply that 2022_05_31_tauh_32_meteors.mp4 exists on disk nor that it will be found by fmdt in the case that it does. For more information, consult our page on [configuring fmdt](./howto/0_initialization.md) 
+
+<!-- 
+1. `fmdt.load_demo()` loads in the `Video` object associated with 2022_05_31_tauh_34_meteors.mp4. The existence of this object does not imply
+that the actual video file exists on disk -->
+
+We can get the full path of a `Video` with the `full_path()` function and check if the file that we are pointing to exists on disk with `exists()`:
+
 
 ```
->>> res = v.detect()
-(II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
+>>> v.full_path()
+'/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4'
 
->>> print(res)
-fmdt.res.DetectionResult with args digest: 74fffad3f5036080
-objects in trk_list: 38 meteor(s), 0 star(s), 0 noise
+>>> v.exists()
+True
 ```
 
-Access the list of `TrackedObject` with the `trk_list` field:
+### Meteors
+
+We can check if `v` has any meteors in our ground truth database using `has_meteors()`
 
 ```
->>> res.trk_list
-[<Meteor (102, 108)>, <Meteor (110, 126)>, <Meteor (111, 118)>, <Meteor (121, 123)>, <Meteor (127, 129)>, <Meteor (129, 131)>, <Meteor (133, 141)>, <Meteor (134, 143)>, <Meteor (134, 137)>, <Meteor (136, 138)>, <Meteor (139, 144)>, <Meteor (139, 142)>, <Meteor (140, 150)>, <Meteor (146, 149)>, <Meteor (156, 158)>, <Meteor (156, 165)>, <Meteor (157, 162)>, <Meteor (160, 163)>, <Meteor (164, 167)>, <Meteor (167, 169)>, <Meteor (171, 175)>, <Meteor (174, 180)>, <Meteor (178, 185)>, <Meteor (179, 181)>, <Meteor (179, 189)>, <Meteor (180, 184)>, <Meteor (183, 189)>, <Meteor (194, 197)>, <Meteor (197, 199)>, <Meteor (199, 201)>, <Meteor (200, 205)>, <Meteor (201, 203)>, <Meteor (202, 204)>, <Meteor (223, 229)>, <Meteor (224, 228)>, <Meteor (227, 231)>, <Meteor (249, 252)>, <Meteor (251, 253)>]
+>>> v.has_meteors()
+True
 ```
 
-### Movement Statistics
-
-We can additionally store movement statistics if we manually specify a log directory with the `log_path` argument.
+and use `meteors()` to retrieve them when the previous result is `True`.
 
 ```
->>> res = v.detect(log_path="log")
-(II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
-Trying to retrieve log info here: log
-
->>> print(res)
-fmdt.res.DetectionResult with args digest: 74fffad3f5036080
-objects in trk_list: 38 meteor(s), 0 star(s), 0 noise
-     nroi  nassoc  mean_err  std_dev
-0      45       0    0.0000   0.0000
-1      63      17    0.1663   0.1411
-2      67      19    0.2939   0.3953
-3      82      24    0.2738   0.2614
-4      35      18    0.1601   0.2101
-..    ...     ...       ...      ...
-251    52      18    0.3344   0.3212
-252    59      22    0.9310   1.2554
-253    65      17    0.1500   0.1209
-254    50      17    0.1251   0.1058
-255    66      19    0.3721   0.2947
-
-[256 rows x 4 columns]
+>>> v.meteors()
+[<fmdt.truth.HumanDetection object at 0x7fec74ccbee0>, <fmdt.truth.HumanDetection object at 0x7febad89b520>, <fmdt.truth.HumanDetection object at 0x7febad89b3d0>, <fmdt.truth.HumanDetection object at 0x7febad89b5e0>, <fmdt.truth.HumanDetection object at 0x7febad89b430>, <fmdt.truth.HumanDetection object at 0x7febad89b640>, <fmdt.truth.HumanDetection object at 0x7febad89b490>, <fmdt.truth.HumanDetection object at 0x7febad89b6a0>, <fmdt.truth.HumanDetection object at 0x7febad89b4f0>, <fmdt.truth.HumanDetection object at 0x7febad89b700>, <fmdt.truth.HumanDetection object at 0x7febad89b550>, <fmdt.truth.HumanDetection object at 0x7febad89b760>, <fmdt.truth.HumanDetection object at 0x7febad89b5b0>, <fmdt.truth.HumanDetection object at 0x7febad89b7c0>, <fmdt.truth.HumanDetection object at 0x7febad89b610>, <fmdt.truth.HumanDetection object at 0x7febad89b820>, <fmdt.truth.HumanDetection object at 0x7febad89b670>, <fmdt.truth.HumanDetection object at 0x7febad89b880>, <fmdt.truth.HumanDetection object at 0x7febad89b6d0>, <fmdt.truth.HumanDetection object at 0x7febad89b8e0>, <fmdt.truth.HumanDetection object at 0x7febad89b730>, <fmdt.truth.HumanDetection object at 0x7febad89b940>, <fmdt.truth.HumanDetection object at 0x7febad89b790>, <fmdt.truth.HumanDetection object at 0x7febad89b9a0>, <fmdt.truth.HumanDetection object at 0x7febad89b7f0>, <fmdt.truth.HumanDetection object at 0x7febad89ba00>, <fmdt.truth.HumanDetection object at 0x7febad89b850>, <fmdt.truth.HumanDetection object at 0x7febad89ba60>, <fmdt.truth.HumanDetection object at 0x7febad89b8b0>, <fmdt.truth.HumanDetection object at 0x7febad89bac0>, <fmdt.truth.HumanDetection object at 0x7febad89b910>, <fmdt.truth.HumanDetection object at 0x7febad89bb20>, <fmdt.truth.HumanDetection object at 0x7febad89b970>, <fmdt.truth.HumanDetection object at 0x7febad89bb80>]
 ```
 
-The movement statistics are stored in the `df` member of our `fmdt.res.DetectionResult`:
+### FMDT Executables
 
-```
->>> res.df
-     nroi  nassoc  mean_err  std_dev
-0      45       0    0.0000   0.0000
-1      63      17    0.1663   0.1411
-2      67      19    0.2939   0.3953
-3      82      24    0.2738   0.2614
-4      35      18    0.1601   0.2101
-..    ...     ...       ...      ...
-251    52      18    0.3344   0.3212
-252    59      22    0.9310   1.2554
-253    65      17    0.1500   0.1209
-254    50      17    0.1251   0.1058
-255    66      19    0.3721   0.2947
+We can run all three of our core executables starting with a `Video` object.
 
-[256 rows x 4 columns]
-```
+=== "detect"
 
-When running multiple diffent videos with the same core set of arguments, it might be a good idea to isolate log_paths. To automatically cache the log information in a unique folder, call `detect` with the `save_df` parameter set to `True` instead of using `log_path`:
+    !!! warning
 
-```
->>> res = v.detect(save_df=True)
-Save_df activated in final detect call
-(II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
-Trying to retrieve log info here: /home/ejovo/.cache/fmdt_python/31a2dd4832e985d6
-```
+        If `v` is not on disc (`v.exists() == False`) then `v.detect()` will raise an exception
 
-Consult the [howto guide](./howto/4_use_the_cache.md) to learn how to monitor and clear the cache.
+    We can run a detection with `detect()`:
 
-### Ground Truths
+    ```
+    >>> res = v.detect()
+    (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
+    ```
+
+    === "`res`"
+
+        ```
+        fmdt.res.DetectionResult with args digest: 31a2dd4832e985d6
+        objects in trk_list: 38 meteor(s), 0 star(s), 0 noise
+        ```
+
+    === "`res.trk_list`"
+
+        ```
+        [<Meteor (102, 108)>, <Meteor (110, 126)>, <Meteor (111, 118)>, <Meteor (121, 123)>, <Meteor (127, 129)>, <Meteor (129, 131)>, <Meteor (133, 141)>, <Meteor (134, 143)>, <Meteor (134, 137)>, <Meteor (136, 138)>, <Meteor (139, 144)>, <Meteor (139, 142)>, <Meteor (140, 150)>, <Meteor (146, 149)>, <Meteor (156, 158)>, <Meteor (156, 165)>, <Meteor (157, 162)>, <Meteor (160, 163)>, <Meteor (164, 167)>, <Meteor (167, 169)>, <Meteor (171, 175)>, <Meteor (174, 180)>, <Meteor (178, 185)>, <Meteor (179, 181)>, <Meteor (179, 189)>, <Meteor (180, 184)>, <Meteor (183, 189)>, <Meteor (194, 197)>, <Meteor (197, 199)>, <Meteor (199, 201)>, <Meteor (200, 205)>, <Meteor (201, 203)>, <Meteor (202, 204)>, <Meteor (223, 229)>, <Meteor (224, 228)>, <Meteor (227, 231)>, <Meteor (249, 252)>, <Meteor (251, 253)>]
+        ```
+
+    === "`res.nframes`"
+
+        ```
+        256
+        ```
+
+    === "`res.args`"
+
+        ```
+        <fmdt.args.Args object>
+        ====================
+        Detect parameters: 
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+        ```
+
+
+    ### Movement Statistics
+
+    We can additionally store movement statistics if we manually specify a log directory with the `log_path` argument.
+
+    ```
+    >>> res = v.detect(log_path="log")
+    (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
+    Trying to retrieve log info here: log
+
+    >>> print(res)
+    fmdt.res.DetectionResult with args digest: 74fffad3f5036080
+    objects in trk_list: 38 meteor(s), 0 star(s), 0 noise
+        nroi  nassoc  mean_err  std_dev
+    0      45       0    0.0000   0.0000
+    1      63      17    0.1663   0.1411
+    2      67      19    0.2939   0.3953
+    3      82      24    0.2738   0.2614
+    4      35      18    0.1601   0.2101
+    ..    ...     ...       ...      ...
+    251    52      18    0.3344   0.3212
+    252    59      22    0.9310   1.2554
+    253    65      17    0.1500   0.1209
+    254    50      17    0.1251   0.1058
+    255    66      19    0.3721   0.2947
+
+    [256 rows x 4 columns]
+    ```
+
+    The estimated movement statistics are stored in the `df` member of our `fmdt.res.DetectionResult`.
+
+    #### Unique `log_path`
+
+    When running multiple diffent videos with the same core set of arguments, it might be a good idea to isolate out `log_path`. To automatically cache the log information in a unique folder, call `detect` with the `save_df` parameter set to `True` instead of using `log_path`:
+
+    ```
+    >>> res = v.detect(save_df=True)
+    Save_df activated in final detect call
+    (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
+    Trying to retrieve log info here: /home/ejovo/.cache/fmdt_python/31a2dd4832e985d6
+    ```
+
+    This will automatically cache our log results in a unique directory. Consult [this](./howto/4_use_the_cache.md) to guide to learn how to monitor and clear the cache.
+
+=== "visu"
+
+    !!! failure 
+        
+        `Video.visu()` is currently unavailable
+
+=== "check"
+
+    We can retrieve the tracking statistics produced by `fmdt-check` by chaining the function calls `detect()` and `check()` together.
+
+    ```
+    check_res = v.detect().check()
+    ```
+
+    === "`check_res.gt_path`"
+
+        ```
+        >>> check_res.gt_table
+            id   types  detects  gts  starts  stops  tracks
+        0    1  meteor        7    7     102    108       1
+        1    2  meteor       17   16     110    125       1
+        2    3  meteor        8    9     111    119       1
+        3    4  meteor        3    3     121    123       1
+        4    5  meteor        3    3     127    129       1
+        5    6  meteor        3    3     129    131       1
+        6    7  meteor        9   10     133    142       1
+        7    8  meteor       10   10     134    143       1
+        8    9  meteor        4    4     134    137       1
+        9   10  meteor        3    4     135    138       1
+        10  11  meteor        6   10     137    146       1
+        11  12  meteor        4    4     139    142       1
+        12  13  meteor       11   11     140    150       1
+        13  14  meteor        4    4     146    149       1
+        14  15  meteor        3    3     156    158       1
+        15  16  meteor       10   10     156    165       1
+        16  17  meteor        6    6     157    162       1
+        17  18  meteor        4    4     160    163       1
+        18  19  meteor        4    4     164    167       1
+        19  20  meteor        3    3     167    169       1
+        20  21  meteor        5    5     171    175       1
+        21  22  meteor        7    7     174    180       1
+        22  23  meteor        8    8     178    185       1
+        23  24  meteor       11   11     179    189       1
+        24  25  meteor        3    3     179    181       1
+        25  26  meteor        5    5     180    184       1
+        26  27  meteor        7    7     183    189       1
+        27  28  meteor        4    4     194    197       1
+        28  29  meteor        3    4     197    200       1
+        29  30  meteor        6    5     199    203       2
+        30  31  meteor        6    6     200    205       1
+        31  32  meteor        7    7     223    229       1
+        32  33  meteor        5    5     224    228       1
+        33  34  meteor        4    4     249    252       1
+        ```
+
+
+    === "`check_res.stats`"
+
+        ```
+        >>> check_res.stats
+            type  gt  ntrk  tpos  fpos  tneg  fneg  trk_rate
+        0  meteor  34    38    35     3     0     0      0.95
+        1    star   0     0     0     0    38     0       NaN
+        2   noise   0     0     0     0    38     0       NaN
+        3     all  34    38    35     3    76     0      0.95
+        ```
+
+    === "`check_res.*_stats()`"
+
+        ```
+        >>> check_res.meteor_stats()
+        type        meteor
+        gt              34
+        ntrk            38
+        tpos            35
+        fpos             3
+        tneg             0
+        fneg             0
+        trk_rate      0.95
+        Name: 0, dtype: object
+
+
+        >>> check_res.star_stats()
+        type        star
+        gt             0
+        ntrk           0
+        tpos           0
+        fpos           0
+        tneg          38
+        fneg           0
+        trk_rate     NaN
+        Name: 1, dtype: object
+
+
+        >>> check_res.noise_stats()
+        type        noise
+        gt              0
+        ntrk            0
+        tpos            0
+        fpos            0
+        tneg           38
+        fneg            0
+        trk_rate      NaN
+        Name: 2, dtype: object
+
+
+        >>> check_res.all_stats()
+        type         all
+        gt            34
+        ntrk          38
+        tpos          35
+        fpos           3
+        tneg          76
+        fneg           0
+        trk_rate    0.95
+        Name: 3, dtype: object
+        ```
+
+For more information about the results of these executables, consult [this section](./reference/res.md)
+
+
+
+## Ground Truths
 
 We can retrieve all the ground truths from our database that are associated with a particular video by using the `Video.meteors()` function. Start by loading in our Draco6 videos.
 
