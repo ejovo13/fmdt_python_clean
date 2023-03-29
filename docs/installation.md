@@ -1,44 +1,47 @@
-### Pip
 
-`fmdt-python` can be installed using `pip`
-```
-pip install fmdt-python
-```
-If you are using Windows or MacOS, you may have to replace `pip` by `pip3`.
+!!! warning 
 
-`fmdt-python` requires a version of Python as recent as 3.10
+    `fmdt-python` requires a version of Python more recent than `3.10` 
 
-Once you've installed `fmdt-python`, open up any python instance and try importing the package via the alias `fmdt`:
+=== "pip"
 
-```
->>> import fmdt
-```
+    `fmdt-python` can be installed using `pip`
+    ```
+    pip install fmdt-python
+    ```
+    If you are using Windows or MacOS, you may have to replace `pip` by `pip3`.
 
-If there are no error messages, then the python module `fmdt` was imported successfully. 
-To confirm `fmdt-python`'s installation, try executing:
+    Once you've installed `fmdt-python`, open up any python instance and try importing the package via the alias `fmdt`:
 
-```
->>> help(fmdt)
-```
+    ```
+    >>> import fmdt
+    ```
 
-Congrats! You've successfully installed `fmdt-python` and you are ready to move on to the next steps!
+    If there are no error messages, then the python module `fmdt` was imported successfully. 
+    To confirm `fmdt-python`'s installation, try executing:
 
-### Github
+    ```
+    >>> help(fmdt)
+    ```
 
-The source code for `fmdt-python` can be obtained by cloning the github repository via https:
-```{bash}
-git clone https://github.com/ejovo13/fmdt_python_clean.git
-```
+    Congrats! You've successfully installed `fmdt-python` and you are ready to move on to the next steps!
 
-or via ssh:
+=== "GitHub"
 
-```{bash}
-git clone git@github.com:ejovo13/fmdt_python_clean.git
-```
+    The source code for `fmdt-python` can be obtained by cloning the github repository via https:
+    ```{bash}
+    git clone https://github.com/ejovo13/fmdt_python_clean.git
+    ```
 
-The benefit of cloning the github repository is having access to example python scripts of using `fmdt-python` to accomplish basic tasks with `fmdt`.
+    or via ssh:
 
-### Next Steps
+    ```{bash}
+    git clone git@github.com:ejovo13/fmdt_python_clean.git
+    ```
+
+    The benefit of cloning the github repository is having access to example python scripts of using `fmdt-python` to accomplish basic tasks with `fmdt`.
+
+## Next Steps
 
 Now that you have access to the `fmdt` module through python, make sure that you have
 the executables `fmdt-detect` and `fmdt-visu` compiled and in your system's path. For instructions 

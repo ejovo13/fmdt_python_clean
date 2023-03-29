@@ -51,6 +51,7 @@ markdown_extensions:
   
 nav:
     - Home: 'index.md'
+    - Installation: "installation.md"
     - Comprehensive Guide: "iz_one_and_only.md"
     - Explanation:
         - 'Video Database': 'explanation/video_database.md'
@@ -70,3 +71,4 @@ nav:
         - 'Use a Video to call fmdt-detect': 'howto/5_use_video.md'
     - Reference:
         - 'fmdt': "reference/home.md"
+        - 'res': "reference/res.md"

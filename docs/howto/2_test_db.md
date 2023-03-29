@@ -3,9 +3,9 @@ Companion script: [test_ground_truth.py](https://github.com/ejovo13/fmdt_python_
 
 ---
 
-### Attention
+!!! warning
 
-Version `0.0.25` of `fmdt-python` updated the way we access the database.
+    Version `0.0.25` of `fmdt-python` updated the way we access the database.
 
 In this guide you'll learn how to use `fmdt` to test the performance of `fmdt-detect`. The relevant
 functions for ground truth testing are stored in the `fmdt.truth` module.

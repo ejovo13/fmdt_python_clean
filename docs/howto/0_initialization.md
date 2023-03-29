@@ -18,7 +18,9 @@ init(d6_dir: str, d12_dir: str, win_dir: str) -> None
 
 `fmdt.init` is used to configure `fmdt`'s local search path for the videos in our database.
 
-For example, for a unix user named `ejovo` with the following directory tree: 
+#### Separate Directories
+
+For a unix user `ejovo` with the following directory tree: 
 
 ```
 /home/ejovo/Videos/
@@ -30,8 +32,12 @@ For example, for a unix user named `ejovo` with the following directory tree:
 we initialize `fmdt` with:
 
 ```
-fmdt.init("/home/ejovo/Videos/Watec6mm", "/home/ejovo/Videos/Watec12mm", "/home/ejovo/Videos/Window")
+fmdt.init(d6_dir ="/home/ejovo/Videos/Watec6mm",
+          d12_dir="/home/ejovo/Videos/Watec12mm",
+          win_dir="/home/ejovo/Videos/Window")
 ```
+
+#### Single Directory
 
 We could, of course, have all our videos in one directory:
 
@@ -54,6 +60,8 @@ Draco12  /home/ejovo/Videos/Meteors
 Window   /home/ejovo/Videos/Meteors
 ```
 
+#### External Hard Drive
+
 We can even configure `fmdt` to look for our videos using an external hard-drive:
 
 ```
@@ -61,6 +69,10 @@ fmdt.init(d6_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteo
          d12_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor",
          win_dir="/run/media/ejovo/Seagate Portable Drive/Meteors")
 ```
+
+## Conclusion
+
+Now that you've configured your system we can get information about your local environment with the following examples.
 
 ```
 >>> fmdt.listdir_draco6()
