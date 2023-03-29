@@ -8,6 +8,8 @@ repo_url: https://github.com/ejovo13/fmdt_python_clean
 theme:
   features:
     - content.code.copy
+    - content.code.annotate 
+
   name: material
   palette:
     scheme: default
@@ -20,7 +22,7 @@ theme:
     tip: octicons/squirrel-16
     success: octicons/check-16
     question: octicons/question-16
-    warning: octicons/alert-16
+    warning: simple/meteor
     failure: octicons/x-circle-16
     danger: octicons/zap-16
     bug: octicons/bug-16
@@ -31,7 +33,20 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+            - name: mermaid
+              class: mermaid
+              format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
 
   
 nav:

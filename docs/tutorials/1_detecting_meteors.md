@@ -17,8 +17,8 @@ In order to follow this tutorial you need to have
 In this tutorial we are going to learn how to detect meteors using the python module `fmdt`. We'll start off by retrieving a sample [video](https://lip6.fr/adrien.cassagne/data/tauh/in/2022_05_31_tauh_34_meteors.mp4), saving it as `demo.mp4`.
 
 Let's open up a new Python script and jot down the following snippet.
-```
-"""first_detection.py - A sample program to call `fmdt-detect` using fmdt-python"""
+``` py title="hello_fmdt.py"
+""" A sample program to call `fmdt-detect` using fmdt-python"""
 import fmdt
 
 vid    = 'demo.mp4'

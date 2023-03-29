@@ -2,21 +2,50 @@
 
 This section presents the core usage of `fmdt-python`.
 
-### Call `fmdt` executables
+## FMDT executables
+
+=== "fmdt-detect"
+
+    ``` py
+    fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
+                trk_bb_path="bb.txt",
+                trk_out_path="trk.txt",
+                light_min=100,
+                light_max=150,
+                log_path="log") 
+    ```
+
+=== "fmdt-visu"
+
+    ``` py
+    fmdt.visu(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
+              trk_bb_path="bb.txt",
+              trk_path="trk.txt")
+    ```
+
+=== "fmdt-check"
+
+    ``` py 
+    fmdt.check(trk_path="trk.txt",
+               gt_path="2022_05_31_tauh_34_meteors.txt")
+    ```
+
+For a full list of available parameters, consult [`fmdt.api`](./reference/home.md#fmdtapi)
+
+## Configuration
+
+???+ info 
+
+    You only need to configure `fmdt-python` once. If you haven't already done so, follow [these instruction](./howto/0_initialization.md)
+
+We configure `fmdt-python` by indicating where our database videos are stored on disk. Here is the signature of `fmdt.init()`.
+
 
 ```
-import fmdt
-
-fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_bb_path="bb.txt", trk_out_path="trk.txt", light_min=100, light_max=150, log_path="log")
-fmdt.visu(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_bb_path="bb.txt", trk_path="trk.txt")
-fmdt.check(trk_path="trk.txt", gt_path="2022_05_31_tauh_34_meteors.txt")
+fmdt.init(d6_dir: str, d12_dir: str, win_dir: str)
 ```
 
-### Initialize database directories
-
-For a list of videos in our database, go [here](./explanation/video_database.md). For instructions how to initialize your configuration, read [this](./howto/0_initialization.md).
-
-If you haven't already done so, notify `fmdt` where you have the database files stored. If, for example, we have our videos stored on a remote hard drive `Seagate Portable Drive` then we could configure `fmdt` for linux user `ejovo` with:
+`fmdt.init` notifies `fmdt` where our video database files are stored. If, for example, we have a unix user `ejovo` with videos stored on a remote hard drive `Seagate Portable Drive` then we could configure `fmdt` with:
 
 ```
 fmdt.init(d6_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor",
@@ -24,47 +53,65 @@ fmdt.init(d6_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteo
          win_dir="/run/media/ejovo/Seagate Portable Drive/Meteors")
 ```
 
+??? example "output"
+
+    ```
+    Saved config to /home/ejovo/.local/share/fmdt_python/config.json
+    ```
+
+
 We can compare what files we have in our local config compared to the files listed in our [database](./explanation/video_database.md) with the function `local_info()`:
-```py
->>> fmdt.local_info()
-Printing information about the local environment
-================================================================================
-Draconids-6mm*.avi videos configured with dir: /run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/
-================================================================================
-52 videos exist on disc out of the 52 videos in our database
-38 of which have ground truths out of 38 ground truths in our database
-
-================================================================================
-Draconids-12mm*.avi videos configured with dir: /run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor/
-================================================================================
-41 videos exist on disc out of the 41 videos in our database
-37 of which have ground truths out of 37 ground truths in our database
-
-================================================================================
-window*.mp4 videos configured with dir: /run/media/ejovo/Seagate Portable Drive/Meteors/
-================================================================================
-8 videos exist on disc out of the 8 videos in our database
-0 of which have ground truths out of 0 ground truths in our database
+```
+fmdt.local_info()
 ```
 
-### Video interface
+??? example "output"
 
-We start by loading in our demo:
+    ``` 
+    Printing information about the local environment
+    ================================================================================
+    Draconids-6mm*.avi videos configured with dir: /run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/
+    ================================================================================
+    52 videos exist on disc out of the 52 videos in our database
+    38 of which have ground truths out of 38 ground truths in our database
 
-```py
-v = fmdt.load_demo()
+    ================================================================================
+    Draconids-12mm*.avi videos configured with dir: /run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor/
+    ================================================================================
+    41 videos exist on disc out of the 41 videos in our database
+    37 of which have ground truths out of 37 ground truths in our database
+
+    ================================================================================
+    window*.mp4 videos configured with dir: /run/media/ejovo/Seagate Portable Drive/Meteors/
+    ================================================================================
+    8 videos exist on disc out of the 8 videos in our database
+    0 of which have ground truths out of 0 ground truths in our database
+    ```
+
+## Video interface
+
+We start by loading in our demo with `fmdt.load_demo()`
+
+
+``` py
+v = fmdt.load_demo() # (1)!
 ```
 
-```py
->>> v
-2022_05_31_tauh_34_meteors.mp4
+1. `fmdt.load_demo()` loads in the `Video` object associated with 2022_05_31_tauh_34_meteors.mp4. The existence of this object does not imply
+that the actual video file exists on disk
 
->>> type(v)
-<class 'fmdt.db.Video'>
+??? example "output"
 
->>> v.full_path()
-'/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4'
-```
+    ``` 
+    >>> v
+    2022_05_31_tauh_34_meteors.mp4
+
+    >>> type(v)
+    <class 'fmdt.db.Video'>
+
+    >>> v.full_path()
+    '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4'
+    ```
 
 And we can run a detection with `detect()`:
 
