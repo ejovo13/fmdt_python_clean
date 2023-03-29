@@ -3,6 +3,18 @@
 This document shows you how to initiliaze your configuration for `fmdt-python`, which only needs
 to be done once per human lifetime (or rather, once per computer).
 
+!!! danger
+
+    This is my title
+
+!!! bug
+
+    This is my note
+
+!!! note 
+
+    Check out some meteors here
+
 ## [Video Database](../explanation/video_database.md)
 
 Our database of videos is hosted on a physical medium (ask us about it) and they are split up into three categories: Draco6 (videos of the form `Draconids-6mm*.avi`), Draco12 (`Draconids-12mm*.avi`), and Window (videos of the form `window*.mp4`). Check out the list of videos in our database [here](../explanation/video_database.md).
