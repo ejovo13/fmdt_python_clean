@@ -1,8 +1,14 @@
 # Core Usage
 
-This section presents the core usage of `fmdt-python`.
+This section presents the core usage of `fmdt-python`. Any examples assume that `fmdt` has already been imported:
+
+```
+import fmdt
+```
 
 ## FMDT executables
+
+We call the main executables `fmdt-*` using `fmdt.*`
 
 === "fmdt-detect"
 
@@ -14,6 +20,47 @@ This section presents the core usage of `fmdt-python`.
                 light_max=150,
                 log_path="log") 
     ```
+
+    ??? info "signature"
+
+        ``` py
+        def detect(
+                #=================== fmdt-detect parameters ================
+                vid_in_path: str, 
+                vid_in_start: int = None,
+                vid_in_stop: int = None,
+                vid_in_skip: int = None,
+                vid_in_buff: bool = None,
+                vid_in_loop: int = None,
+                vid_in_threads: int = None,
+                light_min: int = None,
+                light_max: int = None,
+                ccl_fra_path: str = None,
+                ccl_fra_id: bool = None,
+                mrp_s_min: int = None,
+                mrp_s_max: int = None,
+                knn_k: int = None,
+                knn_d: int = None,
+                knn_s: int = None,
+                trk_ext_d: int = None,
+                trk_ext_o: int = None,
+                trk_angle: float = None,
+                trk_star_min: int = None,
+                trk_meteor_min: int = None,
+                trk_meteor_max: int = None,
+                trk_ddev: float = None,
+                trk_all: bool = None,
+                trk_bb_path: str = "bb.txt",
+                trk_mag_path: str = None,
+                log_path: str = None,
+                #================== Additional Parameters ====================
+                trk_out_path: str = "trk.txt",
+                log: bool = False,
+                timeout: float = None,
+                cache: bool = False,
+                save_df: bool = False
+            ) -> fmdt.res.DetectionResult
+        ```
 
 === "fmdt-visu"
 
@@ -30,7 +77,20 @@ This section presents the core usage of `fmdt-python`.
                gt_path="2022_05_31_tauh_34_meteors.txt")
     ```
 
-For a full list of available parameters, consult [`fmdt.api`](./reference/home.md#fmdtapi)
+    ??? info "signature"
+
+        ``` py
+        def check(
+                trk_path: str,
+                gt_path: str,
+                stdout: str = None,
+                log = False
+            ) -> fmdt.res.CheckResult:
+        ```
+
+---
+
+Consult [`fmdt.api`](./reference/home.md#fmdtapi) for more information about `fmdt`'s interface.
 
 ## Configuration
 
@@ -38,7 +98,7 @@ For a full list of available parameters, consult [`fmdt.api`](./reference/home.m
 
     You only need to configure `fmdt-python` once. If you haven't already done so, follow [these instruction](./howto/0_initialization.md)
 
-We configure `fmdt-python` by indicating where our database videos are stored on disk using `fmdt.init()`:
+We configure `fmdt-python` by indicating where our [database videos](./explanation/video_database.md) are stored on disk using `fmdt.init()`:
 ```
 fmdt.init(d6_dir: str, d12_dir: str, win_dir: str) -> None
 ```
@@ -61,8 +121,7 @@ fmdt.init(d6_dir: str, d12_dir: str, win_dir: str) -> None
     ```
 
 
-We can print information about which videos from our [database](./explanation/video_database.md) are found locally after 
-configuration with the function `local_info()`:
+Print information about our local database configuration with the function `local_info()`:
 
 === "code"
     ```
