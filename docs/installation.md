@@ -3,6 +3,9 @@
 
     `fmdt-python` requires a version of Python more recent than `3.10` 
 
+We can access the `fmdt` module using either `pip` or by directly cloning the source code repository. We recommend using `pip` as 
+it ensures that `fmdt` will be located when we use `import`.
+
 === "pip"
 
     `fmdt-python` can be installed using `pip`
@@ -28,18 +31,22 @@
 
 === "GitHub"
 
-    The source code for `fmdt-python` can be obtained by cloning the github repository via https:
-    ```{bash}
-    git clone https://github.com/ejovo13/fmdt_python_clean.git
-    ```
+    The source code for `fmdt-python` can be obtained by cloning the github repository.
 
-    or via ssh:
+    === "ssh"
 
-    ```{bash}
-    git clone git@github.com:ejovo13/fmdt_python_clean.git
-    ```
+        ```{bash}
+        git clone git@github.com:ejovo13/fmdt_python_clean.git
+        ```
 
-    The benefit of cloning the github repository is having access to example python scripts of using `fmdt-python` to accomplish basic tasks with `fmdt`.
+    === "https"
+
+        ```{bash}
+        git clone https://github.com/ejovo13/fmdt_python_clean.git
+        ```
+        
+    Cloning the github repository provieds you access to sample python scripts that demonstrate
+    the basic usage of `fmdt-python`
 
 ## Next Steps
 
