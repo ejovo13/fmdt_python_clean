@@ -172,7 +172,7 @@ class DetectArgs:
 
     def __hash__(self) -> int:
         # return int.from_bytes(pickle.dumps(self), "big")
-        return int(self.digest, 16)
+        return int(self.digest(), 16)
     
     def gen_unique_dir(self) -> str:
         return self.digest()[0:16] 

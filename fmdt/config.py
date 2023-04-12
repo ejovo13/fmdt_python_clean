@@ -259,19 +259,16 @@ def clear_cache() -> int:
 
         full_path = cd + "/" + p
 
-        print(f"Treating file {p}...")
 
         # shutil.rmtree(full_path)
 
         if os.path.isfile(full_path):
             os.remove(full_path)
-            print("file")
             files_removed += 1
             continue
     
         if os.path.isdir(full_path):
             files_removed += count_files_in_dir(p)
-            print("dir")
             top_level_dir_removed += 1
             shutil.rmtree(full_path)
             continue
@@ -291,7 +288,7 @@ def init_cache() -> None:
         os.mkdir(cache_dir())
 
     if size_cache() > _CACHE_LIMIT_BYTES:
-        print(f"Cache too large! ({bytes_format(size_cache)})")
+        print(f"Cache reached maximum size! ({bytes_format(size_cache())})")
         clear_cache()
 
 def listdir_cache() -> list[str]:

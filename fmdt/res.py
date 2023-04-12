@@ -9,6 +9,10 @@ def retrieve_all_nroi(log_path: str) -> list[int]:
     """
     Assumes the format: '# Frame n°00247 (t) -- Regions of interest (RoI) [64]: \n'
     """
+
+    if not os.path.exists(log_path):
+        return []
+    
     frames = os.listdir(log_path)
     rxp = r'\[(\d*)\]'
 
@@ -28,6 +32,9 @@ def retrieve_all_nroi(log_path: str) -> list[int]:
     return [retrieve_single_nroi(f) for f in frames]
 
 def retrieve_all_nassociations(log_path: str) -> list[int]:
+
+    if not os.path.exists(log_path):
+        return []
 
     frames = os.listdir(log_path)[1:]
 
@@ -59,6 +66,9 @@ def retrieve_mean_err_std_dev(filename: str) -> tuple[float, float]:
             
 def retrieve_all_mean_errs(log_path: str) -> list[float]:
 
+    if not os.path.exists(log_path):
+        return []
+
     frames = os.listdir(log_path)[1:]
 
     def mean_err(filename) -> float:
@@ -68,6 +78,9 @@ def retrieve_all_mean_errs(log_path: str) -> list[float]:
     return [mean_err(f) for f in frames]
 
 def retrieve_all_std_devs(log_path: str) -> list[float]:
+
+    if not os.path.exists(log_path):
+        return []
 
     frames = os.listdir(log_path)[1:]
 
@@ -189,7 +202,28 @@ class DetectionResult:
     #         std_devs = []
 
     #     return DetectionResult(rois, [0] + nassocs, [0.0] + mean_errs, [0.0] + std_devs, args, trk_list)
+
+    def roa(self) -> pd.Series:
+        """Rate of Association (ROA) is the ratio nassoc / nroi"""
+
+        assert not self.df is None, f"Cannot compute the roa of {self} because the field df is missing. Consider rerunning your detection with `save_df=True`"
         
+        return self.df["nassoc"] / self.df["nroi"]
+
+    def mean_roa(self) -> float:
+        return self.roa().mean()
+
+    def mean_nroi(self) -> float:
+        return self.df["nroi"].mean()
+
+    def mean_nassoc(self) -> float:
+        return self.df["nassoc"].mean()
+
+    def mean_mean_err(self) -> float:
+        return self.df["mean_err"].mean()
+    
+    def mean_std_dev(self) -> float:
+        return self.df["std_dev"].mean()
     
 # load a DetectionResult object from a trk_path and a log_path
 def load_det_result(trk_path: str, log_path: str) -> DetectionResult:
@@ -391,7 +425,13 @@ class CheckResult:
 
     def all_stats(self) -> pd.Series:
         return self.stats[self.stats["type"] == "all"].iloc[0]
-
+    
+    def trk_rate(self) -> float:
+        return self.meteor_stats()["trk_rate"]
+    
+    def meteors_detected(self) -> bool:
+        """Return True if the tracking rate is greater than 0"""
+        return self.trk_rate() > 0.0
 
 def main():
     file = "test_check_one.txt"

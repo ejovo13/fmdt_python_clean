@@ -105,8 +105,6 @@ class Video:
     def default_trk_path(self, dir: str = "."):
         return dir + "/" + self.prefix() + "_trk.txt" 
 
-
-
     # def visu
     def detect(self,
         #=================== fmdt-detect parameters ================
@@ -270,6 +268,10 @@ class Video:
         
         return df.iat[0,0]
     
+    def has_id(self, rhs_id: int) -> bool:
+        """Return true if self has the same id as rhs_id"""
+        return self.id() == rhs_id
+    
     def full_path(self) -> str:
         return self.dir() + "/" + self.name
     
@@ -282,6 +284,15 @@ class Video:
     def exists(self) -> bool:
         """Check whether the video path in self.full_path() exists on disk"""
         return os.path.exists(self.full_path())
+    
+    def compute_trk_rate(self, **detect_args):
+
+        c_res = self.detect(**detect_args).check()
+        return c_res.trk_rate()
+    
+    
+    
+
 
     def evaluate_args(
             self,
@@ -368,30 +379,36 @@ def load_in_videos(db_filename: str = "videos.db", dir = fmdt.download.__DATA_DI
 def has_meteors(vids: list[Video]) -> list[Video]:
     return [v for v in vids if v.has_meteors()]
 
-def load_draco6(filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False) -> list[Video]:
+def load_draco6(filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False, require_exist = False) -> list[Video]:
     """Load draco6 `Video` objects that are stored in the `db_dir`/`filename` .db file"""
     vids = load_in_videos(filename, db_dir)
     d6 = [v for v in vids if v.is_draco6()]
     if require_gt:
-        return [v for v in d6 if v.has_meteors()]
-    else:
-        return d6
+        d6 = [v for v in d6 if v.has_meteors()]
+    if require_exist:
+        d6 = [v for v in d6 if v.exists()]
+    
+    return d6
 
-def load_draco12(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False) -> list[Video]:
+def load_draco12(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False, require_exist = False) -> list[Video]:
     vids = load_in_videos(db_filename, db_dir)
     d12 = [v for v in vids if v.is_draco12()]
     if require_gt:
-        return [v for v in d12 if v.has_meteors()]
-    else:
-        return d12
+        d12 = [v for v in d12 if v.has_meteors()]
+    if require_exist:
+        d12 = [v for v in d12 if v.exists()]
+    
+    return d12
 
-def load_window(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False) -> list[Video]:
+def load_window(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False, require_exist = False) -> list[Video]:
     vids = load_in_videos(db_filename, db_dir)
     win = [v for v in vids if v.is_window()]
     if require_gt:
-        return [v for v in win if v.has_meteors()]
-    else:
-        return win
+        win = [v for v in win if v.has_meteors()]
+    if require_exist:
+        win = [v for v in win if v.exists()]
+    
+    return win
     
 def load_demo(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
     vids = load_in_videos(db_filename, db_dir)
@@ -473,7 +490,21 @@ def print_diagnostics_all():
 def info():
     print_diagnostics_all()
 
+
+def get_video_by_id(id: int) -> Video | None:
+    videos = load_in_videos()
+    v = [v for v in videos if v.has_id(id)]
+    if len(v) != 0:
+        return v[0]
+    else:
+        return None 
+
+def get_video_by_ids(ids: list[int]) -> Video | None:
+    return [get_video_by_id(id) for id in ids if not get_video_by_id(id) is None] 
+
+
 #!============================== Modifying our data base ============================
 def add_human_detection_to_gt(meteor: fmdt.HumanDetection):
     pass
-    
+
+ 
