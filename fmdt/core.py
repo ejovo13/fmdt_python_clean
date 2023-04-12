@@ -391,6 +391,7 @@ def split_video_at_intervals(
     else:
         seqs = start_end
     video_name, extension = utils.decompose_video_filename(video_filename) 
+    utils.mkdir_p(video_name)
 
     # Bookkeeping for formatting the name of the output videos
     max_digits = len(str(seqs[-1][1]))

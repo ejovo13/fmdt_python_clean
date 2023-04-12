@@ -83,6 +83,11 @@ def decompose_video_filename(filename: str) -> tuple[str, str]:
 def assert_file_exists(filename: str) -> None:
     assert os.path.exists(filename), f"{filename} not found"
 
+def mkdir_p(dir: str) -> None:
+    """Make directory if it doesnt exist"""
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+
 def time_s_to_ffmpeg_format(time: int | float) -> str:
 
     time_h = int(time // (60 * 60))
