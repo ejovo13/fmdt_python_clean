@@ -226,3 +226,29 @@ def convert_ndarray_to_video(
     process.stdout.close()
     process.stderr.close()
     process.wait()
+
+
+    #function that determines the frame intervals on which to split a video so that the sequences do not exceed a certain duration
+
+#length_video=duration of the video in seconds
+#length_sequence=duration max of a sequence in seconds
+#fps= number of frame per seconds
+
+def video_partition(length_video,length_sequence,fps):
+    nb_frame=length_video*fps
+    nb_frame_seq=length_sequence*fps
+
+    x=np.linspace(0,nb_frame,int(nb_frame/nb_frame_seq)+1,dtype='int64') #contains bounds of intervals of frames
+
+    intervals=[]
+    for i in range(x.shape[0]-1):
+            if(i==0):
+                intervals.append((x[i],x[i+1]+10))
+            elif(i==x.shape[0]-2):
+                intervals.append((x[i]-10,x[i+1]))
+            else:
+                intervals.append((x[i]-10,x[i+1]+10))
+#on prend un "voisinage" de chaque borne car le découpage avec ffmpeg n'est pas précis à la frame près. On ne peut donc garantir que des séquence autour de length_sequence
+    return(intervals)
+
+print(video_partition(120,19,30))
