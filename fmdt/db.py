@@ -9,8 +9,10 @@ import fmdt.res
 import fmdt.api
 
 import pandas as pd
+import numpy as np
 import sqlite3
 from enum import Enum
+from termcolor import colored
 import os
 
 VIDEOS_FILE = fmdt.config.dir() + "/videos.db"
@@ -249,7 +251,6 @@ class Video:
         self.evaluate_args(args, res.trk_list, stdout, log=log_check)
 
 
-
     # Lookup the id in our default database file.
     def id(self) -> int:
 
@@ -290,9 +291,39 @@ class Video:
         c_res = self.detect(**detect_args).check()
         return c_res.trk_rate()
     
+    def frame_rate(self) -> float:
+        return fmdt.utils.get_avg_frame_rate(self.full_path())
     
+    def nb_frames(self) -> int:
+        return fmdt.utils.get_video_nb_frames(self.full_path())
     
+    def duration(self) -> float:
+        return fmdt.utils.get_video_duration(self.full_path())
+    
+    def get_intervals(self, dur_s: float) -> list[tuple[int, int]]:
+        """Compute a list of (start_frame, end_frame) intervals whose length is dur_s"""
+        fps = self.frame_rate()
+        total_dur = self.duration()
+        is_cfr = fmdt.utils.video_has_cfr(self.full_path())
 
+        if not is_cfr:
+            print(colored(f"\tWARNING: {self} doesnt have constant frame rate (CFR), computed intervals may not return desired length of {dur_s} s", "red"))
+
+        # let's first get a list of intervals in seconds
+        start_points = np.arange(0, total_dur + dur_s, dur_s)
+
+        ints = []
+        for i in range(len(start_points) - 1):
+            f_start = int(start_points[i] * fps)
+            f_end   = int(start_points[i + 1] * fps)
+            ints.append((f_start, f_end))
+
+        return ints
+
+    def partition(self, dur_s: float) -> None:
+        """Partition a video into smaller segments of size dur_s"""
+        ints = self.get_intervals(dur_s)
+        fmdt.split_video_at_intervals(self.full_path(), ints, 0, 0, condense=False)
 
     def evaluate_args(
             self,
@@ -379,38 +410,63 @@ def load_in_videos(db_filename: str = "videos.db", dir = fmdt.download.__DATA_DI
 def has_meteors(vids: list[Video]) -> list[Video]:
     return [v for v in vids if v.has_meteors()]
 
-def load_draco6(filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False, require_exist = False) -> list[Video]:
+def load_draco6(
+        filename: str = "videos.db",
+        db_dir = fmdt.download.__DATA_DIR,
+        require_gt = False,
+        require_exist = False
+    ) -> list[Video]:
     """Load draco6 `Video` objects that are stored in the `db_dir`/`filename` .db file"""
+
     vids = load_in_videos(filename, db_dir)
     d6 = [v for v in vids if v.is_draco6()]
+
     if require_gt:
         d6 = [v for v in d6 if v.has_meteors()]
+
     if require_exist:
         d6 = [v for v in d6 if v.exists()]
     
     return d6
 
-def load_draco12(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False, require_exist = False) -> list[Video]:
+def load_draco12(
+        db_filename: str = "videos.db",
+        db_dir = fmdt.download.__DATA_DIR,
+        require_gt = False,
+        require_exist = False
+    ) -> list[Video]:
+
     vids = load_in_videos(db_filename, db_dir)
     d12 = [v for v in vids if v.is_draco12()]
+
     if require_gt:
         d12 = [v for v in d12 if v.has_meteors()]
+
     if require_exist:
         d12 = [v for v in d12 if v.exists()]
     
     return d12
 
-def load_window(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR, require_gt = False, require_exist = False) -> list[Video]:
+def load_window(
+        db_filename: str = "videos.db",
+        db_dir = fmdt.download.__DATA_DIR,
+        require_gt = False,
+        require_exist = False
+    ) -> list[Video]:
+
     vids = load_in_videos(db_filename, db_dir)
     win = [v for v in vids if v.is_window()]
+
     if require_gt:
         win = [v for v in win if v.has_meteors()]
+
     if require_exist:
         win = [v for v in win if v.exists()]
     
     return win
     
 def load_demo(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
+    """Load video 2022_05_31_tauh_34_meteors.mp4 from our database"""
     vids = load_in_videos(db_filename, db_dir)
     win = [v for v in vids if v.name == "2022_05_31_tauh_34_meteors.mp4"]
 
@@ -418,6 +474,8 @@ def load_demo(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR)
 
 
 def retrieve_meteors(video_name: str, db_filename: str = "videos.db", dir = fmdt.download.__DATA_DIR) -> list[fmdt.HumanDetection]:
+
+    """Query all of the ground truths in our database"""
 
     if not os.path.exists(dir + "/" + db_filename):
         fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=dir)

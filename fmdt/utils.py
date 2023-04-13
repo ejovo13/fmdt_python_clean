@@ -53,6 +53,17 @@ def get_avg_frame_rate(filename: str) -> float:
     frame_rates = video_stream['avg_frame_rate'].split('/')
     return float(frame_rates[0]) / float(frame_rates[1])
 
+def get_nominal_frame_rate(filename: str) -> float:
+    """
+    Get the average framerate of a video
+    
+    Adapted from https://github.com/kkroening/ffmpeg-python/blob/master/examples/video_info.py#L15
+    """
+    probe = ffmpeg.probe(filename)
+    video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+    frame_rates = video_stream['r_frame_rate'].split('/')
+    return float(frame_rates[0]) / float(frame_rates[1])
+
 def get_video_width(filename: str) -> int:
     probe = ffmpeg.probe(filename)
     video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
@@ -63,6 +74,23 @@ def get_video_height(filename: str) -> int:
     probe = ffmpeg.probe(filename)
     video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
     return int(video_stream['height'])
+
+def get_video_nb_frames(filename: str) -> int:
+    probe = ffmpeg.probe(filename)
+    video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+    return int(video_stream['nb_frames'])
+
+def get_video_duration(filename: str) -> float:
+    """Get the duration of video in seconds"""
+    probe = ffmpeg.probe(filename)
+    video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
+    return float(video_stream['duration'])
+
+def video_has_cfr(filename: str) -> bool:
+    """Check whether a video is encoded with a constant frame rate (CFR)
+    
+    This amounts to checking if the nominal frame rate and the average frame rate are identical"""
+    return get_avg_frame_rate(filename) == get_nominal_frame_rate(filename)
 
     
 def decompose_video_filename(filename: str) -> tuple[str, str]:
@@ -113,8 +141,9 @@ def extract_video_frames(
         end_frame: int,
         out_file: str | None = None,
         quiet = True,
-        overwrite = False
+        overwrite = False,
     ) -> None:
+    """Extract videos frames using ffmpeg"""
 
     assert_file_exists(filename)
 
@@ -124,14 +153,12 @@ def extract_video_frames(
         out_file = f"{name}_f{start_frame}-{end_frame}.{ext}"
 
     fps = get_avg_frame_rate(filename)
-    start_time = (start_frame / fps) - 1 # offset by at most one second
+    start_time = (start_frame / fps)
     start_time = time_s_to_ffmpeg_format(start_time)
 
     # Calculate the duration.
     duration = (end_frame - start_frame) / fps
-    duration = time_s_to_ffmpeg_format(duration + 1) # Add one second to the duration
-
-    # end_time   = frame_number_to_ffmpeg_format(filename, start_frame, seconds_offset=1)
+    duration = time_s_to_ffmpeg_format(duration)
 
     args = ["ffmpeg", "-ss", start_time, "-i", filename, "-t", duration, out_file]
 
@@ -227,16 +254,17 @@ def convert_ndarray_to_video(
     process.stderr.close()
     process.wait()
 
+def video_partition(length_video: float, length_sequence: float, fps: float) -> list[tuple[int, int]]:
+    """ Determine the frame intervals on which to split a video so that the sequences do not exceed a certain duration
 
-#function that determines the frame intervals on which to split a video so that the sequences do not exceed a certain duration
-
-#length_video=duration of the video in seconds
-#length_sequence=duration max of a sequence in seconds
-#fps= number of frame per seconds
-
-def video_partition(length_video,length_sequence,fps):
-    nb_frame=length_video*fps
-    nb_frame_seq=length_sequence*fps
+    Parameters
+    ----------
+    length_video (float): duration of the video in seconds
+    length_sequence (float): max duration of a sequence in seconds
+    fps (float):  average number of frames per second
+    """
+    nb_frame = length_video * fps
+    nb_frame_seq = length_sequence * fps
 
     x=np.linspace(0,nb_frame,int(nb_frame/nb_frame_seq)+1,dtype='int64') #contains bounds of intervals of frames
 
