@@ -414,6 +414,17 @@ class CheckResult:
         self.gt_table = gt_table
         self.stats = stats
 
+    def __str__(self) -> str:
+        a = "GroundTruth table\n-----------------\n"
+        b = str(self.gt_table) + "\n"
+        c = "Tracking stats\n--------------\n"
+        d = str(self.stats) + "\n"
+
+        return a + b + c + d
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def meteor_stats(self) -> pd.Series:
         return self.stats[self.stats["type"] == "meteor"].iloc[0]
 

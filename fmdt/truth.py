@@ -108,6 +108,10 @@ class HumanDetection:
 
         return False
     
+    def interval(self) -> tuple[int, int]:
+        """Return the (start_frame, end_frame) interval that this ground truth appears in"""
+        return (self.start_frame, self.end_frame)
+    
     def test_detection_vary_light(
             self,
             vid: str,
