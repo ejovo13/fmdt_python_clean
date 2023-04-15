@@ -61,6 +61,7 @@ from fmdt.config import (
 from fmdt.db import (
     Video,
     VideoType,
+    VideoClip,
     load_in_videos,
     load_draco6,
     load_draco12,
@@ -77,6 +78,6 @@ init_cache()
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 35 
+PATCH         = 37 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
