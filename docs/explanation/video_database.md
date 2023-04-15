@@ -1,7 +1,6 @@
 # Video Database
 
-We have split our video database into three sections: `Draco6`, `Draco12`, and `Window`. We have comprehensive ground truth meteors for `Draco6` and `Draco12` videos whereas the ground truths for `Window` videos are in progress.
-
+Our video database is split into three categories: `Draco6`, `Draco12`, and `Window`. 
 
 === "Draco6"
 
@@ -111,7 +110,7 @@ We have split our video database into three sections: `Draco6`, `Draco12`, and `
 
     ```bash
     ~/Videos/Window/
-    ├── 2022_05_31_tauh_34_meteors.mp4  # Commonly our used as demo.mp4
+    ├── 2022_05_31_tauh_34_meteors.mp4  # Sometimes referred to as demo.mp4 in old tutorials
     ├── window_3_sony_0400-0405UTC.mp4
     ├── window_3_sony_0405-0410UTC.mp4
     ├── window_3_sony_0410-0415UTC.mp4
@@ -120,3 +119,5 @@ We have split our video database into three sections: `Draco6`, `Draco12`, and `
     ├── window_3_sony_0425-0430UTC.mp4
     └── window_3_sony_0500-0505UTC.mp4
     ```
+
+    Each `window*` video is 5 minutes long and contains several ground truths.

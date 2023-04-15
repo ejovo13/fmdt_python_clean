@@ -3,6 +3,11 @@
 This document shows you how to initiliaze your configuration for `fmdt-python`, which only needs
 to be done once per human lifetime (or rather, once per computer).
 
+In order to completely configure your system follow the steps outlined in 
+
+- [`fmdt.init`](#fmdtinit) 
+- [`fmdt.download_dbs`](#fmdtdownload_dbs) 
+
 ??? warning
 
     In order for configuration to take effect, you must have our video files on your local machine
@@ -69,6 +74,19 @@ fmdt.init(d6_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteo
          d12_dir="/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor",
          win_dir="/run/media/ejovo/Seagate Portable Drive/Meteors")
 ```
+
+## `fmdt.download_dbs`
+
+Download the ground truth database with `fmdt.download_dbs()`
+
+```
+fmdt.download_dbs()
+```
+
+!!! Warning
+
+    Downloading the ground truth database is an essential step in configuring `fmdt`
+
 
 ## Conclusion
 

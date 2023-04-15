@@ -243,6 +243,7 @@ True
 
 ### Meteors
 
+
 We can check if `v` has any meteors in our ground truth database using `has_meteors()`
 
 ```
@@ -465,6 +466,135 @@ We can run all three of our core executables starting with a `Video` object.
         ```
 
 For more information about the results of these executables, consult [this section](./reference/res.md)
+
+
+## VideoClip
+
+The class `fmdt.VideoClip` is a subclass of `fmdt.Video` and is used to represent a portion of specific video that contains meteors. This class is primarily used when working with the [`window`](./explanation/video_database.md) videos as they are all 5 minutes long and each contain multiple meteors.
+
+### Creation
+
+We can create a `list[VideoClip]` starting from a `Video` with known ground truths. Let's take the first `window` as an example.
+
+```
+w = fmdt.load_window()[0]
+```
+
+Make sure our video has ground truths in our database with `has_meteors()` and then instantiate some `VideoClip` objects with `create_clips()`
+
+=== "code"
+
+    ```
+    clips = w.create_clips()
+    ```
+
+=== "output"
+
+    ```
+    >>> clips
+    [window_3_sony_0400-0405UTC.mp4 [773, 802], window_3_sony_0400-0405UTC.mp4 [1213, 1262], window_3_sony_0400-0405UTC.mp4 [1414, 1451], window_3_sony_0400-0405UTC.mp4 [2276, 2335], window_3_sony_0400-0405UTC.mp4 [2823, 2862], window_3_sony_0400-0405UTC.mp4 [2850, 2900], window_3_sony_0400-0405UTC.mp4 [2916, 2945], window_3_sony_0400-0405UTC.mp4 [3414, 3446], window_3_sony_0400-0405UTC.mp4 [3845, 3874], window_3_sony_0400-0405UTC.mp4 [4143, 4191], window_3_sony_0400-0405UTC.mp4 [4250, 4280], window_3_sony_0400-0405UTC.mp4 [4435, 4472], window_3_sony_0400-0405UTC.mp4 [5311, 5342], window_3_sony_0400-0405UTC.mp4 [6778, 6823], window_3_sony_0400-0405UTC.mp4 [7187, 7219]]
+    ```
+
+If we want to actually save these clips to disk, we add the parameter `save_to_disk=True`
+
+=== "code"
+
+    ```
+    clips = w.create_clips(save_to_disk=True)
+    ```
+
+=== "output"
+
+    ```
+    Running command 'ffmpeg -ss 00:00:30.920 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.160 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f0773-0802_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:00:48.520 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.960 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f1213-1262_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:00:56.560 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.480 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f1414-1451_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:01:31.040 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:02.360 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f2276-2335_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:01:52.920 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.560 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f2823-2862_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:01:54.000 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:02.000 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f2850-2900_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:01:56.640 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.160 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f2916-2945_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:02:16.560 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.280 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f3414-3446_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:02:33.800 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.160 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f3845-3874_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:02:45.720 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.920 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f4143-4191_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:02:50.000 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.200 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f4250-4280_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:02:57.400 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.480 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f4435-4472_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:03:32.440 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.240 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f5311-5342_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:04:31.120 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.800 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f6778-6823_.mp4 -loglevel error'
+    Running command 'ffmpeg -ss 00:04:47.480 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.280 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f7187-7219_.mp4 -loglevel error'
+    ```
+
+Each individual clip can be interfaced just like as a `Video` above thanks to class inheritance. Here we showcase a few examples.
+
+??? example "Get meteors"
+
+    === "code"
+
+        ```
+        clips[0].meteors()
+        ```
+
+    === "output"
+
+        ```
+        [<fmdt.truth.HumanDetection object at 0x7f2b0c156ad0>]
+        ```
+
+??? example "Retrieve the path to the video from which this clip was generated"
+
+    === "code"
+
+        ```
+        clips[0].parent_path()
+        ```
+
+    === "output"
+
+        ```
+        '/run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/'
+        ```
+
+??? example "Retrieve the full path to this clip"
+
+    === "code"
+
+        ```
+        clips[0].full_path()
+        ```
+
+    === "output"
+
+        ```
+        '/run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f0773-0802_.mp4'
+        ```
+
+??? example "Run a detection"
+
+    === "code"
+
+        ```
+        clips[0].detect()
+        ```
+
+    === "output"
+
+        ```
+        (II) Frame n°  28 -- Tracks = ['meteor':   0, 'star':   0, 'noise':   0, 'total':   0]
+        <fmdt.res.DetectionResult object at 0x7f2b0c1571f0>
+        ```
+
+??? example "Retrieve number of frames"
+
+    === "code"
+
+        ```
+        clips[0].nb_frames()
+        ```
+
+    === "output"
+
+        ```
+        29
+        ```
 
 
 
