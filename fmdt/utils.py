@@ -123,8 +123,10 @@ def time_s_to_ffmpeg_format(time: int | float) -> str:
     time_m = int(time // 60)
     time -= time_m * 60
     time_s = int(np.floor(time)) 
+    time -= time_s
+    time_ms = time
 
-    return f"{time_h:02}:{time_m:02}:{time_s:02}"
+    return f"{time_h:02}:{time_m:02}:{time_s:02}" + f"{time_ms:.3f}".lstrip('0')
 
 # def frame_number_to_ffmpeg_format(filename: str, frame_number: int, seconds_offset=0) -> str:
 
@@ -255,7 +257,8 @@ def convert_ndarray_to_video(
     process.wait()
 
 def video_partition(length_video: float, length_sequence: float, fps: float) -> list[tuple[int, int]]:
-    """ Determine the frame intervals on which to split a video so that the sequences do not exceed a certain duration
+    """
+    Determine the frame intervals on which to split a video so that the sequences do not exceed a certain duration
 
     Parameters
     ----------
