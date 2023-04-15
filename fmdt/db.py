@@ -1,5 +1,6 @@
 """Module dealing with the database stuff"""
 
+from fmdt.exceptions import *
 import fmdt.config
 import fmdt.args
 import fmdt.truth
@@ -7,6 +8,10 @@ import fmdt.download
 import fmdt.utils
 import fmdt.res
 import fmdt.api
+
+from copy import (
+    deepcopy
+)
 
 import pandas as pd
 import numpy as np
@@ -363,7 +368,49 @@ class Video:
         # Then call fmdt_check
 
         return fmdt.check(args.detect_args.trk_out_path, tmp_gt_file, stdout, log)
+    
+    def create_clip(self, frame_start: int, frame_end: int):
 
+        valid_bounds = frame_start >= 0 and frame_end <= self.nb_frames()
+        assert valid_bounds, f"Cannot create video clip with bounds [{frame_start}, {frame_end}] for {self} ({self.nb_frames()} frames)"
+
+        return VideoClip(self.name, frame_start, frame_end, self.type)
+
+    def create_clips(self, frame_buffer: int = None, condense = True):
+        """
+        If a video has meteors in our data base, create video clips that capture each meteor
+        
+        Parameters
+        ----------
+        frame_buffer: int
+            The number of frames to include before and after the appearance of a meteor
+        condense: bool
+            Whether or not to condense sequences that overlap. For example if two meteors have the frame 
+            intervals [0, 10] and [5, 15] and condense == True, then only create one video clip with frames
+            [0, 15]
+        """
+
+        if not self.has_meteors():
+            raise GroundTruthError(f"No ground truths in our database for {self}")
+
+        if frame_buffer is None:
+            frame_buffer = int(self.frame_rate() / 2) # If no frame_buffer is given, make sure the clip is at least one second long
+
+        # We need to get the intervals associated with the ground truths
+        meteors = self.meteors()
+        intervals = [m.interval() for m in meteors]
+
+        if condense:
+            intervals = fmdt.utils.condense_start_end(intervals, frame_buffer)
+
+        def get_clip(interval: int):
+            """Helper function to compute VideoClip with proper bounds"""
+            lower = max(interval[0] - frame_buffer, 0) # don't dip below zero
+            upper = min(interval[1] + frame_buffer, self.nb_frames()) # don't go above nb_frames
+
+            return self.create_clip(lower, upper)
+
+        return [get_clip(i) for i in intervals]
 
     @staticmethod
     def from_pd_row(ser: pd.Series):
@@ -565,4 +612,45 @@ def get_video_by_ids(ids: list[int]) -> Video | None:
 def add_human_detection_to_gt(meteor: fmdt.HumanDetection):
     pass
 
- 
+class VideoClip(Video):
+
+    def __init__(self, name: str, frame_start: int, frame_end: int, type: VideoType = None):
+        super().__init__(name, type)
+        self.frame_start = frame_start
+        self.frame_end = frame_end
+
+    def __str__(self) -> str:
+        s = super().__str__()
+        return s + f" [{self.frame_start}, {self.frame_end}]"
+
+    def meteors(self):
+        p_meteors = super().meteors()
+
+        def pred(hum_det: fmdt.HumanDetection):
+            """Check if the meteors start frame is in the clip"""
+            return hum_det.start_frame >= self.frame_start and hum_det.start_frame <= self.frame_end
+        
+        def modify_meteor(m: fmdt.HumanDetection):
+            """Modify the interval with respect to this video clip"""
+            m_c = deepcopy(m)
+            m_c.start_frame = m.start_frame - self.frame_start 
+            m_c.end_frame   = m.end_frame   - self.frame_start 
+
+            return m_c
+
+        return [modify_meteor(m) for m in p_meteors if pred(m)]
+    
+    def parent_path(self) -> str:
+        """Return the full path to the folder that these clips will appear in"""
+        return self.dir() + "/" + self.prefix() + "/"
+    
+    def full_path(self) -> str:
+        return self.parent_path() + f"f{self.frame_start:04}-{self.frame_end:04}_." + self.suffix()
+
+    def save(self, overwrite = False):
+        """
+        Write this clip to disk 
+        """
+        fmdt.utils.mkdir_p(self.parent_path())
+
+        fmdt.utils.extract_video_frames(super().full_path(), self.frame_start, self.frame_end, self.full_path(), overwrite=overwrite)
