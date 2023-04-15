@@ -376,7 +376,7 @@ class Video:
 
         return VideoClip(self.name, frame_start, frame_end, self.type)
 
-    def create_clips(self, frame_buffer: int = None, condense = True):
+    def create_clips(self, frame_buffer: int = None, condense = True, save_to_disk = False):
         """
         If a video has meteors in our data base, create video clips that capture each meteor
         
@@ -410,7 +410,13 @@ class Video:
 
             return self.create_clip(lower, upper)
 
-        return [get_clip(i) for i in intervals]
+        clips = [get_clip(i) for i in intervals]
+
+        if save_to_disk:
+            for c in clips:
+                c.save()
+        
+        return clips
 
     @staticmethod
     def from_pd_row(ser: pd.Series):
