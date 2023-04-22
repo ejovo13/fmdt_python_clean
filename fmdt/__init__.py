@@ -36,7 +36,8 @@ from fmdt.truth import (
 from fmdt.download import (
     download_csvs,
     download_demo_mp4,
-    download_dbs
+    download_dbs,
+    get_db_dir
 )
 
 from fmdt.config import (
@@ -62,11 +63,12 @@ from fmdt.db import (
     Video,
     VideoType,
     VideoClip,
-    load_in_videos,
+    retrieve_videos,
     load_draco6,
     load_draco12,
     load_window,
     load_demo,
+    load_window_clips,
     info as local_info
 )
 
@@ -78,6 +80,6 @@ init_cache()
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 39 
+PATCH         = 40 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)

@@ -20,6 +20,9 @@ csv_dict = {
     "human_detections.csv": __DRACO_CSV_URL
 }
 
+def get_db_dir() -> str:
+    return __DATA_DIR
+
 
 def download_file(
         filename: str,

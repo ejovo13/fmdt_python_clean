@@ -281,3 +281,8 @@ def video_partition(length_video: float, length_sequence: float, fps: float) -> 
                 intervals.append((x[i]-10,x[i+1]+10))
 #on prend un "voisinage" de chaque borne car le découpage avec ffmpeg n'est pas précis à la frame près. On ne peut donc garantir que des séquence autour de length_sequence
     return(intervals)
+
+
+def join(dir: str, file: str):
+    """Convenience function for os.path.join"""
+    return os.path.join(dir, os.path.basename(file))

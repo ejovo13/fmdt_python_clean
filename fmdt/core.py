@@ -174,8 +174,8 @@ def extract_key_information(detect_tracks_in: str) -> list[dict]:
     dict_array (list[dict]): A list of dictionaries of the form
         { 
             "type": <"meteor" | "noise" | "start">
-            "frame_start": <int>
-            "frame_end": <int>
+            "start_frame": <int>
+            "end_frame": <int>
         }
         where each item in the list corresponds to a single object detected by 
         `fmdt-detect`
@@ -348,7 +348,7 @@ def split_video_at_intervals(
     Parameters
     ----------
     `video_filename` (str): Filename of video to split 
-    `start_end` (list[tuple[int, int]]): list of (frame_start, frame_end) pairs to split this video at
+    `start_end` (list[tuple[int, int]]): list of (start_frame, end_frame) pairs to split this video at
     `nframes_before` (int): Number of frames to extract before the meteor sequence begins
         (Default value of 3)
     `nframes_after` (int): Number of frames to extract after the meteor sequence ends

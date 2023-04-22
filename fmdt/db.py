@@ -21,6 +21,7 @@ from termcolor import colored
 import os
 
 VIDEOS_FILE = fmdt.config.dir() + "/videos.db"
+DEFAULT_DATA_DIR = fmdt.download.get_db_dir()
 
 class VideoType(Enum):
     DRACO6 = 0,
@@ -281,11 +282,21 @@ class Video:
     def full_path(self) -> str:
         return self.dir() + "/" + self.name
     
-    def meteors(self) -> list[fmdt.HumanDetection]:
-        return retrieve_meteors(self.name)
+    def meteors(
+            self,
+            db_filename: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+    ) -> list[fmdt.HumanDetection]:
+        
+        return retrieve_meteors(self.name, db_filename, db_dir)
     
-    def has_meteors(self) -> bool:
-        return len(self.meteors()) > 0
+    def has_meteors(
+            self,
+            db_filename: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+    ) -> bool:
+        
+        return len(self.meteors(db_filename, db_dir)) > 0
 
     def exists(self) -> bool:
         """Check whether the video path in self.full_path() exists on disk"""
@@ -369,14 +380,19 @@ class Video:
 
         return fmdt.check(args.detect_args.trk_out_path, tmp_gt_file, stdout, log)
     
-    def create_clip(self, frame_start: int, frame_end: int):
+    def create_clip(self, start_frame: int, end_frame: int):
 
-        valid_bounds = frame_start >= 0 and frame_end <= self.nb_frames()
-        assert valid_bounds, f"Cannot create video clip with bounds [{frame_start}, {frame_end}] for {self} ({self.nb_frames()} frames)"
+        valid_bounds = start_frame >= 0 and end_frame <= self.nb_frames()
+        assert valid_bounds, f"Cannot create video clip with bounds [{start_frame}, {end_frame}] for {self} ({self.nb_frames()} frames)"
 
-        return VideoClip(self.name, frame_start, frame_end, self.type)
+        return VideoClip(self.name, start_frame, end_frame, self.type)
 
-    def create_clips(self, frame_buffer: int = None, condense = True, save_to_disk = False):
+    def create_clips(
+            self,
+            frame_buffer: int = None,
+            condense = True,
+            save_to_disk = False,
+            db_dir = DEFAULT_DATA_DIR):
         """
         If a video has meteors in our data base, create video clips that capture each meteor
         
@@ -390,14 +406,14 @@ class Video:
             [0, 15]
         """
 
-        if not self.has_meteors():
+        if not self.has_meteors(db_dir = db_dir):
             raise GroundTruthError(f"No ground truths in our database for {self}")
 
         if frame_buffer is None:
             frame_buffer = int(self.frame_rate() / 2) # If no frame_buffer is given, make sure the clip is at least one second long
 
         # We need to get the intervals associated with the ground truths
-        meteors = self.meteors()
+        meteors = self.meteors(db_dir = db_dir)
         intervals = [m.interval() for m in meteors]
 
         if condense:
@@ -424,7 +440,76 @@ class Video:
         return out
     
 
+    @staticmethod
+    def from_db_id(
+        id: int,
+        db_file = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ):
+        
+        con = sqlite3.connect(db_dir + db_file)
 
+        video_pd = pd.read_sql_query(f"SELECT * FROM video WHERE id = {id}", con = con)
+        v = Video.from_pd_row(video_pd.iloc[0])
+
+        con.close()
+
+        return v
+    
+class VideoClip(Video):
+
+    def __init__(self, name: str, start_frame: int, end_frame: int, type: VideoType = None):
+        super().__init__(name, type)
+        self.start_frame = start_frame
+        self.end_frame = end_frame
+
+    def __str__(self) -> str:
+        s = super().__str__()
+        return s + f" [{self.start_frame}, {self.end_frame}]"
+
+    def meteors(self):
+        p_meteors = super().meteors()
+
+        def pred(hum_det: fmdt.HumanDetection):
+            """Check if the meteors start frame is in the clip"""
+            return hum_det.start_frame >= self.start_frame and hum_det.start_frame <= self.end_frame
+        
+        def modify_meteor(m: fmdt.HumanDetection):
+            """Modify the interval with respect to this video clip"""
+            m_c = deepcopy(m)
+            m_c.start_frame = m.start_frame - self.start_frame 
+            m_c.end_frame   = m.end_frame   - self.start_frame 
+
+            return m_c
+
+        return [modify_meteor(m) for m in p_meteors if pred(m)]
+    
+    def parent_path(self) -> str:
+        """Return the full path to the folder that these clips will appear in"""
+        return self.dir() + "/" + self.prefix() + "/"
+    
+    def full_path(self) -> str:
+        return self.parent_path() + f"f{self.start_frame:04}-{self.end_frame:04}_." + self.suffix()
+
+    def save(self, overwrite = False):
+        """
+        Write this clip to disk 
+        """
+        fmdt.utils.mkdir_p(self.parent_path())
+
+        fmdt.utils.extract_video_frames(super().full_path(), self.start_frame, self.end_frame, self.full_path(), overwrite=overwrite)
+
+    @staticmethod
+    def from_pd_row(
+        row: pd.Series,
+        db_file = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ):
+
+        parent_video = Video.from_db_id(row["parent_id"], db_file, db_dir)
+        return VideoClip(parent_video.name, row["start_frame"], row["end_frame"], parent_video.type)
+    
+    
 # Take a list of Videos and turn it into a data base.
 def videos_to_csv(videos: list[Video], csv_filename: str) -> None:
     # First get the header
@@ -443,39 +528,22 @@ def csv_to_videos(csv_filename: str) -> list[Video]:
     df = pd.read_csv(csv_filename)
     return [Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
 
-
-def load_in_videos(db_filename: str = "videos.db", dir = fmdt.download.__DATA_DIR) -> list[Video]:
-    """Read in the videos stored in 'videos.db' into a list of fmdt.Video"""
-
-    # Download if the database file requested doesnt exist
-    if not os.path.exists(dir + "/" + db_filename):
-        fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=dir)
-
-    if not dir is None:
-        db_filename = dir + "/" + db_filename
-
-    con = sqlite3.connect(db_filename)
-    df = pd.read_sql_query("select * from video", con)
-    con.close()
-
-    return [fmdt.Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
-
 def has_meteors(vids: list[Video]) -> list[Video]:
     return [v for v in vids if v.has_meteors()]
 
 def load_draco6(
-        filename: str = "videos.db",
-        db_dir = fmdt.download.__DATA_DIR,
+        db_filename: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR,
         require_gt = False,
         require_exist = False
     ) -> list[Video]:
     """Load draco6 `Video` objects that are stored in the `db_dir`/`filename` .db file"""
 
-    vids = load_in_videos(filename, db_dir)
+    vids = retrieve_videos(db_filename, db_dir)
     d6 = [v for v in vids if v.is_draco6()]
 
     if require_gt:
-        d6 = [v for v in d6 if v.has_meteors()]
+        d6 = [v for v in d6 if v.has_meteors(db_filename, db_dir)]
 
     if require_exist:
         d6 = [v for v in d6 if v.exists()]
@@ -484,16 +552,16 @@ def load_draco6(
 
 def load_draco12(
         db_filename: str = "videos.db",
-        db_dir = fmdt.download.__DATA_DIR,
+        db_dir = DEFAULT_DATA_DIR,
         require_gt = False,
         require_exist = False
     ) -> list[Video]:
 
-    vids = load_in_videos(db_filename, db_dir)
+    vids = retrieve_videos(db_filename, db_dir)
     d12 = [v for v in vids if v.is_draco12()]
 
     if require_gt:
-        d12 = [v for v in d12 if v.has_meteors()]
+        d12 = [v for v in d12 if v.has_meteors(db_filename, db_dir)]
 
     if require_exist:
         d12 = [v for v in d12 if v.exists()]
@@ -502,50 +570,99 @@ def load_draco12(
 
 def load_window(
         db_filename: str = "videos.db",
-        db_dir = fmdt.download.__DATA_DIR,
+        db_dir = DEFAULT_DATA_DIR,
         require_gt = False,
         require_exist = False
     ) -> list[Video]:
 
-    vids = load_in_videos(db_filename, db_dir)
+    vids = retrieve_videos(db_filename, db_dir)
     win = [v for v in vids if v.is_window()]
 
     if require_gt:
-        win = [v for v in win if v.has_meteors()]
+        win = [v for v in win if v.has_meteors(db_filename, db_dir)]
 
     if require_exist:
         win = [v for v in win if v.exists()]
     
     return win
+
+def load_window_clips(
+        db_file = "videos.db",
+        db_dir = DEFAULT_DATA_DIR,
+        require_exist = False
+    ) -> list[VideoClip]:
+    """Load all of the clips associated with all of our windows objects"""
+
+    db_path = fmdt.utils.join(db_dir, db_file)
+    con = sqlite3.connect(db_path)
+
+    df: pd.DataFrame = pd.read_sql_query("select * from video_clips", con = con)
+
+    con.close()
+
+    if require_exist:
+
+        out = []
+        for _, row in df.iterrows():
+            v = VideoClip.from_pd_row(row, db_file, db_dir)
+            if v.exists():
+                out.append[v]
+
+        return out 
+
+    else:
+        return [VideoClip.from_pd_row(row, db_file, db_dir) for _, row in df.iterrows()]
+
     
-def load_demo(db_filename: str = "videos.db", db_dir = fmdt.download.__DATA_DIR) -> list[Video]:
+def load_demo(db_filename: str = "videos.db", db_dir = DEFAULT_DATA_DIR) -> list[Video]:
     """Load video 2022_05_31_tauh_34_meteors.mp4 from our database"""
-    vids = load_in_videos(db_filename, db_dir)
+    vids = retrieve_videos(db_filename, db_dir)
     win = [v for v in vids if v.name == "2022_05_31_tauh_34_meteors.mp4"]
 
     return win[0]
 
 
-def retrieve_meteors(video_name: str, db_filename: str = "videos.db", dir = fmdt.download.__DATA_DIR) -> list[fmdt.HumanDetection]:
+def retrieve_videos(
+        db_filename: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ) -> list[Video]:
+
+    """Read in the videos stored in 'videos.db' into a list of fmdt.Video"""
+    db_path = fmdt.utils.join(db_dir, db_filename)
+
+    # Download if the database file requested doesnt exist
+    if not os.path.exists(db_path):
+        fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=db_dir)
+
+    con = sqlite3.connect(db_path)
+    df = pd.read_sql_query("select * from video", con)
+    con.close()
+
+    return [fmdt.Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
+
+def retrieve_meteors(
+        video_name: str,
+        db_filename: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ) -> list[fmdt.HumanDetection]:
 
     """Query all of the ground truths in our database"""
+    db_path = fmdt.utils.join(db_dir, db_filename)
+    print(db_path)
 
-    if not os.path.exists(dir + "/" + db_filename):
-        fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=dir)
-
-    if not dir is None:
-        db_filename = dir + "/" + db_filename
+    if not os.path.exists(db_path):
+        fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=db_dir)
 
     query = f"""
-        select * from human_detection where video_name = '{video_name}'
+        select * from human_detections where video_name = '{video_name}'
     """
 
-    con = sqlite3.connect(db_filename)
+    con = sqlite3.connect(db_path)
     df = pd.read_sql_query(query, con)
     con.close()
 
     return [fmdt.HumanDetection.from_pd_row(df.iloc[i]) for i in range(len(df))]
-    # return df
+
 
 def get_video_diagnostics(vids: list[Video]) -> tuple[int, int]:
     """Print information about the local environment"""
@@ -603,7 +720,7 @@ def info():
 
 
 def get_video_by_id(id: int) -> Video | None:
-    videos = load_in_videos()
+    videos = retrieve_videos()
     v = [v for v in videos if v.has_id(id)]
     if len(v) != 0:
         return v[0]
@@ -618,45 +735,4 @@ def get_video_by_ids(ids: list[int]) -> Video | None:
 def add_human_detection_to_gt(meteor: fmdt.HumanDetection):
     pass
 
-class VideoClip(Video):
 
-    def __init__(self, name: str, frame_start: int, frame_end: int, type: VideoType = None):
-        super().__init__(name, type)
-        self.frame_start = frame_start
-        self.frame_end = frame_end
-
-    def __str__(self) -> str:
-        s = super().__str__()
-        return s + f" [{self.frame_start}, {self.frame_end}]"
-
-    def meteors(self):
-        p_meteors = super().meteors()
-
-        def pred(hum_det: fmdt.HumanDetection):
-            """Check if the meteors start frame is in the clip"""
-            return hum_det.start_frame >= self.frame_start and hum_det.start_frame <= self.frame_end
-        
-        def modify_meteor(m: fmdt.HumanDetection):
-            """Modify the interval with respect to this video clip"""
-            m_c = deepcopy(m)
-            m_c.start_frame = m.start_frame - self.frame_start 
-            m_c.end_frame   = m.end_frame   - self.frame_start 
-
-            return m_c
-
-        return [modify_meteor(m) for m in p_meteors if pred(m)]
-    
-    def parent_path(self) -> str:
-        """Return the full path to the folder that these clips will appear in"""
-        return self.dir() + "/" + self.prefix() + "/"
-    
-    def full_path(self) -> str:
-        return self.parent_path() + f"f{self.frame_start:04}-{self.frame_end:04}_." + self.suffix()
-
-    def save(self, overwrite = False):
-        """
-        Write this clip to disk 
-        """
-        fmdt.utils.mkdir_p(self.parent_path())
-
-        fmdt.utils.extract_video_frames(super().full_path(), self.frame_start, self.frame_end, self.full_path(), overwrite=overwrite)
