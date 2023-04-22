@@ -440,6 +440,16 @@ class CheckResult:
     def trk_rate(self) -> float:
         return self.meteor_stats()["trk_rate"]
     
+    def gts(self) -> int:
+        """Return the number ground truth meteors used when checking"""
+        return self.stats["gt"].iloc[0]
+
+    def nb_meteors_detected(self) -> int:
+        return sum(self.gt_table["tracks"] != 0)
+    
+    def detect_rate(self) -> float:
+        return self.nb_meteors_detected() / self.gts()
+    
     def meteors_detected(self) -> bool:
         """Return True if the tracking rate is greater than 0"""
         return self.trk_rate() > 0.0
