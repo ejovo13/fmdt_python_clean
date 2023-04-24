@@ -5,9 +5,26 @@ import pandas as pd
 import fmdt.args
 import fmdt.core
 
-def retrieve_all_nroi(log_path: str) -> list[int]:
+from fmdt.exceptions import (
+    LogError
+)
+
+from fmdt.utils import (
+    stderr,
+    join
+)
+
+def retrieve_all_nroi(log_path: str, max_frames: int = None) -> list[int]:
     """
-    Assumes the format: '# Frame n°00247 (t) -- Regions of interest (RoI) [64]: \n'
+    Read the log files stored in log_path and retrieve a list of the number of regions of interest
+
+    Assumes the format: '# Frame n°XXXXX (t) -- Regions of interest (RoI) [XX]:'
+
+    Parameters
+    ----------
+    log_path (str): The directory that was passed to fmdt-detect's --log-path parameter    
+    max_frames (int | None): The maximum number of frame files in `log_path` to read. Useful for when
+        multiple different executions are saving log information to the same directory. 
     """
 
     if not os.path.exists(log_path):
@@ -22,7 +39,7 @@ def retrieve_all_nroi(log_path: str) -> list[int]:
         return "(RoI)" in line
 
     def retrieve_single_nroi(frame: str):
-        with open(log_path + "/" + frame, "r") as file:
+        with open(join(log_path, frame), "r") as file:
             lines = file.readlines()
             rois = [l for l in lines if contains_roi(l) and "(t)" in l]
             tokens = rois[0].split() 
@@ -36,19 +53,18 @@ def retrieve_all_nassociations(log_path: str) -> list[int]:
     if not os.path.exists(log_path):
         return []
 
-    frames = os.listdir(log_path)[1:]
+    frames = os.listdir(log_path)[1:] # frame 0 has no associations; skip it
 
-    rxp = r'\[\d*\]'
-
+    rxp = r'\[\d*\]' # regex to capture '42' in line '# Associations [42]:'
     rxp_comp = re.compile(rxp)
 
     def retrieve_single_nassociations(frame: str):
-        with open(log_path + "/" + frame, "r") as file:
+        with open(join(log_path, frame), "r") as file:
             lines = file.readlines()
             assocs = [l for l in lines if "Associations" in l]
-            tokens = assocs[0].split() 
-            n_roi = [n for n in tokens if rxp_comp.search(n)]
-            return int(n_roi[0][1:-2])
+            tokens = assocs[0].split()  # convert '# Associations [42]:' to ['#', 'Associations', '[42]:']
+            n_roi = [n for n in tokens if rxp_comp.search(n)] # n_roi <- ['[42]:']
+            return int(n_roi[0][1:-2]) # extract 42 from ['[42]:']
 
     return [retrieve_single_nassociations(f) for f in frames]
 
@@ -72,7 +88,7 @@ def retrieve_all_mean_errs(log_path: str) -> list[float]:
     frames = os.listdir(log_path)[1:]
 
     def mean_err(filename) -> float:
-        m, _ = retrieve_mean_err_std_dev(log_path + "/" + filename)
+        m, _ = retrieve_mean_err_std_dev(join(log_path, filename))
         return m
     
     return [mean_err(f) for f in frames]
@@ -85,7 +101,7 @@ def retrieve_all_std_devs(log_path: str) -> list[float]:
     frames = os.listdir(log_path)[1:]
 
     def mean_err(filename) -> float:
-        _, s = retrieve_mean_err_std_dev(log_path + "/" + filename)
+        _, s = retrieve_mean_err_std_dev(join(log_path, filename))
         return s
     
     return [mean_err(f) for f in frames]
@@ -96,7 +112,7 @@ def retrieve_log_info(log_path: str) -> tuple[list[int], list[int], list[float],
     print(f"Trying to retrieve log info here: {log_path}")
 
     nrois = retrieve_all_nroi(log_path)
-    nassocs = retrieve_all_nassociations(log_path)
+    nassocs = retrieve_all_nassociations(log_path) # C'est la ou l'erreur s'est produit
     mean_errs = retrieve_all_mean_errs(log_path)
     std_devs = retrieve_all_std_devs(log_path)
 
@@ -131,6 +147,10 @@ class DetectionResult:
 
     def visu(self):
         return self.args.visu()
+    
+    def cmd(self) -> str:
+        """Return the command used to call this detect"""
+        return self.args.command()
 
     def n_meteors_detected(self) -> int:
         return len([m for m in self.trk_list if m.is_meteor()])

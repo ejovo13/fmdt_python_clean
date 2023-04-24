@@ -4,6 +4,10 @@ import sys
 import numpy as np
 import subprocess
 
+from termcolor import (
+    colored
+)
+
 def retain_meteors(tracking_list: list[dict]) -> list[dict]:
     """Take a list of dictionaries returned by one of the fmdt.extract_* functions
     and filter out objects that are not meteors
@@ -286,3 +290,7 @@ def video_partition(length_video: float, length_sequence: float, fps: float) -> 
 def join(dir: str, file: str):
     """Convenience function for os.path.join"""
     return os.path.join(dir, os.path.basename(file))
+
+def stderr(message: str) -> None:
+    """Print a message to stderr that will show up as red in most terminals"""
+    print(colored(message, "red"), file=sys.stderr)
