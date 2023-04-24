@@ -27,7 +27,8 @@ class VideoType(Enum):
     DRACO6 = 0,
     DRACO12 = 1,
     WINDOW = 2,
-    OTHER = 3
+    DEMO = 3,
+    OTHER = 4
 
     def __str__(self) -> str:
         if self == VideoType.DRACO6:
@@ -36,6 +37,8 @@ class VideoType(Enum):
             return "DRACO12"
         elif self == VideoType.WINDOW:
             return "WINDOW"
+        elif self == VideoType.DEMO:
+            return "DEMO"
         else:
             return "OTHER"
         
@@ -51,6 +54,10 @@ class VideoType(Enum):
             return con.d12
         elif self == VideoType.WINDOW:
             return con.win
+        elif self == VideoType.DEMO:
+            return con.win
+        elif self == VideoType.OTHER:
+            return con.win
         else:
             return "./"
         
@@ -61,8 +68,12 @@ class VideoType(Enum):
             return VideoType.DRACO6 
         elif str == "DRACO12":
             return VideoType.DRACO12
-        else:
+        elif str == "WINDOW":
             return VideoType.WINDOW
+        elif str == "DEMO":
+            return VideoType.DEMO
+        else:
+            return VideoType.OTHER
 
 # Or maybe recording, night sky watching, stargazing, video of night sky
 # type is an enum { draco6, draco12, window}
@@ -258,9 +269,15 @@ class Video:
 
 
     # Lookup the id in our default database file.
-    def id(self) -> int:
+    def id(
+            self,
+            db_file = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> int:
 
-        con = sqlite3.connect(VIDEOS_FILE)
+        db_filename = fmdt.utils.join(db_dir, db_file)
+
+        con = sqlite3.connect(db_filename)
 
         query = f"""
             select id from video where name = '{self.name}' 
@@ -434,6 +451,22 @@ class Video:
         
         return clips
 
+    def retrieve_clips(
+            self,
+            db_file = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> list:
+        """Retrieve predefined clips in the table `video_clips` from our videos.db"""
+
+        db_filename = fmdt.utils.join(db_dir, db_file)
+
+        con = sqlite3.connect(db_filename)
+        self_clips = pd.read_sql_query(f"SELECT * FROM video_clips WHERE parent_id = {self.id(db_file, db_dir)}",
+                                       con = con)
+
+        return [VideoClip.from_pd_row(r) for _, r in self_clips.iterrows()]
+
+
     @staticmethod
     def from_pd_row(ser: pd.Series):
         out = Video(ser["name"], VideoType.from_str(ser["type"]))
@@ -447,7 +480,7 @@ class Video:
         db_dir = DEFAULT_DATA_DIR
     ):
         
-        con = sqlite3.connect(db_dir + db_file)
+        con = sqlite3.connect(fmdt.utils.join(db_dir, db_file))
 
         video_pd = pd.read_sql_query(f"SELECT * FROM video WHERE id = {id}", con = con)
         v = Video.from_pd_row(video_pd.iloc[0])
@@ -467,8 +500,20 @@ class VideoClip(Video):
         s = super().__str__()
         return s + f" [{self.start_frame}, {self.end_frame}]"
 
-    def meteors(self):
-        p_meteors = super().meteors()
+    def __eq__(self, rhs) -> bool:
+        return (
+            self.name == rhs.name and 
+            self.start_frame == rhs.start_frame and
+            self.end_frame == rhs.end_frame
+        )
+
+    def meteors(
+            self,
+            db_file = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ):
+
+        p_meteors = super().meteors(db_file, db_dir)
 
         def pred(hum_det: fmdt.HumanDetection):
             """Check if the meteors start frame is in the clip"""
@@ -622,6 +667,19 @@ def load_demo(db_filename: str = "videos.db", db_dir = DEFAULT_DATA_DIR) -> list
     return win[0]
 
 
+def load_all(
+        db_filename = "videos.db",
+        db_dir = DEFAULT_DATA_DIR,
+        require_gt = True
+    ) -> list:
+    """Load all videos that have a ground truth in our database"""
+    draco6  = load_draco6 (db_filename, db_dir, require_gt)
+    draco12 = load_draco12(db_filename, db_dir, require_gt)
+    windows = load_window_clips(db_filename, db_dir)
+
+    return draco6 + draco12 + windows
+
+
 def retrieve_videos(
         db_filename: str = "videos.db",
         db_dir = DEFAULT_DATA_DIR
@@ -648,7 +706,6 @@ def retrieve_meteors(
 
     """Query all of the ground truths in our database"""
     db_path = fmdt.utils.join(db_dir, db_filename)
-    print(db_path)
 
     if not os.path.exists(db_path):
         fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=db_dir)
