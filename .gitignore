@@ -4,4 +4,5 @@ videos
 *.txt
 *.mp4
 *.avi
-*.csv
+*.csv 
+*egg-info
