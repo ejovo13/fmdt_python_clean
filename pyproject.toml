@@ -1,14 +1,13 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+# build-backend = "hatchling.build"
+
+[tool.setuptools.packages.find]
+exclude = ["*.csv", "*.txt", "*.mp4"]
 
 [project]
 name = "fmdt-python"
-packages = [ 
-  { include = "fmdt" },
-  { include = "fmdt/tests"}
-]
-version = "0.0.40"
+version = "0.0.41"
 authors = [
   { name="Evan Voyles", email="ejovo13@yahoo.com" },
 ]

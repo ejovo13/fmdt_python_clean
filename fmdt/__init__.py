@@ -17,7 +17,9 @@ from fmdt.args import (
     Args,
     DetectArgs,
     VisuArgs,
-    detect_args
+    detect_args,
+    set_exec_path,
+    get_exec_path
 )
 
 from fmdt.utils import (
@@ -56,7 +58,8 @@ from fmdt.config import (
     cache_dir,
     cache_info,
     listdir_cache,
-    size_cache
+    size_cache,
+    bytes_format
 )
 
 from fmdt.db import (
@@ -69,6 +72,7 @@ from fmdt.db import (
     load_window,
     load_demo,
     load_window_clips,
+    load_all,
     info as local_info
 )
 
@@ -80,6 +84,6 @@ init_cache()
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 40 
+PATCH         = 41 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
