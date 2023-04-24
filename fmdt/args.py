@@ -11,6 +11,14 @@ import pickle
 import hashlib
 import copy
 
+__EXECUTABLE_PATH = None
+
+def set_exec_path(path: str):
+    global __EXECUTABLE_PATH
+    __EXECUTABLE_PATH = path
+
+def get_exec_path() -> str:
+    return __EXECUTABLE_PATH
 
 class Result:
     pass
@@ -449,7 +457,7 @@ class Args:
         return False
     
     def detect_cmd(self) -> str:
-        return handle_detect_args(**self.detect_args)
+        return handle_detect_args(**self.detect_args.to_dict())
 
     def visu(self, **kwargs):
         """OOP Interface to calling fmdt.api.visu()"""
@@ -529,7 +537,7 @@ class Args:
     
     def command(self) -> str:
         """Return the command used to execute fmdt-detect with this configuration"""
-        return ' '.join(handle_detect_args(**self.detect_args))
+        return ' '.join(handle_detect_args(**self.detect_args.to_dict()))
     
     def digest(self) -> str:
         return hashlib.md5(pickle.dumps(self)).hexdigest()
@@ -737,11 +745,12 @@ def handle_detect_args(
         **args
     ) -> list[str]:
     """Convert the arguments needed for fmdt-detect into a fmdt-detect command-line call
-
-        
     """
+    if get_exec_path() is None:
+        fmdt_detect_exe = shutil.which("fmdt-detect")
+    else:
+        fmdt_detect_exe = shutil.which("fmdt-detect", path=get_exec_path())
 
-    fmdt_detect_exe = shutil.which("fmdt-detect")
     fmdt_detect_found = not fmdt_detect_exe is None
     assert fmdt_detect_found, "fmdt-detect executable not found"
     args = [fmdt_detect_exe, "--vid-in-path", vid_in_path]
@@ -803,6 +812,10 @@ def handle_visu_args(
         vid_out_path: str = None
     ) -> list[str]:
 
+    if get_exec_path() is None:
+        fmdt_visu_exe = shutil.which("fmdt-visu")
+    else:
+        fmdt_visu_exe = shutil.which("fmdt-visu", path=get_exec_path())
 
     fmdt_visu_exe = shutil.which("fmdt-visu")
     fmdt_visu_found = not fmdt_visu_exe is None

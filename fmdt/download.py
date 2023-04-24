@@ -3,6 +3,10 @@ import os
 import requests
 from appdirs import user_data_dir 
 
+from fmdt.utils import (
+    join
+)
+
 # Let's define some functions that will fetch our data base files
 
 __DATA_DIR = user_data_dir("fmdt_python")
@@ -33,7 +37,7 @@ def download_file(
     ) -> bool:
     """Download files whose contents are stored in text"""
     if not dir is None:
-        filename = dir + "/" + filename
+        filename = join(dir, filename)
 
     if os.path.exists(filename) and not overwrite:
         if (log):
@@ -57,7 +61,7 @@ def download_binary_file(
     ) -> bool:
 
     if not dir is None:
-        filename = dir + "/" + filename
+        filename = join(dir, filename)
 
     if os.path.exists(filename) and not overwrite:
         if (log):

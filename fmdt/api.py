@@ -297,7 +297,10 @@ def visu(
     return fmdt.args.Args(visu_args=visu_args, detect_args=None)
 
 def check(
-    trk_path: str, gt_path: str, stdout: str = None, log = False
+        trk_path: str,
+        gt_path: str,
+        stdout: str = None,
+        log = False
     ) -> fmdt.res.CheckResult:
     """Call fmdt-check
     
@@ -305,7 +308,14 @@ def check(
     ----------
     std_out (str): File to store stdout of fmdt-check"""
 
-    argv = ["fmdt-check", "--trk-path", trk_path, "--gt-path", gt_path]
+    if fmdt.args.get_exec_path() is None:
+        fmdt_check_exe = shutil.which("fmdt-check")
+    else:
+        fmdt_check_exe = shutil.which("fmdt-check", path=fmdt.args.get_exec_path())
+
+    assert not fmdt_check_exe is None, "fmdt-check executable not found!"
+
+    argv = [fmdt_check_exe, "--trk-path", trk_path, "--gt-path", gt_path]
     res = subprocess.run(argv, stdout=subprocess.PIPE)
 
     file_content = res.stdout.decode()
