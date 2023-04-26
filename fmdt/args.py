@@ -1,6 +1,5 @@
 """Arguments Class to store shared parameters when calling a chain of .detect(args).visu().split()"""
 import fmdt.api
-# import fmdt.res
 import fmdt.core
 import fmdt.utils
 import shutil
@@ -11,6 +10,41 @@ import pickle
 import hashlib
 import copy
 
+# Hardcoded default detect values for FMDT version v1.0.0-21-g7cba20b4 (7cba20b4)
+# These are used to convert between args in our database and args in python.
+# However, they are NOT used as the default arguments to our .detect() API
+# since the authors of FMDT should be able to change the default values of their
+# own program and the api should allow that.
+_DEFAULT_DETECT_ARGS = {
+    "vid_in_start": 0,
+    "vid_in_stop": 0,
+    "vid_in_skip": 0,
+    "vid_in_buff": False,
+    "vid_in_loop": 1,
+    "vid_in_threads": 0,
+    "light_min": 55,
+    "light_max": 80,
+    "ccl_fra_path": None,
+    "ccl_fra_id": False,
+    "mrp_s_min": 3,
+    "mrp_s_max": 1000,
+    "knn_k": 3,
+    "knn_d": 10,
+    "knn_s": 0.125,
+    "trk_ext_d": 10,
+    "trk_ext_o": 3,
+    "trk_angle": 20.0,
+    "trk_star_min": 15,
+    "trk_meteor_min": 3,
+    "trk_meteor_max": 100,
+    "trk_ddev": 4.0,
+    "trk_all": False,
+    "trk_bb_path": None,
+    "trk_mag_path": None,
+    "log_path": None
+}
+
+# Configuration to find fmdt-detect if it doesn't exist on the path
 __EXECUTABLE_PATH = None
 
 def set_exec_path(path: str):
@@ -20,11 +54,7 @@ def set_exec_path(path: str):
 def get_exec_path() -> str:
     return __EXECUTABLE_PATH
 
-class Result:
-    pass
-    
-
-def filter_dict(d: dict):
+def _filter_dict(d: dict):
     """Filter out None values in a dict, returning a new dict"""
     out = {}
 
@@ -34,7 +64,7 @@ def filter_dict(d: dict):
 
     return out
 
-def row_to_dict(row: pd.Series) -> dict:
+def _row_to_dict(row: pd.Series) -> dict:
     """Convert the non Na values of a pd.DataFrame row to a dict"""
     out = {}
     for k in row.keys():
@@ -103,10 +133,11 @@ class DetectArgs:
         self.trk_all = trk_all
         self.trk_bb_path = trk_bb_path
         self.trk_mag_path = trk_mag_path
-        self.trk_out_path = trk_out_path
         self.log_path = log_path
+        self.trk_out_path = trk_out_path
 
     def to_dict(self) -> dict:
+
         return {
             "vid_in_path": self.vid_in_path, 
             "vid_in_start": self.vid_in_start,
@@ -137,6 +168,59 @@ class DetectArgs:
             "log_path": self.log_path,
             "trk_out_path": self.trk_out_path 
         }
+
+    def to_stripped_dict(self) -> dict:
+        """Return a stripped dictionary that drops all parameters pertaining to paths"""
+        d = self.to_dict()
+
+        del d["vid_in_path"]
+        del d["ccl_fra_path"]
+        del d["trk_bb_path"]
+        del d["trk_mag_path"]
+        del d["log_path"]
+        del d["trk_out_path"]
+
+        return d
+
+    def to_default_stripped_dict(self) -> dict:
+        """Produce a stripped dict where all the none values are set to their default""" 
+
+        d = self.to_stripped_dict()
+
+        for k, v in d.items():
+            if v is None:
+                d[k] = _DEFAULT_DETECT_ARGS[k]
+
+        return d
+
+    def to_sql_insert(
+            self,
+            id: int,
+            table_name: str = "detect_args"
+        ) -> str:
+        """Create the SQL insertion query that adds this detect args to a table named `table_name`"""
+
+        dict_values = self.to_default_stripped_dict().values()
+        n_values = len(dict_values)
+
+        sql = f"INSERT INTO {table_name} VALUES ({id}, "
+
+        for i, v in enumerate(dict_values):
+
+            if i == n_values - 1:
+                break
+                
+            if isinstance(v, bool):
+                v = int(v)
+
+            sql += f"{v}, "
+
+        if isinstance(v, bool):
+            v = int(v)
+
+        sql += f"{v});"
+
+        return sql
     
     def to_reduced_dict(self) -> dict:
         d = self.to_dict()
@@ -191,6 +275,41 @@ class DetectArgs:
     def cache_trk(self) -> str:
         """Generate the full path to a unique file to store the results of this detection"""
         return self.cache_dir() + "_trk.txt"
+
+    @staticmethod
+    def sql_create_table(table_name: str = "detect_args") -> str:
+        """Return the SQL instructions to create a DetectArgs table named `table_name`"""
+        sql = (
+            f"""
+            CREATE TABLE {table_name} (
+                id_args INTEGER NON NULL PRIMARY KEY,
+                vid_in_start INTEGER,
+                vid_in_stop INTEGER,
+                vid_in_skip INTEGER,
+                vid_in_buff BOOLEAN,
+                vid_in_loop INTEGER,
+                vid_in_threads INTEGER,
+                light_min INTEGER,
+                light_max INTEGER,
+                ccl_fra_id INETEGER,
+                mrp_s_min INTEGER,
+                mrp_s_max INTEGER,
+                knn_k INTEGER,
+                knn_d INTEGER,
+                knn_s NUMERIC,
+                trk_ext_d INTEGER,
+                trk_ext_o INTEGER,
+                trk_angle NUMERIC,
+                trk_star_min INTEGER,
+                trk_meteor_min INTEGER,
+                trk_meteor_max INTEGER,
+                trk_ddev NUMERIC,
+                trk_all INTEGER
+            );
+            """
+        )
+
+        return sql
 
 class VisuArgs:
 
@@ -354,8 +473,8 @@ class Args:
                               vid_in_buff=vid_in_buff,
                               vid_in_loop=vid_in_loop,
                               vid_in_threads=vid_in_threads,
-                              light_min =light_min ,
-                              light_max =light_max ,
+                              light_min =light_min,
+                              light_max =light_max,
                               ccl_fra_path=ccl_fra_path,
                               ccl_fra_id=ccl_fra_id,
                               mrp_s_min=mrp_s_min,
@@ -624,7 +743,8 @@ def detect_args(
         log_path: str | None = None,
         trk_out_path: str | None = None,
         log: bool = False,
-        timeout: float = None
+        timeout: float = None,
+        **args # any leftovers, useful when converting sql query to args object
     ) -> Args:
     """Convert the parameters used in fmdt.detect into an Args object"""
 

@@ -19,6 +19,7 @@ import sqlite3
 from enum import Enum
 from termcolor import colored
 import os
+from sys import exit
 
 VIDEOS_FILE = fmdt.config.dir() + "/videos.db"
 DEFAULT_DATA_DIR = fmdt.download.get_db_dir()
@@ -314,6 +315,63 @@ class Video:
     ) -> bool:
         
         return len(self.meteors(db_filename, db_dir)) > 0
+    
+    def has_best_detection(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> bool:
+        """Check if this Video has a best detection stored in our database"""
+
+        id = self.id(db_file, db_dir)
+        try:
+            retrieve_best_arg(id, db_file=db_file, db_dir=db_dir)
+            return True
+        except:
+            return False
+
+    def best_detection(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> tuple[fmdt.Args, float, int]:
+
+        id = self.id(db_file, db_dir)
+
+        if self.has_best_detection(db_file, db_dir):
+            return retrieve_best_detection(id, db_file=db_file, db_dir=db_dir)
+        else:
+            raise DatabaseError(f"Video {self} has no best args in database {fmdt.utils.join(db_dir, db_file)}, cannot retrieve best args with Video.best_args()")
+
+    def best_args(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> fmdt.Args:
+
+        args, _, _ = self.best_detection(db_file, db_dir)
+        return args
+
+    def best_trk_rate(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> float:
+
+        _, trk_rate, _ = self.best_detection(db_file, db_dir)
+
+        return trk_rate
+        
+
+    def best_true_pos(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> int:
+
+        _, _, n_true_pos = self.best_detection(db_file, db_dir)
+
+        return n_true_pos
 
     def exists(self) -> bool:
         """Check whether the video path in self.full_path() exists on disk"""
@@ -528,6 +586,33 @@ class VideoClip(Video):
             return m_c
 
         return [modify_meteor(m) for m in p_meteors if pred(m)]
+
+    def has_best_detection(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> bool:
+        """Check if this Video has a best detection stored in our database"""
+
+        id = self.id(db_file, db_dir)
+        try:
+            retrieve_best_arg(id, video_clip=True, db_file=db_file, db_dir=db_dir)
+            return True
+        except:
+            return False
+
+    def best_detection(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> tuple[fmdt.Args, float, int]:
+
+        id = self.id(db_file, db_dir)
+
+        if self.has_best_detection(db_file, db_dir):
+            return retrieve_best_detection(id, video_clip=True, db_file=db_file, db_dir=db_dir)
+        else:
+            raise DatabaseError(f"Video {self} has no best args in database {fmdt.utils.join(db_dir, db_file)}, cannot retrieve best args with Video.best_args()")
     
     def parent_path(self) -> str:
         """Return the full path to the folder that these clips will appear in"""
@@ -543,6 +628,74 @@ class VideoClip(Video):
         fmdt.utils.mkdir_p(self.parent_path())
 
         fmdt.utils.extract_video_frames(super().full_path(), self.start_frame, self.end_frame, self.full_path(), overwrite=overwrite)
+
+    def parent(
+            self,
+            db_file = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> Video:
+        """Retrieve a Video object that this clip was created from"""
+
+        videos = retrieve_videos(db_file, db_dir)
+        par_list = [v for v in videos if v.name == self.name]
+
+        if len(par_list) != 1:
+            raise DatabaseError(f"Video clip {self} did not find parent in database {fmdt.utils.join(db_dir, db_file)}")
+
+        return par_list[0]
+
+
+    def parent_id(
+            self,
+            db_file = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> int:
+        """Retrieve the id of the parent video in our database file"""
+        return self.parent(db_file, db_dir).id()
+
+    # @override
+    def id(
+            self,
+            db_file = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> int:
+        """Retrieve the clip id of this clip in our database using (parent_id, start_frame, end_frame) as a key
+        
+        Return
+        ------
+        clip_id (int): The id of this clip in our database, if it exists. If the database does not contain
+            a clip with the corresponding key, raise DatabaseError
+        
+        """
+
+        con = sqlite3.connect(fmdt.utils.join(db_dir, db_file))
+
+        try:
+
+            df = pd.read_sql_query(f"""
+                                    SELECT clip_id 
+                                    FROM video_clips
+                                    WHERE parent_id = {self.parent_id()}
+                                    AND start_frame = {self.start_frame}
+                                    AND end_frame = {self.end_frame} 
+                                    """, 
+                                    con)
+        except Exception as db_err:
+            
+            print(db_err)
+            print(colored("Potential solution: update your database file with fmdt.download_dbs()", "green"))
+            con.close()
+            exit(1)
+
+        con.close()
+        
+        if len(df) != 1:
+            raise DatabaseError(f"{self} has no matches in database {fmdt.utils.join(db_file, db_dir)}")
+
+
+
+        return df.iloc[0,0]
+
 
     @staticmethod
     def from_pd_row(
@@ -720,7 +873,116 @@ def retrieve_meteors(
 
     return [fmdt.HumanDetection.from_pd_row(df.iloc[i]) for i in range(len(df))]
 
+def retrieve_best_detection_df(
+        id: int,
+        video_clip: bool = False,
+        db_file: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ) -> pd.DataFrame:
 
+    db_filename = fmdt.utils.join(db_dir, db_file)
+
+    con = sqlite3.connect(db_filename)
+
+    _ID_ARGS_COL = 2
+
+    if video_clip:
+        df = pd.read_sql_query(f"""
+            SELECT * FROM best_detections 
+            INNER JOIN detect_args
+            ON best_detections.id_args = detect_args.id_args
+            WHERE id_video_clip = {id};
+        """, con)
+        
+        df = df.drop(df.columns[_ID_ARGS_COL], axis=1)
+
+    else:
+        df = pd.read_sql_query(f"""
+            SELECT * FROM best_detections 
+            INNER JOIN detect_args
+            ON best_detections.id_args = detect_args.id_args
+            WHERE id_video = {id};
+        """, con)
+        
+        df = df.drop(df.columns[_ID_ARGS_COL], axis=1)
+
+    # Now we want to convert this df into an Args object.
+    if len(df) != 1:
+
+        if video_clip:
+            raise DatabaseError(f"Error accessing best args for VideoClip by id {id} from {db_filename}")
+        else:
+            raise DatabaseError(f"Error accessing best args for Video by id {id} from {db_filename}")
+    
+    con.close()
+
+    return df
+
+def retrieve_best_arg(
+        id: int,
+        video_clip: bool = False,
+        db_file: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ) -> fmdt.Args:
+    """
+    Retrieve the Args object that is associated with the passed Video or VideoClip id
+    
+    Parameters
+    ----------
+    id (int): unique identifier of the Video or VideoClip that we would like to retrieve.
+        when video_clip is True, search for a match in the id_video_clip column of our
+        best_detection table
+    video_clip (bool): Informs this function if we want to retrieve the best args for a VideoClip (True) or 
+        for a Video (false)
+
+    Examples
+    --------
+    >>> args = fmdt.retrieve_best_args(1, video_clip=False) 
+
+    Returns the best Args associated with the *Video* whose id is 1 (Draconids-6mm1.05-0750-164200.avi)
+
+    >>> args = fmdt.retrieve_best_args(4, video_clip=True)
+
+    Returns the vest Args associated with the **VideoClip** whose id is 4  (window_3_sony_0400-0405UTC.mp4 [2823, 2862])
+
+    """
+    df = retrieve_best_detection_df(id, video_clip, db_file, db_dir)
+
+    dict = df.to_dict("records")[0]
+    return fmdt.detect_args(**dict)
+
+def retrieve_best_detection(
+        id: int,
+        video_clip: bool = False,
+        db_file: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ) -> tuple[fmdt.Args, float, int]:
+    """
+    Retrieve the best detection result (args, trk_rate, true_pos) associated with a Video or VideoClip id
+    
+    Parameters
+    ----------
+    id (int): unique identifier of the Video or VideoClip that we would like to retrieve.
+        when video_clip is True, search for a match in the id_video_clip column of our
+        best_detection table
+    video_clip (bool): Informs this function if we want to retrieve the best args for a VideoClip (True) or 
+        for a Video (false)
+
+    Return
+    ------
+
+    best_detection (tuple): A tuple of the form (args, trk_rate, true_pos)
+
+    """
+    df = retrieve_best_detection_df(id, video_clip, db_file, db_dir)
+
+    dict = df.to_dict("records")[0]
+    args = fmdt.detect_args(**dict)
+    trk_rate = df["trk_rate"]
+    n_true_pos = df["true_pos"]
+
+    return args, trk_rate, n_true_pos
+    
 def get_video_diagnostics(vids: list[Video]) -> tuple[int, int]:
     """Print information about the local environment"""
     # d6 = fmdt.load_draco6()/
@@ -775,6 +1037,13 @@ def print_diagnostics_all():
 def info():
     print_diagnostics_all()
 
+def get_video(selector: str | int) -> Video | None:
+    if isinstance(selector, str):
+        return get_video_by_name(selector)
+    elif isinstance(selector, int):
+        return get_video_by_id(selector)
+    else:
+        raise TypeError(f"get_video can only access videos with an `int` or `str`. Passed object type: {type(selector)}")
 
 def get_video_by_id(id: int) -> Video | None:
     videos = retrieve_videos()
@@ -784,6 +1053,16 @@ def get_video_by_id(id: int) -> Video | None:
     else:
         return None 
 
+
+
+def get_video_by_name(name: str) -> Video | None:
+    videos = retrieve_videos()
+    v = [v for v in videos if v.name == name]
+    if len(v) != 0:
+        return v[0]
+    else:
+        return None
+
 def get_video_by_ids(ids: list[int]) -> Video | None:
     return [get_video_by_id(id) for id in ids if not get_video_by_id(id) is None] 
 
@@ -792,4 +1071,28 @@ def get_video_by_ids(ids: list[int]) -> Video | None:
 def add_human_detection_to_gt(meteor: fmdt.HumanDetection):
     pass
 
+
+import json
+# ==================== Functions dealing with Json output =================== #
+
+def best_draco6(db_file = "videos.db", db_dir = DEFAULT_DATA_DIR) -> str:
+
+    # get the draco 6 videos along with their arguments
+    db_filename = fmdt.utils.join(db_dir, db_file)
+
+    con = sqlite3.connect(db_filename)
+    
+    df = pd.read_sql_query(f"""
+        SELECT * FROM best_detections as bd
+        INNER JOIN video as v
+        ON bd.id_video = v.id
+        INNER JOIN detect_args as da
+        ON bd.id_args = da.id_args
+        WHERE v.type = 'DRACO6'
+        """,
+        con)
+
+    print(df)
+
+    con.close()
 
