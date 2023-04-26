@@ -14,7 +14,27 @@ from fmdt.utils import (
     join
 )
 
-def retrieve_all_nroi(log_path: str, max_frames: int = None) -> list[int]:
+def get_ordered_frames(log_path: str, max_frames = None) -> list[str]:
+
+    if not os.path.exists(log_path):
+        raise LogError(f"Cannot retrieve log files from {log_path} as it does not exist")
+    
+    frames = os.listdir(log_path)
+
+    # Retain only the files names who are of the format [\d*].txt
+    rxp = r'\[(\d*)\].txt'
+    rxp_comp = re.compile(rxp)
+    frames = [f for f in frames if rxp_comp.search(f)]
+
+    frames.sort()
+
+    if max_frames is None:
+        return frames
+    else:
+        return frames[:max_frames]
+
+
+def retrieve_all_nroi(log_path: str, frames: list[str]) -> list[int]:
     """
     Read the log files stored in log_path and retrieve a list of the number of regions of interest
 
@@ -27,12 +47,7 @@ def retrieve_all_nroi(log_path: str, max_frames: int = None) -> list[int]:
         multiple different executions are saving log information to the same directory. 
     """
 
-    if not os.path.exists(log_path):
-        return []
-    
-    frames = os.listdir(log_path)
     rxp = r'\[(\d*)\]'
-
     rxp_comp = re.compile(rxp)
 
     def contains_roi(line: str) -> bool:
@@ -48,12 +63,7 @@ def retrieve_all_nroi(log_path: str, max_frames: int = None) -> list[int]:
 
     return [retrieve_single_nroi(f) for f in frames]
 
-def retrieve_all_nassociations(log_path: str) -> list[int]:
-
-    if not os.path.exists(log_path):
-        return []
-
-    frames = os.listdir(log_path)[1:] # frame 0 has no associations; skip it
+def retrieve_all_nassociations(log_path: str, frames: list[str]) -> list[int]:
 
     rxp = r'\[\d*\]' # regex to capture '42' in line '# Associations [42]:'
     rxp_comp = re.compile(rxp)
@@ -80,12 +90,7 @@ def retrieve_mean_err_std_dev(filename: str) -> tuple[float, float]:
                 std_dev  = float(l_split[-1])
                 return (mean_err, std_dev)
             
-def retrieve_all_mean_errs(log_path: str) -> list[float]:
-
-    if not os.path.exists(log_path):
-        return []
-
-    frames = os.listdir(log_path)[1:]
+def retrieve_all_mean_errs(log_path: str, frames: list[str]) -> list[float]:
 
     def mean_err(filename) -> float:
         m, _ = retrieve_mean_err_std_dev(join(log_path, filename))
@@ -93,12 +98,7 @@ def retrieve_all_mean_errs(log_path: str) -> list[float]:
     
     return [mean_err(f) for f in frames]
 
-def retrieve_all_std_devs(log_path: str) -> list[float]:
-
-    if not os.path.exists(log_path):
-        return []
-
-    frames = os.listdir(log_path)[1:]
+def retrieve_all_std_devs(log_path: str, frames: list[str]) -> list[float]:
 
     def mean_err(filename) -> float:
         _, s = retrieve_mean_err_std_dev(join(log_path, filename))
@@ -106,15 +106,17 @@ def retrieve_all_std_devs(log_path: str) -> list[float]:
     
     return [mean_err(f) for f in frames]
 
-def retrieve_log_info(log_path: str) -> tuple[list[int], list[int], list[float], list[float]]:
+def retrieve_log_info(log_path: str, max_frames = None) -> tuple[list[int], list[int], list[float], list[float]]:
     """Return [nrois], [nassocs], [mean_errs], [std_devs]"""
 
     print(f"Trying to retrieve log info here: {log_path}")
 
-    nrois = retrieve_all_nroi(log_path)
-    nassocs = retrieve_all_nassociations(log_path) # C'est la ou l'erreur s'est produit
-    mean_errs = retrieve_all_mean_errs(log_path)
-    std_devs = retrieve_all_std_devs(log_path)
+    frames = get_ordered_frames(log_path, max_frames)
+
+    nrois = retrieve_all_nroi(log_path, frames)
+    nassocs = retrieve_all_nassociations(log_path, frames[1:]) 
+    mean_errs = retrieve_all_mean_errs(log_path, frames[1:])
+    std_devs = retrieve_all_std_devs(log_path, frames[1:])
 
     return nrois, nassocs, mean_errs, std_devs
 
