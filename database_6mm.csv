@@ -1,0 +1,14 @@
+vid_in_path,vid_in_start,vid_in_stop,vid_in_skip,vid_in_buff,vid_in_loop,vid_in_threads,light_min,light_max,ccl_fra_path,ccl_fra_id,mrp_s_min,mrp_s_max,knn_k,knn_d,knn_s,trk_ext_d,trk_ext_o,trk_angle,trk_star_min,trk_meteor_min,trk_meteor_max,trk_ddev,trk_all,trk_bb_path,trk_mag_path,log_path,out_track_file
+Draconids-6mm2.00.13-0680-203800.avi,,,,,,,230,255,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.14-1400-170300.avi,,,,,,,221,246,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.14-1400-170300.avi,,,,,,,230,255,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.00-2750-163200.avi,,,,,,,176,201,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.00-2750-163200.avi,,,,,,,185,210,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.00-2750-163200.avi,,,,,,,212,237,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm2.00.12-3100-203730.avi,,,,,,,221,246,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm2.00.12-3100-203730.avi,,,,,,,230,255,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.34-3050-174700.avi,,,,,,,212,237,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.05-0750-164200.avi,,,,,,,176,201,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.32-3150-174200.avi,,,,,,,212,237,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.32-3150-174200.avi,,,,,,,221,246,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
+Draconids-6mm1.32-3150-174200.avi,,,,,,,230,255,,,,,,,,,,,,,,,True,track_bb.txt,,,tracks.txt
