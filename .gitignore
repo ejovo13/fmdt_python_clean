@@ -6,3 +6,4 @@ videos
 *.avi
 *.csv 
 *egg-info
+!data/*

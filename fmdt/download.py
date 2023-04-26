@@ -9,9 +9,9 @@ from deprecated import deprecated
 # Constant URLs for downloading
 __DATA_DIR = user_data_dir("fmdt_python")
 __GITHUB_PREFIX = "https://raw.githubusercontent.com/ejovo13/fmdt_python_clean/main"
-__DRACO6_CSV_URL  = __GITHUB_PREFIX + "/human_detections_draco6.csv"
-__DRACO12_CSV_URL = __GITHUB_PREFIX + "/human_detections_draco12.csv"
-__DRACO_CSV_URL = __GITHUB_PREFIX + "/human_detections.csv"
+__DRACO6_CSV_URL  = __GITHUB_PREFIX + "data/human_detections_draco6.csv"
+__DRACO12_CSV_URL = __GITHUB_PREFIX + "data/human_detections_draco12.csv"
+__DRACO_CSV_URL = __GITHUB_PREFIX + "data/human_detections.csv"
 
 # "name_of_local_file": "url_of_db"
 csv_dict = {
@@ -95,7 +95,7 @@ def download_csvs(log = False, overwrite = False, dir = __DATA_DIR) -> None:
 
 def download_videos_db(filename = "videos.db", log = False, overwrite = False, dir = __DATA_DIR):
     """Download videos.db"""
-    url  = "https://github.com/ejovo13/fmdt_python_clean/raw/main/videos.db"
+    url  = "https://github.com/ejovo13/fmdt_python_clean/raw/main/data/videos.db"
 
     download_binary_file(filename, url, dir, log, overwrite)
 
