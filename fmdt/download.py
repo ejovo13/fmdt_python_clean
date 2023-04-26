@@ -1,18 +1,14 @@
 """Module dealing with downloading files and stuff"""
-import os
-import requests
+from fmdt.utils import join
+
+from os.path import exists
+from requests import get
 from appdirs import user_data_dir 
+from deprecated import deprecated
 
-from fmdt.utils import (
-    join
-)
-
-# Let's define some functions that will fetch our data base files
-
+# Constant URLs for downloading
 __DATA_DIR = user_data_dir("fmdt_python")
-
-__GITHUB_PREFIX = "https://raw.githubusercontent.com/ejovo13/fmdt_python_clean/build"
-
+__GITHUB_PREFIX = "https://raw.githubusercontent.com/ejovo13/fmdt_python_clean/main"
 __DRACO6_CSV_URL  = __GITHUB_PREFIX + "/human_detections_draco6.csv"
 __DRACO12_CSV_URL = __GITHUB_PREFIX + "/human_detections_draco12.csv"
 __DRACO_CSV_URL = __GITHUB_PREFIX + "/human_detections.csv"
@@ -39,14 +35,14 @@ def download_file(
     if not dir is None:
         filename = join(dir, filename)
 
-    if os.path.exists(filename) and not overwrite:
+    if exists(filename) and not overwrite:
         if (log):
             print(f"{filename} already exists, not downloading anything")
         return False
     else:
         if (log):
             print(f"Downloading csv file from {url}")
-        r = requests.get(url)
+        r = get(url)
         with open(filename, "w") as csv: 
             csv.write(r.text)
 
@@ -63,7 +59,7 @@ def download_binary_file(
     if not dir is None:
         filename = join(dir, filename)
 
-    if os.path.exists(filename) and not overwrite:
+    if exists(filename) and not overwrite:
         if (log):
             print(f"{filename} already exists, not downloading anything")
         return False
@@ -71,33 +67,35 @@ def download_binary_file(
         if (log):
             print(f"Downloading csv file from {url}")
 
-        r = requests.get(url, stream=True)
+        r = get(url, stream=True)
         with open(filename, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024): 
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
 
         return True
-    
+
+@deprecated(version="0.0.43", reason="All relevant data is now stored in videos.db. Use fmdt.download_dbs() instead")
 def download_draco6_csv(filename: str = "human_detections_draco6.csv", dir = __DATA_DIR) -> bool:
     """Return True if downloading"""
     return download_file(filename, __DRACO6_CSV_URL, dir=dir)
 
-
+@deprecated(version="0.0.43", reason="All relevant data is now stored in videos.db. Use fmdt.download_dbs() instead")
 def download_draco12_csv(filename: str = "human_detections_draco12.csv", dir = __DATA_DIR) -> bool:
     return download_file(filename, __DRACO12_CSV_URL, dir=dir)
 
+@deprecated(version="0.0.43", reason="All relevant data is now stored in videos.db. Use fmdt.download_dbs() instead")
 def download_draco_csv(filename: str = "human_detections.csv", dir = __DATA_DIR) -> bool:
     return download_file(filename, __DRACO_CSV_URL, dir=dir)
 
+@deprecated(version="0.0.43", reason="All relevant data is now stored in videos.db. Use fmdt.download_dbs() instead")
 def download_csvs(log = False, overwrite = False, dir = __DATA_DIR) -> None:
     for (file, url) in csv_dict.items():
         download_file(file, url, dir, log, overwrite)
 
-
 def download_videos_db(filename = "videos.db", log = False, overwrite = False, dir = __DATA_DIR):
     """Download videos.db"""
-    url  = "https://github.com/ejovo13/fmdt_python_clean/raw/build/videos.db"
+    url  = "https://github.com/ejovo13/fmdt_python_clean/raw/main/videos.db"
 
     download_binary_file(filename, url, dir, log, overwrite)
 
@@ -108,12 +106,12 @@ def download_demo_mp4(filename: str = "demo.mp4"):
 
     url = "https://lip6.fr/adrien.cassagne/data/tauh/in/2022_05_31_tauh_34_meteors.mp4"
 
-    if os.path.exists(filename):
+    if exists(filename):
         print(f"{filename} already exists, not downloading")
         return False
     else:
         print(f"Downloading mp4 file from {url}...")
-        r = requests.get(url)
+        r = get(url)
         with open(filename, "wb") as file:
             for chunk in r.iter_content(chunk_size=255): 
                 if chunk: # filter out keep-alive new chunks
