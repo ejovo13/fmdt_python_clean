@@ -324,11 +324,7 @@ class Video:
         """Check if this Video has a best detection stored in our database"""
 
         id = self.id(db_file, db_dir)
-        try:
-            retrieve_best_arg(id, db_file=db_file, db_dir=db_dir)
-            return True
-        except:
-            return False
+        return query_best_detection(id, False, db_file, db_dir)
 
     def best_detection(
             self,
@@ -339,9 +335,13 @@ class Video:
         id = self.id(db_file, db_dir)
 
         if self.has_best_detection(db_file, db_dir):
-            return retrieve_best_detection(id, db_file=db_file, db_dir=db_dir)
+            args, trk_rate, n_true_pos = retrieve_best_detection(id, db_file=db_file, db_dir=db_dir)
+            args.detect_args.vid_in_path = self.full_path()
+            return args, trk_rate, n_true_pos
+
         else:
-            raise DatabaseError(f"Video {self} has no best args in database {fmdt.utils.join(db_dir, db_file)}, cannot retrieve best args with Video.best_args()")
+            fmdt.utils.stderr(f"WARNING: {self} has no best detection in {fmdt.utils.join(db_dir, db_file)}, VideoClip.best_detection(); returning None")
+            return None
 
     def best_args(
             self,
@@ -575,7 +575,7 @@ class VideoClip(Video):
 
         def pred(hum_det: fmdt.HumanDetection):
             """Check if the meteors start frame is in the clip"""
-            return hum_det.start_frame >= self.start_frame and hum_det.start_frame <= self.end_frame
+            return hum_det.start_frame >= self.start_frame and hum_det.start_frame < self.end_frame
         
         def modify_meteor(m: fmdt.HumanDetection):
             """Modify the interval with respect to this video clip"""
@@ -595,24 +595,27 @@ class VideoClip(Video):
         """Check if this Video has a best detection stored in our database"""
 
         id = self.id(db_file, db_dir)
-        try:
-            retrieve_best_arg(id, video_clip=True, db_file=db_file, db_dir=db_dir)
-            return True
-        except:
-            return False
+        return query_best_detection(id, True, db_file, db_dir)
 
     def best_detection(
             self,
             db_file: str = "videos.db",
             db_dir = DEFAULT_DATA_DIR
-        ) -> tuple[fmdt.Args, float, int]:
+        ) -> tuple[fmdt.Args, float, int] | None:
+        """
+        Get the best detection from our database, retrieved as a (args, trk_rate, n_true_pos) tuple. 
+
+        If no best detection exists, return None.
+        
+        """
 
         id = self.id(db_file, db_dir)
 
         if self.has_best_detection(db_file, db_dir):
             return retrieve_best_detection(id, video_clip=True, db_file=db_file, db_dir=db_dir)
         else:
-            raise DatabaseError(f"Video {self} has no best args in database {fmdt.utils.join(db_dir, db_file)}, cannot retrieve best args with Video.best_args()")
+            fmdt.utils.stderr(f"WARNING: {self} has no best detection in {fmdt.utils.join(db_dir, db_file)}, VideoClip.best_detection(); returning None")
+            return None
     
     def parent_path(self) -> str:
         """Return the full path to the folder that these clips will appear in"""
@@ -692,8 +695,6 @@ class VideoClip(Video):
         if len(df) != 1:
             raise DatabaseError(f"{self} has no matches in database {fmdt.utils.join(db_file, db_dir)}")
 
-
-
         return df.iloc[0,0]
 
 
@@ -733,83 +734,45 @@ def load_draco6(
         db_filename: str = "videos.db",
         db_dir = DEFAULT_DATA_DIR,
         require_gt = False,
-        require_exist = False
+        require_exist = False,
+        require_best_det = False
     ) -> list[Video]:
     """Load draco6 `Video` objects that are stored in the `db_dir`/`filename` .db file"""
 
-    vids = retrieve_videos(db_filename, db_dir)
-    d6 = [v for v in vids if v.is_draco6()]
-
-    if require_gt:
-        d6 = [v for v in d6 if v.has_meteors(db_filename, db_dir)]
-
-    if require_exist:
-        d6 = [v for v in d6 if v.exists()]
+    vids = retrieve_videos(db_filename, db_dir, require_gt, require_exist, require_best_det)
+    return [v for v in vids if v.is_draco6()]
     
-    return d6
-
 def load_draco12(
         db_filename: str = "videos.db",
         db_dir = DEFAULT_DATA_DIR,
         require_gt = False,
-        require_exist = False
+        require_exist = False,
+        require_best_det = False
     ) -> list[Video]:
 
-    vids = retrieve_videos(db_filename, db_dir)
-    d12 = [v for v in vids if v.is_draco12()]
+    vids = retrieve_videos(db_filename, db_dir, require_gt, require_exist, require_best_det)
+    return [v for v in vids if v.is_draco12()]
 
-    if require_gt:
-        d12 = [v for v in d12 if v.has_meteors(db_filename, db_dir)]
-
-    if require_exist:
-        d12 = [v for v in d12 if v.exists()]
-    
-    return d12
 
 def load_window(
         db_filename: str = "videos.db",
         db_dir = DEFAULT_DATA_DIR,
         require_gt = False,
-        require_exist = False
+        require_exist = False,
+        require_best_det = False
     ) -> list[Video]:
 
-    vids = retrieve_videos(db_filename, db_dir)
-    win = [v for v in vids if v.is_window()]
-
-    if require_gt:
-        win = [v for v in win if v.has_meteors(db_filename, db_dir)]
-
-    if require_exist:
-        win = [v for v in win if v.exists()]
-    
-    return win
+    vids = retrieve_videos(db_filename, db_dir, require_gt, require_exist, require_best_det)
+    return [v for v in vids if v.is_window()]
 
 def load_window_clips(
         db_file = "videos.db",
         db_dir = DEFAULT_DATA_DIR,
-        require_exist = False
+        require_exist = False,
+        require_best_det = False
     ) -> list[VideoClip]:
     """Load all of the clips associated with all of our windows objects"""
-
-    db_path = fmdt.utils.join(db_dir, db_file)
-    con = sqlite3.connect(db_path)
-
-    df: pd.DataFrame = pd.read_sql_query("select * from video_clips", con = con)
-
-    con.close()
-
-    if require_exist:
-
-        out = []
-        for _, row in df.iterrows():
-            v = VideoClip.from_pd_row(row, db_file, db_dir)
-            if v.exists():
-                out.append[v]
-
-        return out 
-
-    else:
-        return [VideoClip.from_pd_row(row, db_file, db_dir) for _, row in df.iterrows()]
+    return retrieve_video_clips(db_file, db_dir, require_exist, require_best_det)
 
     
 def load_demo(db_filename: str = "videos.db", db_dir = DEFAULT_DATA_DIR) -> list[Video]:
@@ -823,33 +786,88 @@ def load_demo(db_filename: str = "videos.db", db_dir = DEFAULT_DATA_DIR) -> list
 def load_all(
         db_filename = "videos.db",
         db_dir = DEFAULT_DATA_DIR,
-        require_gt = True
-    ) -> list:
-    """Load all videos that have a ground truth in our database"""
-    draco6  = load_draco6 (db_filename, db_dir, require_gt)
-    draco12 = load_draco12(db_filename, db_dir, require_gt)
-    windows = load_window_clips(db_filename, db_dir)
+        require_gt = True,
+        require_exist = True,
+        require_best_det = False
+    ) -> list[Video]:
+    """Load all Draco6, Draco12, and window_clips
+    
+    The default behavior is to load all the videos that have at least one ground truth and exist on disk. We can also 
+    require that a video has a best detection with the require_best_det parameter
+
+    Parameters
+    ----------
+    require_gt (bool): When True, all returned videos have a ground truth in our database
+        default: True
+    require_exist (bool): When True, all returned videos exist on disk
+        default: True 
+    require_best_det (bool): When True, all returned videos have a recorded best detection in the best_detections table
+        of our database.
+        default: False
+
+    """
+
+    draco6  = load_draco6 (db_filename, db_dir, require_gt, require_exist, require_best_det)
+    draco12 = load_draco12(db_filename, db_dir, require_gt, require_exist, require_best_det)
+    windows = load_window_clips(db_filename, db_dir, require_exist, require_best_det)
 
     return draco6 + draco12 + windows
 
-
 def retrieve_videos(
-        db_filename: str = "videos.db",
-        db_dir = DEFAULT_DATA_DIR
+        db_file: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR,
+        require_gt = False,
+        require_exist = False,
+        require_best_det = False
     ) -> list[Video]:
 
     """Read in the videos stored in 'videos.db' into a list of fmdt.Video"""
-    db_path = fmdt.utils.join(db_dir, db_filename)
+    db_path = fmdt.utils.join(db_dir, db_file)
 
     # Download if the database file requested doesnt exist
     if not os.path.exists(db_path):
-        fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=db_dir)
+        fmdt.download.download_videos_db(db_file, log=False, overwrite=False, dir=db_dir)
 
     con = sqlite3.connect(db_path)
     df = pd.read_sql_query("select * from video", con)
     con.close()
 
-    return [fmdt.Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
+    vids = [fmdt.Video.from_pd_row(df.iloc[i]) for i in range(len(df))]
+
+    if require_gt:
+        vids = [v for v in vids if v.has_meteors(db_file, db_dir)]
+    
+    if require_exist:
+        vids = [v for v in vids if v.exists()]
+
+    if require_best_det:
+        vids = [v for v in vids if v.has_best_detection(db_file, db_dir)]
+
+    return vids
+
+def retrieve_video_clips(
+        db_file: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR,
+        require_exist = False,
+        require_best_det = False
+    ) -> list[Video]:
+
+    db_path = fmdt.utils.join(db_dir, db_file)
+    con = sqlite3.connect(db_path)
+
+    df: pd.DataFrame = pd.read_sql_query("select * from video_clips", con = con)
+    clips = [VideoClip.from_pd_row(row, db_file, db_dir) for _, row in df.iterrows()]
+
+    con.close()
+
+    if require_exist:
+        clips = [c for c in clips if c.exists()]
+
+    if require_best_det:
+        clips = [c for c in clips if c.has_best_detection()]
+
+    return clips
+
 
 def retrieve_meteors(
         video_name: str,
@@ -872,6 +890,35 @@ def retrieve_meteors(
     con.close()
 
     return [fmdt.HumanDetection.from_pd_row(df.iloc[i]) for i in range(len(df))]
+
+def query_best_detection(
+        id: int,
+        video_clip: bool = False,
+        db_file: str = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+    ) -> bool:
+
+    """Test if there is a best detection associated with the provided id"""
+
+    db_full_path = fmdt.utils.join(db_dir, db_file)
+    con = sqlite3.connect(db_full_path)
+
+    if video_clip:
+
+        df = pd.read_sql_query(f"""
+            SELECT * FROM best_detections
+            WHERE id_video_clip = {id};
+            """, con)
+    
+    else:
+
+        df = pd.read_sql_query(f"""
+            SELECT * FROM best_detections
+            WHERE id_video = {id};
+            """, con)
+
+    return len(df) == 1
+
 
 def retrieve_best_detection_df(
         id: int,
@@ -906,6 +953,7 @@ def retrieve_best_detection_df(
         
         df = df.drop(df.columns[_ID_ARGS_COL], axis=1)
 
+    con.close()
     # Now we want to convert this df into an Args object.
     if len(df) != 1:
 
@@ -914,7 +962,6 @@ def retrieve_best_detection_df(
         else:
             raise DatabaseError(f"Error accessing best args for Video by id {id} from {db_filename}")
     
-    con.close()
 
     return df
 
@@ -978,8 +1025,8 @@ def retrieve_best_detection(
 
     dict = df.to_dict("records")[0]
     args = fmdt.detect_args(**dict)
-    trk_rate = df["trk_rate"]
-    n_true_pos = df["true_pos"]
+    trk_rate = df["trk_rate"].iloc[0]
+    n_true_pos = df["true_pos"].iloc[0]
 
     return args, trk_rate, n_true_pos
     
@@ -1075,24 +1122,90 @@ def add_human_detection_to_gt(meteor: fmdt.HumanDetection):
 import json
 # ==================== Functions dealing with Json output =================== #
 
-def best_draco6(db_file = "videos.db", db_dir = DEFAULT_DATA_DIR) -> str:
+def best_draco6(
+        parameter_subset: list[str] = ["light_min", "light_max", "kdd_n"],
+        db_file = "videos.db",
+        db_dir = DEFAULT_DATA_DIR
+) -> str:
 
     # get the draco 6 videos along with their arguments
-    db_filename = fmdt.utils.join(db_dir, db_file)
+    # db_filename = fmdt.utils.join(db_dir, db_file)
 
-    con = sqlite3.connect(db_filename)
+    # con = sqlite3.connect(db_filename)
     
-    df = pd.read_sql_query(f"""
-        SELECT * FROM best_detections as bd
-        INNER JOIN video as v
-        ON bd.id_video = v.id
-        INNER JOIN detect_args as da
-        ON bd.id_args = da.id_args
-        WHERE v.type = 'DRACO6'
-        """,
-        con)
+    # df = pd.read_sql_query(f"""
+    #     SELECT * FROM best_detections as bd
+    #     INNER JOIN video as v
+    #     ON bd.id_video = v.id
+    #     INNER JOIN detect_args as da
+    #     ON bd.id_args = da.id_args
+    #     WHERE v.type = 'DRACO6'
+    #     """,
+    #     con)
 
-    print(df)
+    # print(df)
+
+    # con.close()
+
+    d6 = load_draco6(require_gt = True, require_exist = True, require_best_det = True)
+
+    best_dets = [(d.name, d.best_detection()) for d in d6]
+
+
+
+
+
+
+
+    
+
+
+
+# ======================= Load Relational Database tables as pd.DataFrames ==================== #
+
+def retrieve_table(
+    table_name: str,
+    db_file = "videos.db",
+    db_dir  = DEFAULT_DATA_DIR
+) -> pd.DataFrame:
+
+    db_full_path = fmdt.utils.join(db_dir, db_file)
+
+    con = sqlite3.connect(db_full_path)
+
+    sql = f"""select * from {table_name}"""
+    df = pd.read_sql_query(sql, con)
 
     con.close()
 
+    return df
+
+def retrieve_table_video(
+    db_file = "videos.db",
+    db_dir  = DEFAULT_DATA_DIR
+) -> pd.DataFrame:
+    return retrieve_table("video", db_file, db_dir)
+
+def retrieve_table_video_clips(
+    db_file = "videos.db",
+    db_dir  = DEFAULT_DATA_DIR
+) -> pd.DataFrame:
+    return retrieve_table("video_clips", db_file, db_dir)
+
+def retrieve_table_best_detections(
+    db_file = "videos.db",
+    db_dir  = DEFAULT_DATA_DIR
+) -> pd.DataFrame:
+    return retrieve_table("best_detections", db_file, db_dir)
+
+def retrieve_table_human_detections(
+    db_file = "videos.db",
+    db_dir  = DEFAULT_DATA_DIR
+) -> pd.DataFrame:
+    return retrieve_table("human_detections", db_file, db_dir)
+
+def retrieve_table_detect_args(
+    db_file = "videos.db",
+    db_dir  = DEFAULT_DATA_DIR
+) -> pd.DataFrame:
+    return retrieve_table("detect_args", db_file, db_dir)
