@@ -950,7 +950,6 @@ def handle_visu_args(
     else:
         fmdt_visu_exe = shutil.which("fmdt-visu", path=get_exec_path())
 
-    fmdt_visu_exe = shutil.which("fmdt-visu")
     fmdt_visu_found = not fmdt_visu_exe is None
     assert fmdt_visu_found, "fmdt-visu executable not found"
 

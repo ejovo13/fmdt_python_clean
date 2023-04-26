@@ -137,10 +137,9 @@ class Video:
         if self.has_best_detection():
 
             best_args = self.best_args()
-            best_args.detect_args.vid_in_path = self.full_path()
-            best_args.log = log
+            d_args_stripped = best_args.detect_args.to_stripped_dict()
 
-            return best_args.detect()
+            return self.detect(**d_args_stripped, log=log)
 
         else:
 
@@ -166,7 +165,7 @@ class Video:
             best_args, trk_rate, true_pos = self.best_detection()
             d_args_stripped = best_args.detect_args.to_stripped_dict()
 
-            c_res = self.detect(**d_args_stripped).check()
+            c_res = self.detect(**d_args_stripped, log=log).check()
 
             return trk_rate == c_res.trk_rate() and true_pos == c_res.true_pos()
 
