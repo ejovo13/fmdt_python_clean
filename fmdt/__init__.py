@@ -95,6 +95,6 @@ init_cache()
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 42 
+PATCH         = 43 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
