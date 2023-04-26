@@ -125,6 +125,56 @@ class Video:
     def default_trk_path(self, dir: str = "."):
         return dir + "/" + self.prefix() + "_trk.txt" 
 
+    def detect_best(
+            self,
+            log = False 
+        ) -> fmdt.res.DetectionResult:
+        """Use the arguments from our best_detections database file to call a detection. 
+        
+        If there is no recorded best detection, then use FMDT's default parameters  
+        """
+
+        if self.has_best_detection():
+
+            best_args = self.best_args()
+            best_args.detect_args.vid_in_path = self.full_path()
+            best_args.log = log
+
+            return best_args.detect()
+
+        else:
+
+            fmdt.utils.stderr(f"WARNING: {self} has no records in best_detections table; using default FMDT arguments")
+            return self.detect()
+
+    def validate_best(
+            self,
+            log = False
+        ) -> bool:
+        """Call detect_best().check() and see if the trk_rate is the same as what is recorded in our database
+        
+
+        Return
+        ------
+
+        validated (bool): True when the trk_rate of a fresh run with the best args matches the trk_rate of the
+            corresponding entry in our database
+        """
+
+        if self.has_best_detection():
+
+            best_args, trk_rate, true_pos = self.best_detection()
+            d_args_stripped = best_args.detect_args.to_stripped_dict()
+
+            c_res = self.detect(**d_args_stripped).check()
+
+            return trk_rate == c_res.trk_rate() and true_pos == c_res.true_pos()
+
+        else:
+
+            fmdt.utils.stderr(f"WARNING: {self} has no records in best_detections table; Video.validate_best() returning false")
+            return False
+
     # def visu
     def detect(self,
         #=================== fmdt-detect parameters ================

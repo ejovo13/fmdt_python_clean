@@ -136,9 +136,12 @@ class DetectArgs:
         self.log_path = log_path
         self.trk_out_path = trk_out_path
 
-    def to_dict(self) -> dict:
+    def to_dict(
+            self,
+            subset: list[str] = None
+    ) -> dict:
 
-        return {
+        d = {
             "vid_in_path": self.vid_in_path, 
             "vid_in_start": self.vid_in_start,
             "vid_in_stop": self.vid_in_stop,
@@ -168,6 +171,16 @@ class DetectArgs:
             "log_path": self.log_path,
             "trk_out_path": self.trk_out_path 
         }
+
+        if subset is None:
+            return d
+        
+        else:
+            dsub = {}
+            for k in subset:
+                dsub[k] = d[k]
+        
+            return dsub
 
     def to_stripped_dict(self) -> dict:
         """Return a stripped dictionary that drops all parameters pertaining to paths"""

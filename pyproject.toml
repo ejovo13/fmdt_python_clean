@@ -7,7 +7,7 @@ exclude = ["*.csv", "*.txt", "*.mp4"]
 
 [project]
 name = "fmdt-python"
-version = "0.0.41"
+version = "0.0.42"
 authors = [
   { name="Evan Voyles", email="ejovo13@yahoo.com" },
 ]

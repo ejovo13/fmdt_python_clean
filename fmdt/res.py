@@ -459,6 +459,18 @@ class CheckResult:
     
     def trk_rate(self) -> float:
         return self.meteor_stats()["trk_rate"]
+
+    def true_pos(self) -> int:
+        return self.meteor_stats()["tpos"]
+
+    def true_neg(self) -> int:
+        return self.meteor_stats()["tneg"]
+
+    def false_pos(self) -> int:
+        return self.meteor_stats()["fpos"]
+
+    def false_neg(self) -> int:
+        return self.meteor_stats()["fneg"]
     
     def gts(self) -> int:
         """Return the number ground truth meteors used when checking"""

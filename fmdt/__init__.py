@@ -73,7 +73,18 @@ from fmdt.db import (
     load_demo,
     load_window_clips,
     load_all,
-    info as local_info
+    get_video,
+    info as local_info,
+    retrieve_table_video,
+    retrieve_table_video_clips,
+    retrieve_table_best_detections,
+    retrieve_table_detect_args,
+    retrieve_table_human_detections
+)
+
+from fmdt.stats import (
+    num_videos,
+    num_meteors
 )
 
 init_cache()
@@ -84,6 +95,6 @@ init_cache()
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 41 
+PATCH         = 42 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
