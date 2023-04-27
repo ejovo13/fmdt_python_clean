@@ -22,7 +22,7 @@ def get_ordered_frames(log_path: str, max_frames = None) -> list[str]:
     frames = os.listdir(log_path)
 
     # Retain only the files names who are of the format [\d*].txt
-    rxp = r'\[(\d*)\].txt'
+    rxp = r'\d*.txt'
     rxp_comp = re.compile(rxp)
     frames = [f for f in frames if rxp_comp.search(f)]
 

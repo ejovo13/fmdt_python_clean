@@ -87,6 +87,11 @@ from fmdt.stats import (
     num_meteors
 )
 
+from fmdt.res import (
+    retrieve_log_info,
+    retrieve_log_df
+)
+
 init_cache()
 
 
@@ -95,6 +100,6 @@ init_cache()
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 0
-PATCH         = 43 
+PATCH         = 44 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)

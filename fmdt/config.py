@@ -8,6 +8,8 @@ import fmdt.res
 import pandas as pd
 import shutil
 
+from fmdt.utils import join
+
 dirs = AppDirs("fmdt_python")
 config_file = "config.json"
 full_path = dirs.user_data_dir + "/" + config_file
@@ -257,10 +259,7 @@ def clear_cache() -> int:
 
     for p in paths:
 
-        full_path = cd + "/" + p
-
-
-        # shutil.rmtree(full_path)
+        full_path = join(cd, p)
 
         if os.path.isfile(full_path):
             os.remove(full_path)
