@@ -238,7 +238,7 @@ def detect(
 
     #============= Recover data if log_path =======================================#
     if not args.detect_args.log_path is None:
-        nrois, nassocs, mean_errs, std_devs = fmdt.res.retrieve_log_info(args.detect_args.log_path) 
+        nrois, nassocs, mean_errs, std_devs = fmdt.res.retrieve_log_info(args.detect_args.log_path, nframes) 
     else:
         nrois = []
         nassocs = []
