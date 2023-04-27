@@ -297,6 +297,13 @@ def listdir_cache() -> list[str]:
 def cache_info():
     print(f"Cache: {cache_dir()} has {bytes_format(size_cache())}")
 
+def seagate():
+    fmdt.init(
+        d6_dir  = "/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor",
+        d12_dir = "/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor",
+        win_dir = "/run/media/ejovo/Seagate Portable Drive/Meteors/",
+    )
+
 def main():
 
     # config = Config("/home/ejovo/Videos/Watec6mm", "/home/ejovo/Videos/Watec12mm", "/home/ejovo/Videos/Window")
