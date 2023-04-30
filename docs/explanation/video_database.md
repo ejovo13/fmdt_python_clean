@@ -1,3 +1,54 @@
+# SQL Database
+
+Behind the surface of any `load_*` function is an SQL query. For example, `fmdt.load_demo()` exectutes the following SQL:
+
+```sql
+SELECT * FROM video WHERE name='2022_05_31_tauh_34_meteors.mp4'
+```
+
+and then converts the returned `pandas.DataFrame` into a single `Video`.
+
+??? Note "Developer's Note"
+
+    These SQL requests are powered by the python modules sqlite3 and pandas. Each request is executed with a call to `pandas.read_sql_query()` whose first argument is valid SQL and whose second argument is a connection to a database. The following snippet shows how we perform the previous query to retrieve our demo video.
+
+    ```python
+    import pandas as pd
+    import sqlite3 
+    import fmdt
+    from os.path import join
+
+    db_filename = join(fmdt.get_db_dir(), "videos.db")
+
+    con = sqlite3.connect(db_filename)
+    df = pd.read_sql_query("select * from video where name='2022_05_31_tauh_34_meteors.mp4'", con)  
+    con.close()
+
+    v = fmdt.Video.from_pd_row(df.iloc[0]) 
+    print(v) # '2022_05_31_tauh_34_meteors.mp4'
+    ```
+
+We use a relational database powered by sqlite3 with the following Entity Relationship Diagram (using [crow's foot notation](http://www2.cs.uregina.ca/~bernatja/crowsfoot.html)):
+
+![videos.db](../media/videos_db.svg)
+
+For those familiar with SQL, you can inspect the contents of each table by accessing the database located in `$DB_DIR/videos.db`, where `$DB_DIR` is the string returned by `fmdt.get_db_dir()`:
+
+```python
+>>> import fmdt
+>>> import os
+>>> fmdt.get_db_dir()
+'/home/ejovo/.local/share/fmdt_python'
+>>> os.listdir(fmdt.get_db_dir())
+['human_detections_draco6.csv',
+ 'human_detections_draco12.csv',
+ 'human_detections.csv',
+ 'videos.db',                         # sqlite3 database file
+ 'config.json',
+ 'gt6.csv',
+ 'gt12.csv']
+```
+
 # Video Database
 
 Our video database is split into three categories: `Draco6`, `Draco12`, and `Window`. 
@@ -121,3 +172,5 @@ Our video database is split into three categories: `Draco6`, `Draco12`, and `Win
     ```
 
     Each `window*` video is 5 minutes long and contains several ground truths.
+
+    Within each `window` video there are several meteors. 
