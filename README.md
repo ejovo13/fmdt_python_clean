@@ -10,9 +10,6 @@ This branch contains the `fmdt`'s documentation and a series of scripts that sho
 pip install fmdt-python
 ```
 
-In order to use the functions `fmdt.detect` and `fmdt.visu` (to call `fmdt-detect` and `fmdt-visu`, respectively) you need to have `fmdt-detect` and `fmdt-visu` compiled and locatable via your system's 
-`PATH`.
-
 ### Example Usage
 
 In order to actually use `fmdt` you need to have installed the [Fast Meteor Detection Toolbox](https://github.com/alsoc/fmdt)
