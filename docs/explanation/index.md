@@ -38,7 +38,7 @@ args = args.detect()
 It's important to know that we can also create `Args` instances as the return type from a call to `fmdt.detect`:
 
 ```
-res = fmdt.detect(vid_in_path="demo.mp4)
+res = fmdt.detect(vid_in_path="demo.mp4")
 ```
 
 ##### Chain together function calls
@@ -49,7 +49,7 @@ member functions `visu` and `detect` to chain together detection and visualizati
 ```
 res = args.detect().visu()
 ```
----
+
 ## TrackedObject
 A `TrackedOjbect` encodes the results of a call to `fmdt-detect`. A list of `TrackedObject` is our 
 representation of the table of tracks outputted by `fmdt-detect` (corresponding to the `trk_out_path` parameter)
