@@ -53,15 +53,15 @@ def detect(
         trk_all: bool | None = None,
         trk_bb_path: str | None = None,
         trk_mag_path: str | None = None,
-        trk_out_path: str | None = None,
+        trk_path: str | None = None,
         log_path: str | None = None,
         log: bool = False
     ) -> fmdt.args.Args:
 ```
 
-All of these parameters except for `trk_out_path` and `log` are extensively documented in the main project [here](https://fmdt.readthedocs.io/en/latest/user/usage/detect.html). 
+All of these parameters except for `trk_path` and `log` are extensively documented in the main project [here](https://fmdt.readthedocs.io/en/latest/user/usage/detect.html). 
 
-`trk_out_path` is the name of a file where the stdout of `fmdt-detect` will be redirected.
+`trk_path` is the name of a file where the stdout of `fmdt-detect` will be redirected.
 
 For example, the command line call 
 ```
@@ -71,7 +71,7 @@ For example, the command line call
 Would get translated as 
 
 ```
->>> fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_bb_path="out_detect_bb.txt", trk_out_path = "out_detect_tracks.txt")
+>>> fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_bb_path="out_detect_bb.txt", trk_path = "out_detect_tracks.txt")
 ```
 
 
@@ -79,7 +79,7 @@ In practice, I've found that the most important parameters are
 
 - `vid_in_path`
 - `trk_bb_path`
-- `trk_out_path` 
+- `trk_path` 
 
 as the execution of `fmdt.visu` depends on their inclusion.
 

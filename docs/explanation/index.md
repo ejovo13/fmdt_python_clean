@@ -26,7 +26,7 @@ We can use the `Args` class to call `fmdt.detect`:
 d_args = {
     "vid_in_path": "demo.mp4",
     "trk_bb_path": "bbs.txt",
-    "trk_out_path": "trk.txt",
+    "trk_path": "trk.txt",
     "light_min": 250,
     "light_max": 255
 }
@@ -52,18 +52,18 @@ res = args.detect().visu()
 
 ## TrackedObject
 A `TrackedOjbect` encodes the results of a call to `fmdt-detect`. A list of `TrackedObject` is our 
-representation of the table of tracks outputted by `fmdt-detect` (corresponding to the `trk_out_path` parameter)
+representation of the table of tracks outputted by `fmdt-detect` (corresponding to the `trk_path` parameter)
 
 ##### Creation
 
 A list of `TrackedObject` can be retreived two different ways. The first involves a fresh call to `fmdt.detect` and 
-uses the `Args` object that we just studied. In this method we **have** to specify the `trk_out_path` so that we 
+uses the `Args` object that we just studied. In this method we **have** to specify the `trk_path` so that we 
 can later retreive the data.
 
 ```
 d_args = {
     "vid_in_path": "demo.mp4",
-    "trk_out_path": "trk.txt"
+    "trk_path": "trk.txt"
     "light_min": 150,
     "light_max": 200
 }

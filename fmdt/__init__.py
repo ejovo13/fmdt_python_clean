@@ -7,6 +7,7 @@ from fmdt.core import (
 
 from fmdt.api import (
     detect,
+    log_parser,
     visu,
     count,
     detect_directory,
@@ -16,6 +17,7 @@ from fmdt.api import (
 from fmdt.args import (
     Args,
     DetectArgs,
+    LogParserArgs,
     VisuArgs,
     detect_args,
     set_exec_path,

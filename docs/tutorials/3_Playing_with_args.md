@@ -9,7 +9,7 @@ Before you get started, it might not be a bad idea to check out the [fmdt.args](
 In previous tutorials, we've been passing our arguments directly to `fmdt.detect` like so:
 
 ```
-fmdt.detect(vid_in_path="demo.mp4", trk_out_path="trk.txt")
+fmdt.detect(vid_in_path="demo.mp4", trk_path="trk.txt")
 ```
 
 ### Creating Args
@@ -17,8 +17,8 @@ fmdt.detect(vid_in_path="demo.mp4", trk_out_path="trk.txt")
 However, we can explicitly create an `Args` object first, using either `fmdt.detect_args` or `fmdt.Args.new`.
 
 ```
-args = fmdt.detect_args(vid_in_path="demo.mp4", trk_out_path="trk.txt")
-args = fmdt.Args.new(vid_in_path="demo.mp4", trk_out_path="trk.txt")
+args = fmdt.detect_args(vid_in_path="demo.mp4", trk_path="trk.txt")
+args = fmdt.Args.new(vid_in_path="demo.mp4", trk_path="trk.txt")
 ```
 
 These two calls are semantically equivalent; the difference between `Args.new()` and `detect_args()` is that `Args.new` includes extra options for `fmdt-visu`, such as `vid_out_path`, that a call to `fmdt-detect` does not use.

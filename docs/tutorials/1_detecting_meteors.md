@@ -25,7 +25,7 @@ vid    = 'demo.mp4'
 trk    = 'trk.txt'
 bb     = 'bb.txt'
 
-fmdt.detect(vid_in_path=vid, trk_out_path=trk, trk_bb_path=bb)
+fmdt.detect(vid_in_path=vid, trk_path=trk, trk_bb_path=bb)
 ```
 The last line executes `fmdt-detect` with the equivalent bash command:
 ```{bash}

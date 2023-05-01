@@ -20,7 +20,7 @@ vid_in  = "demo.mp4"
 trk     = "trk.txt"
 bb      = "bb.txt"
 
-res = fmdt.detect(vid_in_path=vid_in, trk_out_path=trk, trk_bb_path=bb, trk_all=True)
+res = fmdt.detect(vid_in_path=vid_in, trk_path=trk, trk_bb_path=bb, trk_all=True)
 ```
 
 This time, however, we pass in `trk_all=True` to indicate to `fmdt-detect` to track all celestial objects (stars, meteors AND noise) and we also store the results of a call to `fmdt.detect` in the `res` variable. The return of `fmdt.detect` is a `fmdt.res.DetectionResult`.
@@ -82,4 +82,4 @@ noise   = res.noise()
 
 ### Conclusion
 
-This tutorial taught you how to load, filter, and examine the list of objects that are detected by `fmdt-detect` (and stored in the `trk_out_path` file). We will use this tracking list often when evaluating the performance of `fmdt-detect` with our database of videos. Keep following along to [the next section](3_Playing_with_args.md) to learn how to play around with different argument combinations or read up on the `DetectionResult` class [here](../reference/res.md)
+This tutorial taught you how to load, filter, and examine the list of objects that are detected by `fmdt-detect` (and stored in the `trk_path` file). We will use this tracking list often when evaluating the performance of `fmdt-detect` with our database of videos. Keep following along to [the next section](3_Playing_with_args.md) to learn how to play around with different argument combinations or read up on the `DetectionResult` class [here](../reference/res.md)

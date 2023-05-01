@@ -15,7 +15,7 @@ We call the main executables `fmdt-*` using `fmdt.*`
     ``` py
     fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
                 trk_bb_path="bb.txt",
-                trk_out_path="trk.txt",
+                trk_path="trk.txt",
                 light_min=100,
                 light_max=150,
                 log_path="log") 
@@ -54,7 +54,7 @@ We call the main executables `fmdt-*` using `fmdt.*`
                 trk_mag_path: str = None,
                 log_path: str = None,
                 #================== Additional Parameters ====================
-                trk_out_path: str = "trk.txt",
+                trk_path: str = "trk.txt",
                 log: bool = False,
                 timeout: float = None,
                 cache: bool = False,
@@ -300,7 +300,7 @@ We can run all three of our core executables starting with a `Video` object.
         <fmdt.args.Args object>
         ====================
         Detect parameters: 
-        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
         ```
 
 
@@ -653,7 +653,7 @@ Awesome! With args:
 <fmdt.args.Args object>
 ====================
 Detect parameters: 
-{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'light_min': 253, 'light_max': 255, 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'light_min': 253, 'light_max': 255, 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
 ```
 
 The meteor

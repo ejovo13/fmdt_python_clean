@@ -263,7 +263,7 @@ class GroundTruth:
         n = (light_min_max - light_min_min) / diff + 1
 
         # d_args = {
-        #     "trk_out_path": "trk.txt",
+        #     "trk_path": "trk.txt",
         #     "trk_bb_path": "bb.txt",
         #     "timeout":  1
         # }
@@ -536,7 +536,7 @@ def vary_light_intervals(
         vname = f"{vname}_off{offset}"
 
         res = fmdt.detect(vid, 
-                        trk_out_path=track_file,
+                        trk_path=track_file,
                         log=True,
                         light_min=light_min,
                         light_max=light_max,

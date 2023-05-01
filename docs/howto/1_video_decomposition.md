@@ -48,7 +48,7 @@ vid    = "demo.mp4"
 tracks = "tracks.txt"
 bb     = "bb.txt"
 
-fmdt.detect(vid_in_path=vid, trk_out_path=tracks, trk_bb_path=bb).split()
+fmdt.detect(vid_in_path=vid, trk_path=tracks, trk_bb_path=bb).split()
 ```
 
 Which uses ffmpeg to _approximately_ trim a video around non-overlapping meteor 
@@ -57,7 +57,7 @@ detections.
 There is also a more verbose alternative which accomplishes the same split:
 
 ```
-fmdt.detect(vid_in_path=vid, trk_out_path=tracks, trk_bb_path=bb)
+fmdt.detect(vid_in_path=vid, trk_path=tracks, trk_bb_path=bb)
 fmdt.split_video_at_meteors(vid, tracks, overwrite=True)
 ```
 
@@ -67,7 +67,7 @@ We can produce more informative videos if we apply `fmdt-visu` before our splitt
 operation
 
 ```
-fmdt.detect(vid_in_path=vid, trk_out_path=tracks, trk_bb_path=bb).visu().split()
+fmdt.detect(vid_in_path=vid, trk_path=tracks, trk_bb_path=bb).visu().split()
 ```
 
 which will apply the split to the video that contains bounding boxes on objects 

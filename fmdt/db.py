@@ -204,7 +204,7 @@ class Video:
         trk_mag_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
-        trk_out_path: str | None = "trk.txt",
+        trk_path: str | None = "trk.txt",
         log: bool = False,
         timeout: float = None,
         #================== Parameters for logging ===================
@@ -217,7 +217,7 @@ class Video:
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
         ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
-        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log, timeout=timeout)
+        trk_all, trk_bb_path, trk_mag_path, log_path, trk_path, log, timeout=timeout)
 
         res = args.detect(cache=cache, save_df=save_df)
         res.video = self
@@ -299,7 +299,7 @@ class Video:
         trk_mag_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
-        trk_out_path: str | None = "trk.txt",
+        trk_path: str | None = "trk.txt",
         log: bool = False,
         timeout: float = None,
         #================== Check ====================================
@@ -311,7 +311,7 @@ class Video:
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
         ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
         trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
-        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log, timeout=timeout)
+        trk_all, trk_bb_path, trk_mag_path, log_path, trk_path, log, timeout=timeout)
 
         res = args.detect()
 
@@ -481,18 +481,18 @@ class Video:
         
         args (fmdt.Args): The set of fmdt-detect parameters that we want to evaluate
         meteors (list[fmdt.HumanDetection]): The list of meteors in our ground truth
-        rerun (bool): Used to determine if we should rerun fmdt-detect when the trk_out_path file
+        rerun (bool): Used to determine if we should rerun fmdt-detect when the trk_path file
             already exists
         """
-        assert not args.detect_args.trk_out_path is None, "Missing `trk_out_path` from `args: fmdt.Args` required for evaluation"
+        assert not args.detect_args.trk_path is None, "Missing `trk_path` from `args: fmdt.Args` required for evaluation"
         # assert not args.detect_args.vid_in_path  is None, "Missing `vid_in_path` required to evaluate an fmdt.Args"
         args.detect_args.vid_in_path = self.full_path()
 
         if rerun:
             args.detect()
 
-        # Check if the trk_out_path file already exists
-        if not os.path.exists(args.detect_args.trk_out_path):
+        # Check if the trk_path file already exists
+        if not os.path.exists(args.detect_args.trk_path):
             args.detect()
 
         # We guarentee that the file exist at this point
@@ -502,7 +502,7 @@ class Video:
 
         # Then call fmdt_check
 
-        return fmdt.check(args.detect_args.trk_out_path, tmp_gt_file, stdout, log)
+        return fmdt.check(args.detect_args.trk_path, tmp_gt_file, stdout, log)
     
     def create_clip(self, start_frame: int, end_frame: int):
 

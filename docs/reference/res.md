@@ -55,7 +55,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
         <fmdt.args.Args object>
         ====================
         Detect parameters: 
-        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
         ```
 
     ???+ info "`df`"
@@ -205,7 +205,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
         <fmdt.args.Args object>
         ====================
         Detect parameters: 
-        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
         ```
 
     ???+ info "`df`"
