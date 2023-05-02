@@ -4,11 +4,12 @@ This how-to guide showcases various ways to split a video using `fmdt`, using
 [demo.mp4](https://lip6.fr/adrien.cassagne/data/tauh/in/2022_05_31_tauh_34_meteors.mp4)
 as our sample video
 
-### Split at arbitrary intervals
+## Split at arbitrary intervals
 
-We can split a video at any arbitrary interval using the function `fmdt.split_video_at_intervals()`
-which has the following signature:
-```
+We can split a video at any arbitrary interval using the function 
+`fmdt.split_video_at_intervals()` which has the following signature:
+
+```python
 def split_video_at_intervals(
         video_filename: str,
         start_end: list[tuple[int, int]],
@@ -24,7 +25,7 @@ def split_video_at_intervals(
 If we wanted to make two frame-perfect cuts of our video demo.mp4, say with the 
 two pairs (5, 20) and (100, 200), we would call:
 
-```
+```python
 import fmdt
 
 vid = "demo.mp4"
@@ -33,68 +34,100 @@ start_end = [(5, 20), (100, 200)]
 fmdt.split_video_at_intervals(vid, start_end, 0, 0, True, exact_split=True)
 ```
 
-When `exact_split` is set to `True` we load in the entire video as a numpy array and 
-are able to make frame-perfect cuts. We can quickly run out of RAM when dealing with large videos
-so in general we should avoid `exact_split=True` unless the video is only a few seconds long.
+When `exact_split` is set to `True` we load in the entire video as a numpy array 
+and are able to make frame-perfect cuts. We can quickly run out of RAM when 
+dealing with large videos so in general we should avoid `exact_split=True` 
+unless the video is only a few seconds long.
 
-### Split video at meteors
+## Split video at meteors
 
 We can call `fmdt-detect` and then split a video where meteors are detected.
 
-```
+```python
 import fmdt
 
-vid    = "demo.mp4"
-tracks = "tracks.txt"
-bb     = "bb.txt"
-
-fmdt.detect(vid_in_path=vid, trk_path=tracks, trk_bb_path=bb).split()
+fmdt.detect(vid_in_path="demo.mp4", trk_path="tracks.txt").split()
 ```
 
-Which uses ffmpeg to _approximately_ trim a video around non-overlapping meteor 
-detections.
+!!! danger 
+
+    TODO: The latest is not working anymore, the `fmdt.DetectionResult` class 
+    does not have a `split()` method :-(.
+
+Which uses `ffmpeg` to _approximately_ trim a video around non-overlapping 
+meteor detections.
 
 There is also a more verbose alternative which accomplishes the same split:
 
-```
-fmdt.detect(vid_in_path=vid, trk_path=tracks, trk_bb_path=bb)
-fmdt.split_video_at_meteors(vid, tracks, overwrite=True)
+```python
+fmdt.detect(vid_in_path="demo.mp4", trk_path="tracks.txt")
+fmdt.split_video_at_meteors("demo.mp4", "tracks.txt", overwrite=True)
 ```
 
-### Split and visualize
+## Split and Visualize
 
-We can produce more informative videos if we apply `fmdt-visu` before our splitting 
-operation
+We can produce more informative videos if we apply `fmdt-visu` before our 
+splitting operation:
+
+```python
+vid = "demo.mp4"
+trk = "tracks.txt"
+log = "detect_log"
+trk2roi = "trk2roi.txt"
+fmdt.detect(vid_in_path=vid, trk_path=trk, log_path=log, trk_roi_path=trk2roi).log_parser().visu().split()
+
+# here is an alternative way to do the same thing
+d_args = { "vid_in_path": "demo.mp4", 
+           "trk_path": "tracks.txt", 
+           "log_path": "detect_log", 
+           "trk_roi_path": "trk2roi.txt" }
+args = fmdt.Args.new(**d_args)
+args.detect().log_parser().visu().split()
 
 ```
-fmdt.detect(vid_in_path=vid, trk_path=tracks, trk_bb_path=bb).visu().split()
-```
+
+!!! danger 
+
+    TODO: The latest is not working, the `fmdt.Args` class has a `split()` 
+    method but this method will select the video path to split according to its
+    `vid()` method that will return `demo.mp4` instead of `demo_visu.mp4`.
 
 which will apply the split to the video that contains bounding boxes on objects 
 detected by `fmdt-detect`.
 
-### Real Example
+## Real Examples
 
-In this section we are going to show a real example using `fmdt.split_video_at_intervals`. 
+In this section we are going to show a real example using 
+`fmdt.split_video_at_intervals`. 
 
+```python
+intervals = [(102, 149), (156, 189), (194, 204), (223, 231), (249, 256)]
+
+fmdt.split_video_at_intervals(video_filename="demo.mp4", start_end=intervals, nframes_before=-15, nframes_after=50)
 ```
-intervals = [(785, 790), (1222, 1250), (1426, 1439), (2288, 2323), (2836, 2850),
-             (2810, 2888), (2928, 2933), (3426, 3434), (3857, 3862), (4155, 4179), 
-             (4262, 4268), (4447, 4460), (5323, 5330), (6790, 6811), (7199, 7207)]
-```
 
-These are the intervals of interest. In this specific case the frames aren't precise so
-when we call `split_video_at_intervals` we add a -15 frame buffer "before" our intended start plus a 
-50 frame buffer after our intended stop frame.
+These are the intervals of interest. In this specific case the frames aren't 
+precise so when we call `split_video_at_intervals` we add a `-15` frame buffer 
+"before" our intended start plus a `50` frame buffer after our intended stop 
+frame.
 
-If you have [initialized your config](0_initialization.md) and have all of the correct windows videos then we can go ahead and load up the first one:
+!!! danger 
 
-```
+    TODO: This is buggy for the last split, indeed 256 + 50 = 306 frames is out 
+    of the full video range (full video is 256 frames). We should managed this 
+    better.
+
+---
+
+If you have [initialized your config](0_initialization.md) and have all of the 
+correct windows videos then we can go ahead and load up the first one:
+
+```python
 import fmdt
 v = fmdt.load_window()[0]
 ```
 
-```
+```python
 #============ Real interactive session ==================#
 >>> v 
 window_3_sony_0400-0405UTC.mp4
@@ -105,6 +138,10 @@ window_3_sony_0400-0405UTC.mp4
 
 We then split the video with one line:
 
-```
+```python
+intervals = [(785, 790), (1222, 1250), (1426, 1439), (2288, 2323), (2836, 2850),
+             (2810, 2888), (2928, 2933), (3426, 3434), (3857, 3862), (4155, 4179), 
+             (4262, 4268), (4447, 4460), (5323, 5330), (6790, 6811), (7199, 7207)]
+
 fmdt.split_video_at_intervals(v.full_path(), intervals, nframes_before=-15, nframes_after=50)
 ```

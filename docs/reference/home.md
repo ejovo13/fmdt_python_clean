@@ -18,14 +18,15 @@ This page contains a technical reference for `fmdt`'s modules.
 The module `fmdt.api` provides a set of convenient wrapper functions to the 
 executables `fmdt-detect` and `fmdt-visu`.
 
-It is important to know that if `fmdt-detect` or `fmdt-visu` are not found on your system's
-`$PATH` then the functions in this module will immediately fail.
+It is important to know that if `fmdt-detect` or `fmdt-visu` are not found on 
+your system's `$PATH` then the functions in this module will immediately fail.
 
-###### `detect`
+## `detect`
 
-The complete signature for the function `fmdt.api.detect` (aliased as `fmdt.detect`) is:
+The complete signature for the function `fmdt.api.detect` (aliased as 
+`fmdt.detect`) is:
 
-```
+```Python
 def detect(
         vid_in_path: str, 
         vid_in_start: int | None = None,
@@ -34,10 +35,12 @@ def detect(
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -51,73 +54,77 @@ def detect(
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = None,
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         trk_path: str | None = None,
         log_path: str | None = None,
         log: bool = False
     ) -> fmdt.args.Args:
 ```
 
-All of these parameters except for `trk_path` and `log` are extensively documented in the main project [here](https://fmdt.readthedocs.io/en/latest/user/usage/detect.html). 
+All of these parameters except for `trk_path` and `log` are extensively 
+documented in the main project 
+[here](https://fmdt.readthedocs.io/en/latest/user/usage/detect.html). 
 
-`trk_path` is the name of a file where the stdout of `fmdt-detect` will be redirected.
+`trk_path` is the name of a file where the stdout of `fmdt-detect` will be 
+redirected.
 
 For example, the command line call 
-```
-./exe/fmdt-detect --vid-in-path ./2022_05_31_tauh_34_meteors.mp4 --trk-bb-path ./out_detect_bb.txt > ./out_detect_tracks.txt
+
+```bash
+./exe/fmdt-detect --vid-in-path ./2022_05_31_tauh_34_meteors.mp4 > ./out_detect_tracks.txt
 ```
 
 Would get translated as 
 
+```Python
+>>> fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_path = "out_detect_tracks.txt")
 ```
->>> fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_bb_path="out_detect_bb.txt", trk_path = "out_detect_tracks.txt")
-```
-
 
 In practice, I've found that the most important parameters are 
 
 - `vid_in_path`
-- `trk_bb_path`
+- `trk_roi_path`
 - `trk_path` 
 
 as the execution of `fmdt.visu` depends on their inclusion.
 
-###### `visu`
+## `visu`
 
 ---
 
 # `fmdt.args`
 
-The `fmdt.args` module provides an alternative interface to the core executables `fmdt-detect`
-and `fmdt-visu`. This module also provides the `Args` class which allows us to represent various
-configurations of parameters.
+The `fmdt.args` module provides an alternative interface to the core executables 
+`fmdt-detect` and `fmdt-visu`. This module also provides the `Args` class which 
+allows us to represent various configurations of parameters.
 
-#### Args
+### Args
 
-The `Args` class of this module is aliased by `fmdt.Args` and has the following fields:
+The `Args` class of this module is aliased by `fmdt.Args` and has the following 
+fields:
 
 - detect_args:   dict
 - visu_args:     dict
-- tracking_list: list[TrackedObject] 
+- trk_list:      list[TrackedObject] 
 
-We can create a new `Args` instance by creating a dictionary of parameters and then passing
-it to our constructor
+We can create a new `Args` instance by creating a dictionary of parameters and 
+then passing it to our constructor
 
-```
+```Python
 import fmdt
 
 detect_args = {
-    "light_min": 253,
-    "light_max": 254
+    "vid_in_path": "demo.mp4",
+    "ccl_hyst_lo": 253,
+    "ccl_hyst_hi": 254
 }
 
-args = fmdt.Args(detect_args=detect_args)
+args = fmdt.Args(detect_args=fmdt.DetectArgs(**detect_args))
 ```
 
 and then call `fmdt-detect`
 
-```
+```Python
 res = args.detect()
 ```
 

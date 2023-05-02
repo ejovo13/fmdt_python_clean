@@ -1,6 +1,7 @@
 # SQL Database
 
-Behind the surface of any `load_*` function is an SQL query. For example, `fmdt.load_demo()` exectutes the following SQL:
+Behind the surface of any `load_*` function is an SQL query. For example, 
+`fmdt.load_demo()` exectutes the following SQL:
 
 ```sql
 SELECT * FROM video WHERE name='2022_05_31_tauh_34_meteors.mp4'
@@ -10,7 +11,11 @@ and then converts the returned `pandas.DataFrame` into a single `Video`.
 
 ??? Note "Developer's Note"
 
-    These SQL requests are powered by the python modules sqlite3 and pandas. Each request is executed with a call to `pandas.read_sql_query()` whose first argument is valid SQL and whose second argument is a connection to a database. The following snippet shows how we perform the previous query to retrieve our demo video.
+    These SQL requests are powered by the python modules sqlite3 and pandas. 
+    Each request is executed with a call to `pandas.read_sql_query()` whose 
+    first argument is valid SQL and whose second argument is a connection to a 
+    database. The following snippet shows how we perform the previous query to 
+    retrieve our demo video.
 
     ```python
     import pandas as pd
@@ -28,11 +33,26 @@ and then converts the returned `pandas.DataFrame` into a single `Video`.
     print(v) # '2022_05_31_tauh_34_meteors.mp4'
     ```
 
-We use a relational database powered by sqlite3 with the following Entity Relationship Diagram (using [crow's foot notation](http://www2.cs.uregina.ca/~bernatja/crowsfoot.html)):
+We use a relational database powered by sqlite3 with the following Entity 
+Relationship Diagram (using 
+[crow's foot notation](http://www2.cs.uregina.ca/~bernatja/crowsfoot.html)):
+
+!!! danger
+
+    TODO: need to update the `videos_db.svg` figure below.
+    In the `detect_args` table:
+        
+    - `light_min` becomes `ccl_hyst_lo`,
+    - `light_max` becomes `ccl_hyst_hi`,
+    - `ccl_fra_id` is a BOOLEAN,
+    - add `cca_mag` as a BOOLEAN (just after `ccl_fra_id`),
+    - add `cca_ell` as a BOOLEAN (just after `cca_mag`).
 
 ![videos.db](../media/videos_db.svg)
 
-For those familiar with SQL, you can inspect the contents of each table by accessing the database located in `$DB_DIR/videos.db`, where `$DB_DIR` is the string returned by `fmdt.get_db_dir()`:
+For those familiar with SQL, you can inspect the contents of each table by 
+accessing the database located in `$DB_DIR/videos.db`, where `$DB_DIR` is the 
+string returned by `fmdt.get_db_dir()`:
 
 ```python
 >>> import fmdt
@@ -51,7 +71,8 @@ For those familiar with SQL, you can inspect the contents of each table by acces
 
 # Video Database
 
-Our video database is split into three categories: `Draco6`, `Draco12`, and `Window`. 
+Our video database is split into three categories: `Draco6`, `Draco12`, and 
+`Window`. 
 
 === "Draco6"
 

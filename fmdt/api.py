@@ -21,11 +21,13 @@ def help():
     fmdt.api contains the public-facing functions (also aliased under fmdt.*):
         fmdt[.api].count
         fmdt[.api].detect
+        fmdt[.api].log_parser
         fmdt[.api].visu
         fmdt[.api].detect_directory
 
     fmdt.api.count counts the number of celestial objects specified by the parameters
     fmdt.api.detect calls `fmdt-detect` with the given arguments
+    fmdt.api.log_parser calls `fmdt-log-parser`
     fmdt.api.visu calls `fmdt-visu`
     fmdt.api.detect_directory
         
@@ -106,7 +108,7 @@ def _run_detect_stdout(
         except:
             print(f"Subprocess timed out for {colored(' '.join(argv), 'red')}")
             tmp_file.close()
-            os.remove(tmp_file)
+            os.remove(tmp_filename)
             return [], 0
     else:
         subprocess.run(argv, stdout=tmp_file)
@@ -141,7 +143,14 @@ def _run_detect_trk_path(
 
         if not timeout is None:
             try: 
-                subprocess.run(argv, stdout=outfile, timeout=timeout)
+                # subprocess.run(argv, stdout=outfile, timeout=timeout)
+                proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+                outs, errs = proc.communicate(timeout=timeout)
+                lines = outs.decode("utf-8").split("\n")
+                for line in lines:
+                    print(line)
+                    outfile.write(line + "\n")
+                proc.wait(timeout=timeout)
             except:
                 print("==================================================================")
                 print("")
@@ -150,10 +159,17 @@ def _run_detect_trk_path(
                 print("==================================================================")
                 return [], 0
         else:
-            subprocess.run(argv, stdout=outfile)
+            # subprocess.run(argv, stdout=outfile)
+            proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+            outs, errs = proc.communicate()
+            lines = outs.decode("utf-8").split("\n")
+            for line in lines:
+                print(line)
+                outfile.write(line + "\n")
+            proc.wait()
         
-        trk_list = fmdt.core.extract_all_information(trk_path)
-        nframes = fmdt.core.nframes_processed(trk_path)
+    trk_list = fmdt.core.extract_all_information(trk_path)
+    nframes = fmdt.core.nframes_processed(trk_path)
             
     if cache:
         shutil.copyfile(src=trk_path, dst=cache_file)
@@ -214,11 +230,36 @@ def detect(
 
 
     # Wrap up all of the arguments into an Args object
-    args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
-        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi,
-        ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
-        knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max,
-        trk_ddev, trk_all, trk_roi_path, log_path, trk_path, log)
+    args = fmdt.args.detect_args(vid_in_path=vid_in_path,
+                                 vid_in_start=vid_in_start,
+                                 vid_in_stop=vid_in_stop,
+                                 vid_in_skip=vid_in_skip,
+                                 vid_in_buff=vid_in_buff,
+                                 vid_in_loop=vid_in_loop,
+                                 vid_in_threads=vid_in_threads,
+                                 ccl_hyst_lo=ccl_hyst_lo,
+                                 ccl_hyst_hi=ccl_hyst_hi,
+                                 ccl_fra_path=ccl_fra_path,
+                                 ccl_fra_id=ccl_fra_id,
+                                 cca_mag=cca_mag,
+                                 cca_ell=cca_ell,
+                                 mrp_s_min=mrp_s_min,
+                                 mrp_s_max=mrp_s_max,
+                                 knn_k=knn_k,
+                                 knn_d=knn_d,
+                                 knn_s=knn_s,
+                                 trk_ext_d=trk_ext_d,
+                                 trk_ext_o=trk_ext_o,
+                                 trk_angle=trk_angle,
+                                 trk_star_min=trk_star_min,
+                                 trk_meteor_min=trk_meteor_min,
+                                 trk_meteor_max=trk_meteor_max,
+                                 trk_ddev=trk_ddev,
+                                 trk_all=trk_all,
+                                 trk_roi_path=trk_roi_path,
+                                 log_path=log_path,
+                                 trk_path=trk_path,
+                                 log=log)
     
     if save_df and log_path is None:
         print("Save_df activated in final detect call")
@@ -277,15 +318,15 @@ def log_parser(
     ----------
     Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/log.html
     """
-    log_parser_args = fmdt.args.log_parser_args(log_path,
-                                                trk_roi_path,
-                                                log_flt,
-                                                fra_path,
-                                                ftr_name,
-                                                ftr_path,
-                                                trk_path,
-                                                trk_json_path,
-                                                trk_bb_path)
+    log_parser_args = fmdt.args.log_parser_args(log_path=log_path,
+                                                trk_roi_path=trk_roi_path,
+                                                log_flt=log_flt,
+                                                fra_path=fra_path,
+                                                ftr_name=ftr_name,
+                                                ftr_path=ftr_path,
+                                                trk_path=trk_path,
+                                                trk_json_path=trk_json_path,
+                                                trk_bb_path=trk_bb_path)
 
     argv = fmdt.args.handle_log_parser_args(**log_parser_args.to_dict())
 
@@ -312,17 +353,17 @@ def visu(
     ----------
     Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/visu.html
     """
-    visu_args = fmdt.args.visu_args(vid_in_path, 
-                                    vid_in_start,
-                                    vid_in_stop,
-                                    vid_in_threads,
-                                    trk_path,
-                                    trk_bb_path,
-                                    trk_id,
-                                    trk_nat_num,
-                                    trk_only_meteor,
-                                    gt_path,
-                                    vid_out_path)
+    visu_args = fmdt.args.visu_args(vid_in_path=vid_in_path,
+                                    vid_in_start=vid_in_start,
+                                    vid_in_stop=vid_in_stop,
+                                    vid_in_threads=vid_in_threads,
+                                    trk_path=trk_path,
+                                    trk_bb_path=trk_bb_path,
+                                    trk_id=trk_id,
+                                    trk_nat_num=trk_nat_num,
+                                    trk_only_meteor=trk_only_meteor,
+                                    gt_path=gt_path,
+                                    vid_out_path=vid_out_path)
 
     argv = fmdt.args.handle_visu_args(**visu_args.to_dict())
 
@@ -370,8 +411,6 @@ def check(
         print(file_content)
 
     return fmdt.res.CheckResult(gt_table=gt_table, stats=stats)
-
-
 
 def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     """Call `fmdt-detect` on all videos in the directory `dir_name` using the settings stored in `args`

@@ -9,6 +9,7 @@ from enum import Enum
 import pickle
 import hashlib
 import copy
+import os
 
 # Hardcoded default detect values for FMDT version v1.0.0-109-g03a83f42
 # These are used to convert between args in our database and args in python.
@@ -468,13 +469,26 @@ class Args:
 
     Consider the difference between the two calls:
     ```
-    fmdt.detect(vid_in_path = "vid.mp4")
-    fmdt.visu(vid_in_path = "vid.mp4", vid_out_path = "vid_visu.mp4")
+    fmdt.detect(vid_in_path  = "vid.mp4",
+                trk_path     = "tracks.txt",
+                trk_roi_path = "trk2roi.txt",
+                log_path     = "detect_log")
+    fmdt.log_parser(log_path     = "detect_log",
+                    trk_roi_path = "trk2roi.txt",
+                    trk_bb_path  = "bb.txt")
+    fmdt.visu(vid_in_path  = "vid.mp4",
+              trk_path     = "tracks.txt",
+              trk_bb_path  = "bb.txt",
+              vid_out_path = "vid_visu.mp4")
     ```
 
     and
     ```
-    fmdt.detect(vid_in_path = "vid.mp4").visu()
+    fmdt.detect(vid_in_path  = "vid.mp4",
+                trk_path     = "tracks.txt",
+                trk_roi_path = "trk2roi.txt",
+                log_path     = "detect_log")
+        .log_parser().visu()
     ```  
     where storing the configuration for `fmdt-detect` in an Args object allows
     us to fill in the parameters needed by a call to `fmdt-log-parser` and
@@ -496,13 +510,14 @@ class Args:
 
     def __init__(
         self,
-        detect_args: DetectArgs,
-        log_parser_args: LogParserArgs,
-        visu_args: VisuArgs,
+        detect_args: DetectArgs | None = None,
+        log_parser_args: LogParserArgs | None = None,
+        visu_args: VisuArgs | None = None,
         log: bool = False,
         timeout: float | None = None
     ):
         self.detect_args = detect_args
+        self.log_parser_args = log_parser_args
         self.visu_args = visu_args
         self.log = log
         self.timeout = timeout
@@ -613,7 +628,7 @@ class Args:
                              trk_nat_num=trk_nat_num,
                              trk_only_meteor=trk_only_meteor,
                              gt_path=gt_path,
-                             vid_out_path=vid_out_path)
+                             vid_out_path=os.path.basename(vid_out_path))
         
         return Args(detect_args, log_parser_args, visu_args, log, timeout)
 
@@ -714,6 +729,8 @@ class Args:
         """Return the name of the tracks file, if it exists"""
         if not self.detect_args.trk_path is None:
             return self.detect_args.trk_path
+        elif not self.log_parser_args.trk_path is None:
+            return self.log_parser_args.trk_path
         elif not self.visu_args.trk_path is None:
             return self.visu_args.trk_path
         else:
@@ -869,11 +886,14 @@ def detect_args(
                         ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s,
                         trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max,
                         trk_ddev, trk_all, trk_roi_path, log_path, trk_path)
-    
-    l_args = LogParserArgs(log_path=log_path,
-                           trk_roi_path=trk_roi_path)
 
     name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
+
+    bb_name = f"{name}_bbs.txt"
+    l_args = LogParserArgs(log_path=log_path,
+                           trk_roi_path=trk_roi_path,
+                           trk_bb_path=os.path.basename(bb_name))
+
     visu_name = f"{name}_visu.{ext}"
 
     v_args = VisuArgs(vid_in_path=vid_in_path,
@@ -881,7 +901,8 @@ def detect_args(
                       vid_in_stop=vid_in_stop,
                       vid_in_threads=vid_in_threads,
                       trk_path=trk_path,
-                      vid_out_path=visu_name)
+                      trk_bb_path=os.path.basename(bb_name),
+                      vid_out_path=os.path.basename(visu_name))
     
     return Args(d_args, l_args, v_args, log, timeout)
 
@@ -1130,7 +1151,6 @@ def handle_visu_args(
     fmdt_visu_found = not fmdt_visu_exe is None
     assert fmdt_visu_found, "fmdt-visu executable not found"
 
-
     assert not vid_in_path is None, "No input video specified"
     assert not trk_path is None, "No input track path"
     assert not trk_bb_path is None, "No input bounding boxes file"
@@ -1142,7 +1162,7 @@ def handle_visu_args(
     else:
         name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
         new_name = f"{name}_visu.{ext}"
-        args.extend(["--vid-out-path", new_name])
+        args.extend(["--vid-out-path", os.path.basename(new_name)])
 
     # helper closure to clean up repetitive code
     def add_arg(arg, flag):

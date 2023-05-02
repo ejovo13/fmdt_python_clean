@@ -1,14 +1,15 @@
 The module `fmdt.api` provides a set of convenient wrapper functions to the 
 executables `fmdt-detect` and `fmdt-visu`.
 
-It is important to know that if `fmdt-detect` or `fmdt-visu` are not found on your system's
-`$PATH` then the functions in this module will immediately fail.
+It is important to know that if `fmdt-detect` or `fmdt-visu` are not found on 
+your system's `$PATH` then the functions in this module will immediately fail.
 
 # `detect`
 
-The complete signature for the function `fmdt.api.detect` (aliased as `fmdt.detect`) is:
+The complete signature for the function `fmdt.api.detect` (aliased as 
+`fmdt.detect`) is:
 
-```
+```Python
 def detect(
         vid_in_path: str, 
         vid_in_start: int | None = None,
@@ -44,27 +45,30 @@ def detect(
     ) -> fmdt.args.Args:
 ```
 
-All of these parameters except for `trk_path` and `log` are extensively documented in the main project [here](https://fmdt.readthedocs.io/en/latest/user/usage/detect.html). 
+All of these parameters except for `trk_path` and `log` are extensively 
+documented in the main project 
+[here](https://fmdt.readthedocs.io/en/latest/user/usage/detect.html). 
 
-`trk_path` is the name of a file where the stdout of `fmdt-detect` will be redirected.
+`trk_path` is the name of a file where the stdout of `fmdt-detect` will be 
+redirected.
 
 For example, the command line call 
-```
+
+```bash
 ./exe/fmdt-detect --vid-in-path ./2022_05_31_tauh_34_meteors.mp4 --trk-bb-path ./out_detect_bb.txt > ./out_detect_tracks.txt
 ```
 
 Would get translated as 
 
-```
+```Python
 >>> fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_bb_path="out_detect_bb.txt", trk_path = "out_detect_tracks.txt")
 ```
 
-
 In practice, I've found that the most important parameters are 
 
-- `vid_in_path`
-- `trk_bb_path`
-- `trk_path` 
+- `vid_in_path`,
+- `trk_path`,
+- `trk_roi_path`,
 
 as the execution of `fmdt.visu` depends on their inclusion.
 

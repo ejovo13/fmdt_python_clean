@@ -187,6 +187,8 @@ class Video:
         light_max: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -200,8 +202,7 @@ class Video:
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = "bb.txt",
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
         trk_path: str | None = "trk.txt",
@@ -215,9 +216,10 @@ class Video:
 
         args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
-        ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
-        trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
-        trk_all, trk_bb_path, trk_mag_path, log_path, trk_path, log, timeout=timeout)
+        ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
+        knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
+        trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, log,
+        timeout=timeout)
 
         res = args.detect(cache=cache, save_df=save_df)
         res.video = self
@@ -282,6 +284,8 @@ class Video:
         light_max: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -295,8 +299,7 @@ class Video:
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = "bb.txt",
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
         trk_path: str | None = "trk.txt",
@@ -309,9 +312,10 @@ class Video:
 
         args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
-        ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
-        trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
-        trk_all, trk_bb_path, trk_mag_path, log_path, trk_path, log, timeout=timeout)
+        ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
+        knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
+        trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, log,
+        timeout=timeout)
 
         res = args.detect()
 

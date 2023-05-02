@@ -147,6 +147,9 @@ class DetectionResult:
     def detect(self):
         return self.args.detect()
 
+    def log_parser(self):
+        return self.args.log_parser()
+
     def visu(self):
         return self.args.visu()
     

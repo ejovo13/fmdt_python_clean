@@ -1,15 +1,20 @@
 # 0. Introduction 
 
-Welcome to the tutorials! This is the best place to start for complete beginners. In the next few sections we'll have you detecting meteors, analyzing their statistics, and making cool visualizations!
+Welcome to the tutorials! This is the best place to start for complete 
+beginners. In the next few sections we'll have you detecting meteors, analyzing 
+their statistics, and making cool visualizations!
 
-Before you begin, make sure you have `fmdt-detect` installed and on your path as well having `fmdt-python` installed. Head over to [installation](../installation.md) if you still need to do that.
+Before you begin, make sure you have `fmdt-detect` installed and on your path as 
+well having `fmdt-python` installed. Head over to 
+[installation](../installation.md) if you still need to do that.
 
 ---
 
-Make sure you have the latest version of `fmdt-python` and then work through the following content.
+Make sure you have the latest version of `fmdt-python` and then work through the 
+following content.
 
-```
-pip install --upgrade fmdt-python==0.0.25
+```bash
+pip install --upgrade fmdt-python==0.0.46
 ```
 
 ## Contents
