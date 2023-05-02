@@ -37,17 +37,6 @@ We use a relational database powered by sqlite3 with the following Entity
 Relationship Diagram (using 
 [crow's foot notation](http://www2.cs.uregina.ca/~bernatja/crowsfoot.html)):
 
-!!! danger
-
-    TODO: need to update the `videos_db.svg` figure below.
-    In the `detect_args` table:
-        
-    - `light_min` becomes `ccl_hyst_lo`,
-    - `light_max` becomes `ccl_hyst_hi`,
-    - `ccl_fra_id` is a BOOLEAN,
-    - add `cca_mag` as a BOOLEAN (just after `ccl_fra_id`),
-    - add `cca_ell` as a BOOLEAN (just after `cca_mag`).
-
 ![videos.db](../media/videos_db.svg)
 
 For those familiar with SQL, you can inspect the contents of each table by 
