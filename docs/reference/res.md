@@ -1,13 +1,13 @@
 # `fmdt.res`
 
-This module contains the two very important classes `DetectionResult` and `CheckResult` which store information that
-is generated during the execution of `fmdt-detect` and `fmdt-check`.
+This module contains the two very important classes `DetectionResult` and 
+`CheckResult` which store information that is generated during the execution of 
+`fmdt-detect` and `fmdt-check`.
 
 - [`DetectionResult`](#detectionresult)
 - [`CheckResult`](#checkresult)
 
 ## `DetectionResult`
-
 
 ``` mermaid
 classDiagram
@@ -26,44 +26,52 @@ classDiagram
   DetectionResult : +int n_noise_detected() 
 ```
 
-Any interface to `fmdt.detect` will return a `DetectionResult` object. However, the contents of a `DetectionResult` are dependent on the _way_ in which we call `fmdt-detect`. 
+Any interface to `fmdt.detect` will return a `DetectionResult` object. However, 
+the contents of a `DetectionResult` are dependent on the _way_ in which we call 
+`fmdt-detect`. 
 
-### Usage
-
+## Usage
 
 Let's start off loading in our beloved tau demo.
 
-```
+```Python
 import fmdt
 v = fmdt.load_demo()
 ```
 
-If the executable `fmdt-detect` is called with a `--log-path` then we save movement estimation statistics on disk. By default, we don't store log data. To enable log data which will be stored in under the field `DetectionResult.df` we pass `save_df=True` to our detection interface.
+If the executable `fmdt-detect` is called with a `--log-path` then we save 
+movement estimation statistics on disk. By default, we don't store log data. To 
+enable log data which will be stored in under the field `DetectionResult.df` we 
+pass `save_df=True` to our detection interface.
 
 === "`res = v.detect()`"
 
     ??? info "`nframes`"
         
-        ```
+        ```Python
         >>> res.nframes
         256
         ```
 
     ??? info "`args`"
-        ```
+
+        ```Python
         >>> res.args
         <fmdt.args.Args object>
         ====================
         Detect parameters: 
-        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_path': 'trk.txt'}
         ```
 
     ???+ info "`df`"
-        ```
+
+        ```Python
         >>> res.df
         ```
+
     ???+ info "`trk_list`"
-        ```
+
+        ```Python
         >>> res.trk_list
         [<Meteor (102, 108)>, <Meteor (110, 126)>, <Meteor (111, 118)>, <Meteor (121, 123)>, <Meteor (127, 129)>, <Meteor (129, 131)>, <Meteor (133, 141)>, <Meteor (134, 143)>, <Meteor (134, 137)>, <Meteor (136, 138)>, <Meteor (139, 144)>, <Meteor (139, 142)>, <Meteor (140, 150)>, <Meteor (146, 149)>, <Meteor (156, 158)>, <Meteor (156, 165)>, <Meteor (157, 162)>, <Meteor (160, 163)>, <Meteor (164, 167)>, <Meteor (167, 169)>, <Meteor (171, 175)>, <Meteor (174, 180)>, <Meteor (178, 185)>, <Meteor (179, 181)>, <Meteor (179, 189)>, <Meteor (180, 184)>, <Meteor (183, 189)>, <Meteor (194, 197)>, <Meteor (197, 199)>, <Meteor (199, 201)>, <Meteor (200, 205)>, <Meteor (201, 203)>, <Meteor (202, 204)>, <Meteor (223, 229)>, <Meteor (224, 228)>, <Meteor (227, 231)>, <Meteor (249, 252)>, <Meteor (251, 253)>]
         ```
@@ -71,7 +79,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`detect()`"
 
-        ```
+        ```Python
         >>> res.detect()
         (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
         <fmdt.res.DetectionResult object at 0x7fb0288f5780>
@@ -79,7 +87,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`visu()`"
 
-        ```
+        ```Python
         >>> res.visu()
         #  -------------------
         # |        ----*      |
@@ -110,7 +118,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`check()`"
 
-        ```
+        ```Python
         >>> res.check()
         <fmdt.res.CheckResult object at 0x7fb0288f7af0>
 
@@ -134,15 +142,15 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
         # -----|---------||--------|-----||-------|-------||--------
         #   Id |    Type || Detect |  GT || Start |  Stop ||      # 
         # -----|---------||--------|-----||-------|-------||--------
-            1 |  meteor ||      7 |   7 ||   102 |   108 ||      1  
-            2 |  meteor ||     17 |  16 ||   110 |   125 ||      1  
-            3 |  meteor ||      8 |   9 ||   111 |   119 ||      1  
-            4 |  meteor ||      3 |   3 ||   121 |   123 ||      1  
-            5 |  meteor ||      3 |   3 ||   127 |   129 ||      1  
-            6 |  meteor ||      3 |   3 ||   129 |   131 ||      1  
-            7 |  meteor ||      9 |  10 ||   133 |   142 ||      1  
-            8 |  meteor ||     10 |  10 ||   134 |   143 ||      1  
-            9 |  meteor ||      4 |   4 ||   134 |   137 ||      1  
+             1 |  meteor ||      7 |   7 ||   102 |   108 ||      1  
+             2 |  meteor ||     17 |  16 ||   110 |   125 ||      1  
+             3 |  meteor ||      8 |   9 ||   111 |   119 ||      1  
+             4 |  meteor ||      3 |   3 ||   121 |   123 ||      1  
+             5 |  meteor ||      3 |   3 ||   127 |   129 ||      1  
+             6 |  meteor ||      3 |   3 ||   129 |   131 ||      1  
+             7 |  meteor ||      9 |  10 ||   133 |   142 ||      1  
+             8 |  meteor ||     10 |  10 ||   134 |   143 ||      1  
+             9 |  meteor ||      4 |   4 ||   134 |   137 ||      1  
             10 |  meteor ||      3 |   4 ||   135 |   138 ||      1  
             11 |  meteor ||      6 |  10 ||   137 |   146 ||      1  
             12 |  meteor ||      4 |   4 ||   139 |   142 ||      1  
@@ -185,7 +193,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`trk_list_summary()`"
 
-        ```
+        ```Python
         >>> res.trk_list_summary()
         'objects in trk_list: 38 meteor(s), 0 star(s), 0 noise'
         ```
@@ -194,22 +202,24 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`nframes`"
         
-        ```
+        ```Python
         >>> res.nframes
         256
         ```
 
     ??? info "`args`"
-        ```
+
+        ```Python
         >>> res.args
         <fmdt.args.Args object>
         ====================
         Detect parameters: 
-        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_path': 'trk.txt'}
         ```
 
     ???+ info "`df`"
-        ```
+
+        ```Python
         >>> res.df
             nroi  nassoc  mean_err  std_dev
         0      45       0    0.0000   0.0000
@@ -235,7 +245,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`detect()`"
 
-        ```
+        ```Python
         >>> res.detect()
         (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
         <fmdt.res.DetectionResult object at 0x7fb0288f5780>
@@ -243,7 +253,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`visu()`"
 
-        ```
+        ```Python
         >>> res.visu()
         #  -------------------
         # |        ----*      |
@@ -274,7 +284,7 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`check()`"
 
-        ```
+        ```Python
         >>> res.check()
         <fmdt.res.CheckResult object at 0x7fb0288f7af0>
 
@@ -298,15 +308,15 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
         # -----|---------||--------|-----||-------|-------||--------
         #   Id |    Type || Detect |  GT || Start |  Stop ||      # 
         # -----|---------||--------|-----||-------|-------||--------
-            1 |  meteor ||      7 |   7 ||   102 |   108 ||      1  
-            2 |  meteor ||     17 |  16 ||   110 |   125 ||      1  
-            3 |  meteor ||      8 |   9 ||   111 |   119 ||      1  
-            4 |  meteor ||      3 |   3 ||   121 |   123 ||      1  
-            5 |  meteor ||      3 |   3 ||   127 |   129 ||      1  
-            6 |  meteor ||      3 |   3 ||   129 |   131 ||      1  
-            7 |  meteor ||      9 |  10 ||   133 |   142 ||      1  
-            8 |  meteor ||     10 |  10 ||   134 |   143 ||      1  
-            9 |  meteor ||      4 |   4 ||   134 |   137 ||      1  
+             1 |  meteor ||      7 |   7 ||   102 |   108 ||      1  
+             2 |  meteor ||     17 |  16 ||   110 |   125 ||      1  
+             3 |  meteor ||      8 |   9 ||   111 |   119 ||      1  
+             4 |  meteor ||      3 |   3 ||   121 |   123 ||      1  
+             5 |  meteor ||      3 |   3 ||   127 |   129 ||      1  
+             6 |  meteor ||      3 |   3 ||   129 |   131 ||      1  
+             7 |  meteor ||      9 |  10 ||   133 |   142 ||      1  
+             8 |  meteor ||     10 |  10 ||   134 |   143 ||      1  
+             9 |  meteor ||      4 |   4 ||   134 |   137 ||      1  
             10 |  meteor ||      3 |   4 ||   135 |   138 ||      1  
             11 |  meteor ||      6 |  10 ||   137 |   146 ||      1  
             12 |  meteor ||      4 |   4 ||   139 |   142 ||      1  
@@ -349,16 +359,12 @@ If the executable `fmdt-detect` is called with a `--log-path` then we save movem
 
     ??? info "`trk_list_summary()`"
 
-        ```
+        ```Python
         >>> res.trk_list_summary()
         'objects in trk_list: 38 meteor(s), 0 star(s), 0 noise'
         ```
     
 Only the `df` field is altered by this choice.
-
-
-
-
 
 ## `CheckResult`
 
@@ -372,7 +378,10 @@ classDiagram
   CheckResult : +Series noise_stats()
   CheckResult : +Series all_stats()
 ```
-A `CheckResult` stores the information generated by a call to `fmdt-check`. Notably, we retrieve the `gt_table` which contains information about the meteors in our ground truth file and the `stats` table that summarizes important tracking statistics
+A `CheckResult` stores the information generated by a call to `fmdt-check`. 
+Notably, we retrieve the `gt_table` which contains information about the meteors 
+in our ground truth file and the `stats` table that summarizes important 
+tracking statistics
 
 <!-- === "`fmdt.check`"
 
@@ -387,13 +396,13 @@ A `CheckResult` stores the information generated by a call to `fmdt-check`. Nota
 
     Alternatively, we can use a video to call `fmdt-check` (our preferred method)
 
-    ``` 
+    ``` Python
     res = fmdt.load_demo().detect().check()
     ```
 
     ??? note "`gt_table`"
 
-        ```
+        ```Python
         >>> res.gt_table
             id   types  detects  gts  starts  stops  tracks
         0    1  meteor        7    7     102    108       1
@@ -434,7 +443,7 @@ A `CheckResult` stores the information generated by a call to `fmdt-check`. Nota
 
     ??? note "`stats`"
 
-        ```
+        ```Python
         >>> res.stats
             type  gt  ntrk  tpos  fpos  tneg  fneg  trk_rate
         0  meteor  34    38    35     3     0     0      0.95
@@ -445,7 +454,7 @@ A `CheckResult` stores the information generated by a call to `fmdt-check`. Nota
 
     ??? note "individual functions"
 
-        ```
+        ```Python
         >>> res.meteor_stats()
         type        meteor
         gt              34

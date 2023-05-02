@@ -9,8 +9,9 @@ from enum import Enum
 import pickle
 import hashlib
 import copy
+import os
 
-# Hardcoded default detect values for FMDT version v1.0.0-21-g7cba20b4 (7cba20b4)
+# Hardcoded default detect values for FMDT version v1.0.0-109-g03a83f42
 # These are used to convert between args in our database and args in python.
 # However, they are NOT used as the default arguments to our .detect() API
 # since the authors of FMDT should be able to change the default values of their
@@ -22,10 +23,12 @@ _DEFAULT_DETECT_ARGS = {
     "vid_in_buff": False,
     "vid_in_loop": 1,
     "vid_in_threads": 0,
-    "light_min": 55,
-    "light_max": 80,
+    "ccl_hyst_lo": 55,
+    "ccl_hyst_hi": 80,
     "ccl_fra_path": None,
     "ccl_fra_id": False,
+    "cca_mag": False,
+    "cca_ell": False,
     "mrp_s_min": 3,
     "mrp_s_max": 1000,
     "knn_k": 3,
@@ -39,8 +42,7 @@ _DEFAULT_DETECT_ARGS = {
     "trk_meteor_max": 100,
     "trk_ddev": 4.0,
     "trk_all": False,
-    "trk_bb_path": None,
-    "trk_mag_path": None,
+    "trk_roi_path": None,
     "log_path": None
 }
 
@@ -84,10 +86,12 @@ class DetectArgs:
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -101,10 +105,9 @@ class DetectArgs:
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = None,
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         log_path: str | None = None,
-        trk_out_path: str | None = None,
+        trk_path: str | None = None,
     ):
 
         self.vid_in_path = vid_in_path
@@ -114,10 +117,12 @@ class DetectArgs:
         self.vid_in_buff = vid_in_buff
         self.vid_in_loop = vid_in_loop
         self.vid_in_threads = vid_in_threads
-        self.light_min = light_min 
-        self.light_max = light_max 
+        self.ccl_hyst_lo = ccl_hyst_lo
+        self.ccl_hyst_hi = ccl_hyst_hi
         self.ccl_fra_path = ccl_fra_path
         self.ccl_fra_id = ccl_fra_id
+        self.cca_mag = cca_mag
+        self.cca_ell = cca_ell
         self.mrp_s_min = mrp_s_min
         self.mrp_s_max = mrp_s_max
         self.knn_k = knn_k
@@ -131,10 +136,9 @@ class DetectArgs:
         self.trk_meteor_max = trk_meteor_max
         self.trk_ddev = trk_ddev
         self.trk_all = trk_all
-        self.trk_bb_path = trk_bb_path
-        self.trk_mag_path = trk_mag_path
+        self.trk_roi_path = trk_roi_path
         self.log_path = log_path
-        self.trk_out_path = trk_out_path
+        self.trk_path = trk_path
 
     def to_dict(
             self,
@@ -149,10 +153,12 @@ class DetectArgs:
             "vid_in_buff": self.vid_in_buff,
             "vid_in_loop": self.vid_in_loop,
             "vid_in_threads": self.vid_in_threads,
-            "light_min": self.light_min,
-            "light_max": self.light_max,
+            "ccl_hyst_lo": self.ccl_hyst_lo,
+            "ccl_hyst_hi": self.ccl_hyst_hi,
             "ccl_fra_path": self.ccl_fra_path,
             "ccl_fra_id": self.ccl_fra_id,
+            "cca_mag": self.cca_mag,
+            "cca_ell": self.cca_ell,
             "mrp_s_min": self.mrp_s_min,
             "mrp_s_max": self.mrp_s_max,
             "knn_k": self.knn_k,
@@ -166,10 +172,9 @@ class DetectArgs:
             "trk_meteor_max": self.trk_meteor_max,
             "trk_ddev": self.trk_ddev,
             "trk_all": self.trk_all,
-            "trk_bb_path": self.trk_bb_path,
-            "trk_mag_path": self.trk_mag_path,
+            "trk_roi_path": self.trk_roi_path,
             "log_path": self.log_path,
-            "trk_out_path": self.trk_out_path 
+            "trk_path": self.trk_path
         }
 
         if subset is None:
@@ -188,10 +193,9 @@ class DetectArgs:
 
         del d["vid_in_path"]
         del d["ccl_fra_path"]
-        del d["trk_bb_path"]
-        del d["trk_mag_path"]
+        del d["trk_roi_path"]
         del d["log_path"]
-        del d["trk_out_path"]
+        del d["trk_path"]
 
         return d
 
@@ -261,9 +265,8 @@ class DetectArgs:
         c = copy.deepcopy(self)
         c.ccl_fra_path = None
         c.log_path = None
-        c.trk_bb_path = None
-        c.trk_mag_path = None
-        c.trk_out_path = None
+        c.trk_roi_path = None
+        c.trk_path = None
 
         return c
         
@@ -302,9 +305,11 @@ class DetectArgs:
                 vid_in_buff BOOLEAN,
                 vid_in_loop INTEGER,
                 vid_in_threads INTEGER,
-                light_min INTEGER,
-                light_max INTEGER,
-                ccl_fra_id INETEGER,
+                ccl_hyst_lo INTEGER,
+                ccl_hyst_hi INTEGER,
+                ccl_fra_id BOOLEAN,
+                cca_mag BOOLEAN,
+                cca_ell BOOLEAN,
                 mrp_s_min INTEGER,
                 mrp_s_max INTEGER,
                 knn_k INTEGER,
@@ -317,12 +322,72 @@ class DetectArgs:
                 trk_meteor_min INTEGER,
                 trk_meteor_max INTEGER,
                 trk_ddev NUMERIC,
-                trk_all INTEGER
+                trk_all BOOLEAN
             );
             """
         )
 
         return sql
+
+
+class LogParserArgs:
+
+    def __init__(
+            self,
+            log_path: str,
+            trk_roi_path: str | None = None,
+            log_flt: str | None = None,
+            fra_path: str | None = None,
+            ftr_name: str | None = None,
+            ftr_path: str | None = None,
+            trk_path: str | None = None,
+            trk_json_path: str | None = None,
+            trk_bb_path: str | None = None,
+        ):
+
+        self.log_path = log_path
+        self.trk_roi_path = trk_roi_path
+        self.log_flt = log_flt
+        self.fra_path = fra_path
+        self.ftr_name = ftr_name
+        self.ftr_path = ftr_path
+        self.trk_path = trk_path
+        self.trk_json_path = trk_json_path
+        self.trk_bb_path = trk_bb_path
+
+    def to_dict(self) -> dict:
+        return {
+
+            "log_path": self.log_path,
+            "trk_roi_path": self.trk_roi_path,
+            "log_flt": self.log_flt,
+            "fra_path": self.fra_path,
+            "ftr_name": self.ftr_name,
+            "ftr_path": self.ftr_path,
+            "trk_path": self.trk_path,
+            "trk_json_path": self.trk_json_path,
+            "trk_bb_path": self.trk_bb_path,
+        }
+
+    def to_reduced_dict(self) -> dict:
+        d = self.to_dict()
+        out = {}
+        for (k, v) in d.items():
+            if not v is None:
+                out[k] = v
+
+        return out
+
+    def argv(self) -> list[str]:
+        """Return a list of arguments that will be used to execute fmdt-detect"""
+        return handle_log_parser_args(**self.to_dict())
+
+    def cmd(self) -> str:
+        return ' '.join(self.argv())
+
+    def exec(self, log: bool = False, timeout: float = None):
+        res = fmdt.api.log_parser(**self.to_dict())
+        return res
 
 class VisuArgs:
 
@@ -330,8 +395,8 @@ class VisuArgs:
             self, 
             vid_in_path: str, 
             trk_path: str,
-            trk_bb_path: str,
-            vid_out_path: str,
+            trk_bb_path: str | None = None,
+            vid_out_path: str | None = None,
             vid_in_start: int | None = None, 
             vid_in_stop: int | None = None, 
             vid_in_threads: int | None = None, 
@@ -393,33 +458,51 @@ class VisuArgs:
 
 
 class Args:
-    """Args keeps track of a configuration of parameters for all of fmdt's executables
+    """Args keeps track of a configuration of parameters for all of fmdt's
+    executables
 
     Upon a call to `fmdt.detect()`, an Args object is returned that remembers
     the configuration used to execute fmdt-detect. We can subsequently use the
-    Args object as an interface to directly calling fmdt-visu, without having to respecify some of the more specific arguments.
+    Args object as an interface to directly calling `fmdt-log-parser` and
+    `fmdt-visu`, without having to respecify some of the more specific
+    arguments.
 
     Consider the difference between the two calls:
     ```
-    fmdt.detect(vid_in_path = "vid.mp4")
-    fmdt.visu(vid_in_path = "vid.mp4", vid_out_path = "vid_visu.mp4")
+    fmdt.detect(vid_in_path  = "vid.mp4",
+                trk_path     = "tracks.txt",
+                trk_roi_path = "trk2roi.txt",
+                log_path     = "detect_log")
+    fmdt.log_parser(log_path     = "detect_log",
+                    trk_roi_path = "trk2roi.txt",
+                    trk_bb_path  = "bb.txt")
+    fmdt.visu(vid_in_path  = "vid.mp4",
+              trk_path     = "tracks.txt",
+              trk_bb_path  = "bb.txt",
+              vid_out_path = "vid_visu.mp4")
     ```
 
     and
     ```
-    fmdt.detect(vid_in_path = "vid.mp4").visu()
+    fmdt.detect(vid_in_path  = "vid.mp4",
+                trk_path     = "tracks.txt",
+                trk_roi_path = "trk2roi.txt",
+                log_path     = "detect_log")
+        .log_parser().visu()
     ```  
-    where storing the configuration for `fmdt-detect` in an Args object allows us to fill
-    in the parameters needed by a call to `fmdt-visu`.
+    where storing the configuration for `fmdt-detect` in an Args object allows
+    us to fill in the parameters needed by a call to `fmdt-log-parser` and
+    `fmdt-visu`.
 
-    This class is therefore a collection of dictionaries of parameters and interfaces to
-    the fmdt.api functions.
+    This class is therefore a collection of dictionaries of parameters and
+    interfaces to the fmdt.api functions.
 
     ==================
 
     Args has the fields
 
     detect_args: DetectArgs
+    log_parser_args: LogParserArgs
     visu_args: VisuArgs
     log: bool
     timeout: float
@@ -427,19 +510,21 @@ class Args:
 
     def __init__(
         self,
-        detect_args: DetectArgs,
-        visu_args: VisuArgs,
+        detect_args: DetectArgs | None = None,
+        log_parser_args: LogParserArgs | None = None,
+        visu_args: VisuArgs | None = None,
         log: bool = False,
         timeout: float | None = None
     ):
         self.detect_args = detect_args
+        self.log_parser_args = log_parser_args
         self.visu_args = visu_args
         self.log = log
         self.timeout = timeout
 
     @staticmethod
     def new(
-        #=================== DetectArgs =============================
+        #=================== DetectArgs =======================================
         vid_in_path: str = "default.mp4", 
         vid_in_start: int | None = None,
         vid_in_stop: int | None = None,
@@ -447,10 +532,12 @@ class Args:
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -464,68 +551,86 @@ class Args:
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = None,
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         log_path: str | None = None,
-        trk_out_path: str | None = None,
-        #=================== VisuArgs =================================
+        trk_path: str | None = None,
+        #=================== LogParserArgs ====================================
+        # log_path: str = None,
+        # trk_roi_path: str = None,
+        log_flt: str | None = None,
+        fra_path: str| None = None,
+        ftr_name: str | None = None,
+        ftr_path: str | None = None,
+        # trk_path: str | None = None,
+        trk_json_path: str | None = None,
+        trk_bb_path: str | None = None,
+        #=================== VisuArgs =========================================
         trk_id: bool | None = None,
         trk_nat_num: bool| None = None,
         trk_only_meteor: bool | None = None,
         gt_path: str | None = None,
         vid_out_path: str | None = None,
-        #================== PythonArgs================================
+        #================== PythonArgs=========================================
         log: bool | None = False, 
         timeout: float | None = None,
     ):
 
         detect_args = DetectArgs(vid_in_path=vid_in_path,
-                              vid_in_start=vid_in_start,
-                              vid_in_stop=vid_in_stop,
-                              vid_in_skip=vid_in_skip,
-                              vid_in_buff=vid_in_buff,
-                              vid_in_loop=vid_in_loop,
-                              vid_in_threads=vid_in_threads,
-                              light_min =light_min,
-                              light_max =light_max,
-                              ccl_fra_path=ccl_fra_path,
-                              ccl_fra_id=ccl_fra_id,
-                              mrp_s_min=mrp_s_min,
-                              mrp_s_max=mrp_s_max,
-                              knn_k=knn_k,
-                              knn_d=knn_d,
-                              knn_s=knn_s,
-                              trk_ext_d=trk_ext_d,
-                              trk_ext_o=trk_ext_o,
-                              trk_angle=trk_angle,
-                              trk_star_min=trk_star_min,
-                              trk_meteor_min=trk_meteor_min,
-                              trk_meteor_max=trk_meteor_max,
-                              trk_ddev=trk_ddev,
-                              trk_all=trk_all,
-                              trk_bb_path=trk_bb_path,
-                              trk_mag_path=trk_mag_path,
-                              trk_out_path=trk_out_path,
-                              log_path=log_path)
+                                 vid_in_start=vid_in_start,
+                                 vid_in_stop=vid_in_stop,
+                                 vid_in_skip=vid_in_skip,
+                                 vid_in_buff=vid_in_buff,
+                                 vid_in_loop=vid_in_loop,
+                                 vid_in_threads=vid_in_threads,
+                                 ccl_hyst_lo =ccl_hyst_lo,
+                                 ccl_hyst_hi =ccl_hyst_hi,
+                                 ccl_fra_path=ccl_fra_path,
+                                 ccl_fra_id=ccl_fra_id,
+                                 cca_mag=cca_mag,
+                                 cca_ell=cca_ell,
+                                 mrp_s_min=mrp_s_min,
+                                 mrp_s_max=mrp_s_max,
+                                 knn_k=knn_k,
+                                 knn_d=knn_d,
+                                 knn_s=knn_s,
+                                 trk_ext_d=trk_ext_d,
+                                 trk_ext_o=trk_ext_o,
+                                 trk_angle=trk_angle,
+                                 trk_star_min=trk_star_min,
+                                 trk_meteor_min=trk_meteor_min,
+                                 trk_meteor_max=trk_meteor_max,
+                                 trk_ddev=trk_ddev,
+                                 trk_all=trk_all,
+                                 trk_roi_path=trk_roi_path,
+                                 trk_path=trk_path,
+                                 log_path=log_path)
         
+        log_parser_args = LogParserArgs(log_path=log_path,
+                                        trk_roi_path=trk_roi_path,
+                                        fra_path=fra_path,
+                                        ftr_name=ftr_name,
+                                        ftr_path=ftr_path,
+                                        trk_path=trk_path,
+                                        trk_json_path=trk_json_path,
+                                        trk_bb_path=trk_bb_path)
 
         if vid_out_path is None:
             name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
             vid_out_path = f"{name}_visu.{ext}"
 
         visu_args = VisuArgs(vid_in_path=vid_in_path,
-                            vid_in_start=vid_in_start,
-                            vid_in_stop=vid_in_stop,
-                            vid_in_threads=vid_in_threads,
-                            trk_path=trk_out_path,
-                            trk_bb_path=trk_bb_path,
-                            trk_id=trk_id,
-                            trk_nat_num=trk_nat_num,
-                            trk_only_meteor=trk_only_meteor,
-                            gt_path=gt_path,
-                            vid_out_path=vid_out_path)
+                             vid_in_start=vid_in_start,
+                             vid_in_stop=vid_in_stop,
+                             vid_in_threads=vid_in_threads,
+                             trk_path=trk_path,
+                             trk_bb_path=trk_bb_path,
+                             trk_id=trk_id,
+                             trk_nat_num=trk_nat_num,
+                             trk_only_meteor=trk_only_meteor,
+                             gt_path=gt_path,
+                             vid_out_path=os.path.basename(vid_out_path))
         
-        return Args(detect_args, visu_args, log, timeout) 
+        return Args(detect_args, log_parser_args, visu_args, log, timeout)
 
     def __str__(self) -> str:
 
@@ -591,6 +696,16 @@ class Args:
     def detect_cmd(self) -> str:
         return handle_detect_args(**self.detect_args.to_dict())
 
+    def log_parser(self, **kwargs):
+        """OOP Interface to calling fmdt.api.visu()"""
+
+        # Do we have visu arguments?
+        assert not self.log_parser_args is None, "No log parser args for this object"
+
+        self.log_parser_args.exec()
+
+        return self
+
     def visu(self, **kwargs):
         """OOP Interface to calling fmdt.api.visu()"""
 
@@ -612,8 +727,10 @@ class Args:
         
     def tracks(self) -> str | None:
         """Return the name of the tracks file, if it exists"""
-        if not self.detect_args.trk_out_path is None:
-            return self.detect_args.trk_out_path
+        if not self.detect_args.trk_path is None:
+            return self.detect_args.trk_path
+        elif not self.log_parser_args.trk_path is None:
+            return self.log_parser_args.trk_path
         elif not self.visu_args.trk_path is None:
             return self.visu_args.trk_path
         else:
@@ -621,8 +738,8 @@ class Args:
 
     def bbs(self) -> str | None:
         """Return the name of the bounding boxes (BBs) file, if it exists"""
-        if not self.detect_args.trk_bb_path is None:
-            return self.detect_args.trk_bb_path
+        if not self.log_parser_args.trk_bb_path is None:
+            return self.log_parser_args.trk_bb_path
         elif not self.visu_args.trk_bb_path is None:
             return self.visu_args.trk_bb_path
         else:
@@ -662,10 +779,10 @@ class Args:
         return csv[:-1] + "\n"
     
     def get_tracking_list(self) -> list[fmdt.core.TrackedObject]:
-        """Retreive the list of TrackedObject that is stored in the trk_out_path file"""
-        assert not self.detect_args.trk_out_path is None, "Out track file not stored"
+        """Retreive the list of TrackedObject that is stored in the trk_path file"""
+        assert not self.detect_args.trk_path is None, "Out track file not stored"
 
-        return fmdt.core.extract_all_information(self.detect_args.trk_out_path)
+        return fmdt.core.extract_all_information(self.detect_args.trk_path)
     
     def command(self) -> str:
         """Return the command used to execute fmdt-detect with this configuration"""
@@ -734,10 +851,12 @@ def detect_args(
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -751,10 +870,9 @@ def detect_args(
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = None,
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         log_path: str | None = None,
-        trk_out_path: str | None = None,
+        trk_path: str | None = None,
         log: bool = False,
         timeout: float = None,
         **args # any leftovers, useful when converting sql query to args object
@@ -764,23 +882,55 @@ def detect_args(
     assert not vid_in_path is None, "vid_in_path cannot be None"
 
     d_args = DetectArgs(vid_in_path, vid_in_start, vid_in_stop, vid_in_skip, vid_in_buff,
-                        vid_in_loop, vid_in_threads, light_min, light_max, ccl_fra_path,
-                        ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
-                        trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max,
-                        trk_ddev, trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path)
-    
+                        vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, ccl_fra_path,
+                        ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s,
+                        trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max,
+                        trk_ddev, trk_all, trk_roi_path, log_path, trk_path)
+
     name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
+
+    bb_name = f"{name}_bbs.txt"
+    l_args = LogParserArgs(log_path=log_path,
+                           trk_roi_path=trk_roi_path,
+                           trk_bb_path=os.path.basename(bb_name))
+
     visu_name = f"{name}_visu.{ext}"
 
     v_args = VisuArgs(vid_in_path=vid_in_path,
                       vid_in_start=vid_in_start,
                       vid_in_stop=vid_in_stop,
                       vid_in_threads=vid_in_threads,
-                      trk_path=trk_out_path,
-                      trk_bb_path=trk_bb_path,
-                      vid_out_path=visu_name)
+                      trk_path=trk_path,
+                      trk_bb_path=os.path.basename(bb_name),
+                      vid_out_path=os.path.basename(visu_name))
     
-    return Args(d_args, v_args, log, timeout)
+    return Args(d_args, l_args, v_args, log, timeout)
+
+def log_parser_args(
+        log_path: str = None,
+        trk_roi_path: str = None,
+        log_flt: str = None,
+        fra_path: str = None,
+        ftr_name: str = None,
+        ftr_path: str = None,
+        trk_path: str = None,
+        trk_json_path: str = None,
+        trk_bb_path: str = None,
+    ) -> VisuArgs:
+
+    # wtf man
+    return LogParserArgs( **{
+        "log_path": log_path,
+        "trk_roi_path": trk_roi_path,
+        "log_flt": log_flt,
+        "fra_path": fra_path,
+        "ftr_name": ftr_name,
+        "ftr_path": ftr_path,
+        "trk_path": trk_path,
+        "trk_json_path": trk_json_path,
+        "trk_bb_path": trk_bb_path,
+    }
+    )
 
 def visu_args(
         vid_in_path: str = None,
@@ -822,10 +972,12 @@ def default_detect_args() -> dict:
         "vid_in_buff": None,
         "vid_in_loop": None,
         "vid_in_threads": None,
-        "light_min": None,
-        "light_max": None,
+        "ccl_hyst_lo": None,
+        "ccl_hyst_hi": None,
         "ccl_fra_path": None,
         "ccl_fra_id": None,
+        "cca_mag": None,
+        "cca_ell": None,
         "mrp_s_min": None,
         "mrp_s_max": None,
         "knn_k": None,
@@ -840,9 +992,9 @@ def default_detect_args() -> dict:
         "trk_ddev": None,
         "trk_all": None,
         "trk_bb_path": None,
-        "trk_mag_path": None,
+        "trk_roi_path": None,
         "log_path": None,
-        "trk_out_path": None
+        "trk_path": None
     }
 
     return default_detect
@@ -855,10 +1007,12 @@ def handle_detect_args(
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -873,7 +1027,7 @@ def handle_detect_args(
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
         trk_bb_path: str | None = None,
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         log_path: str | None = None,
         **args
     ) -> list[str]:
@@ -901,8 +1055,8 @@ def handle_detect_args(
     # ====== Arguments of the form --flag <arg_value>
     arg_str(vid_in_skip, "vid-in-skip")
     arg_str(vid_in_threads, "vid-in-threads")
-    arg_str(light_min, "ccl-hyst-lo")
-    arg_str(light_max, "ccl-hyst-hi")
+    arg_str(ccl_hyst_lo, "ccl-hyst-lo")
+    arg_str(ccl_hyst_hi, "ccl-hyst-hi")
     arg_str(ccl_fra_path, "ccl_fra_path")
     arg_str(mrp_s_min, "mrp-s-min")
     arg_str(mrp_s_max, "mrp-s-max")
@@ -915,7 +1069,7 @@ def handle_detect_args(
     arg_str(trk_meteor_min, "trk-meteor-min")
     arg_str(trk_meteor_max, "trk-meteor-max")
     arg_str(trk_ddev, "trk-ddev")
-    arg_str(trk_mag_path, "trk-mag-path")
+    arg_str(trk_roi_path, "trk-roi-path")
     arg_str(log_path, "log-path")
     arg_str(trk_angle, "trk-angle")
     arg_str(trk_star_min, "trk-star-min")
@@ -927,7 +1081,51 @@ def handle_detect_args(
     # ======== Arguments of the form --toggle
     arg_bool(vid_in_buff, "vid_in_buff")
     arg_bool(ccl_fra_id, "ccl-fra-id")
+    arg_bool(cca_mag, "cca-mag")
+    arg_bool(cca_ell, "cca-ell")
     arg_bool(trk_all, "trk-all")
+
+    return args
+
+def handle_log_parser_args(
+        log_path: str = None,
+        trk_roi_path: str = None,
+        log_flt: str = None,
+        fra_path: str = None,
+        ftr_name: str = None,
+        ftr_path: str = None,
+        trk_path: str = None,
+        trk_json_path: str = None,
+        trk_bb_path: str = None,
+    ) -> list[str]:
+
+    if get_exec_path() is None:
+        fmdt_log_parser_exe = shutil.which("fmdt-log-parser")
+    else:
+        fmdt_log_parser_exe = shutil.which("fmdt-log-parser", path=get_exec_path())
+
+    fmdt_log_parser_found = not fmdt_log_parser_exe is None
+    assert fmdt_log_parser_found, "fmdt-log-parser executable not found"
+
+    assert not log_path is None, "No input log path specified"
+
+    args = [fmdt_log_parser_exe, "--log-path", log_path]
+
+    # helper closure to clean up repetitive code
+    def add_arg(arg, flag):
+        if not arg is None:
+            args.extend([flag, str(arg)])
+
+    add_arg(trk_roi_path, "--trk-roi-path")
+    add_arg(log_flt, "--log-flt")
+    add_arg(fra_path, "--fra-path")
+    add_arg(ftr_name, "--ftr-name")
+    add_arg(ftr_path, "--ftr-path")
+    add_arg(trk_path, "--trk-path")
+    add_arg(trk_json_path, "--trk-json-path")
+    add_arg(trk_bb_path, "--trk-bb-path")
+
+    print(args)
 
     return args
 
@@ -953,7 +1151,6 @@ def handle_visu_args(
     fmdt_visu_found = not fmdt_visu_exe is None
     assert fmdt_visu_found, "fmdt-visu executable not found"
 
-
     assert not vid_in_path is None, "No input video specified"
     assert not trk_path is None, "No input track path"
     assert not trk_bb_path is None, "No input bounding boxes file"
@@ -965,12 +1162,12 @@ def handle_visu_args(
     else:
         name, ext = fmdt.utils.decompose_video_filename(vid_in_path)
         new_name = f"{name}_visu.{ext}"
-        args.extend(["--vid-out-path", new_name])
+        args.extend(["--vid-out-path", os.path.basename(new_name)])
 
     # helper closure to clean up repetitive code
     def add_arg(arg, flag):
         if not arg is None:
-            args.extend([flag, str(args)])
+            args.extend([flag, str(arg)])
 
     add_arg(vid_in_start, "--vid-in-start")
     add_arg(vid_in_stop, "--vid-in-stop")
@@ -987,8 +1184,6 @@ def handle_visu_args(
         args.append("--trk-only-meteor")
 
     return args
-
-
 
 def detect_args_to_cmd(args: dict) -> list[str]:
     return handle_detect_args(**args)            

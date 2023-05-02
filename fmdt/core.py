@@ -55,7 +55,7 @@ class TrackedObject:
 
     If we call `fmdt-detect` and store the track results to a file with:
 
-    >>> fmdt.detect("demo.mp4", trk_out_path="tracks.txt")  
+    >>> fmdt.detect("demo.mp4", trk_path="tracks.txt")
 
     Then we can load in the detected objects as a list of `TrackedObject`:
 
@@ -304,7 +304,7 @@ def split_video_at_meteors(
     ----------
     `video_filename` (str): Filename of video to split 
     `detect_tracks_in` (str): Filename of tracks recorded by a call to 
-        fmdt.detect(video_filename, trk_out_path=detect_tracks_in)
+        fmdt.detect(video_filename, trk_path=detect_tracks_in)
     `nframes_before` (int): Number of frames to extract before the meteor sequence begins
         (Default value of 3)
     `nframes_after` (int): Number of frames to extract after the meteor sequence ends

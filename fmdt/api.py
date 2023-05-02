@@ -21,11 +21,13 @@ def help():
     fmdt.api contains the public-facing functions (also aliased under fmdt.*):
         fmdt[.api].count
         fmdt[.api].detect
+        fmdt[.api].log_parser
         fmdt[.api].visu
         fmdt[.api].detect_directory
 
     fmdt.api.count counts the number of celestial objects specified by the parameters
     fmdt.api.detect calls `fmdt-detect` with the given arguments
+    fmdt.api.log_parser calls `fmdt-log-parser`
     fmdt.api.visu calls `fmdt-visu`
     fmdt.api.detect_directory
         
@@ -52,7 +54,7 @@ def count(
     
     Examples
     --------
-    >>> fmdt.detect(vid_in_path="demo.mp4", trk_out_path="tracks.txt") # Store tracks in tracking file
+    >>> fmdt.detect(vid_in_path="demo.mp4", trk_path="tracks.txt") # Store tracks in tracking file
     >>> fmdt.count("tracks.txt")  # Count meteors only
 
     >>> fmdt.count("tracks.txt", all=True) # Count stars, meteors, and noise
@@ -106,7 +108,7 @@ def _run_detect_stdout(
         except:
             print(f"Subprocess timed out for {colored(' '.join(argv), 'red')}")
             tmp_file.close()
-            os.remove(tmp_file)
+            os.remove(tmp_filename)
             return [], 0
     else:
         subprocess.run(argv, stdout=tmp_file)
@@ -126,7 +128,7 @@ def _run_detect_stdout(
     return trk_list, nframes
 
 def _run_detect_trk_path(
-        trk_out_path: str,
+        trk_path: str,
         argv: list[str],
         timeout: float,
         log: bool,
@@ -134,14 +136,21 @@ def _run_detect_trk_path(
         cache_file: str
     ) -> tuple[list[fmdt.core.TrackedObject], int]:
 
-    with open(trk_out_path, 'w') as outfile:
+    with open(trk_path, 'w') as outfile:
 
         if log:
             print(f"Executing cmd: {' '.join(argv)}")
 
         if not timeout is None:
             try: 
-                subprocess.run(argv, stdout=outfile, timeout=timeout)
+                # subprocess.run(argv, stdout=outfile, timeout=timeout)
+                proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+                outs, errs = proc.communicate(timeout=timeout)
+                lines = outs.decode("utf-8").split("\n")
+                for line in lines:
+                    print(line)
+                    outfile.write(line + "\n")
+                proc.wait(timeout=timeout)
             except:
                 print("==================================================================")
                 print("")
@@ -150,13 +159,20 @@ def _run_detect_trk_path(
                 print("==================================================================")
                 return [], 0
         else:
-            subprocess.run(argv, stdout=outfile)
+            # subprocess.run(argv, stdout=outfile)
+            proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+            outs, errs = proc.communicate()
+            lines = outs.decode("utf-8").split("\n")
+            for line in lines:
+                print(line)
+                outfile.write(line + "\n")
+            proc.wait()
         
-        trk_list = fmdt.core.extract_all_information(trk_out_path)
-        nframes = fmdt.core.nframes_processed(trk_out_path)
+    trk_list = fmdt.core.extract_all_information(trk_path)
+    nframes = fmdt.core.nframes_processed(trk_path)
             
     if cache:
-        shutil.copyfile(src=trk_out_path, dst=cache_file)
+        shutil.copyfile(src=trk_path, dst=cache_file)
 
     return trk_list, nframes
     
@@ -170,10 +186,12 @@ def detect(
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
+        cca_mag: bool | None = None,
+        cca_ell: bool | None = None,
         mrp_s_min: int | None = None,
         mrp_s_max: int | None = None,
         knn_k: int | None = None,
@@ -187,11 +205,10 @@ def detect(
         trk_meteor_max: int | None = None,
         trk_ddev: float | None = None,
         trk_all: bool | None = None,
-        trk_bb_path: str | None = "bb.txt",
-        trk_mag_path: str | None = None,
+        trk_roi_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
-        trk_out_path: str | None = "trk.txt",
+        trk_path: str | None = "trk.txt",
         log: bool = False,
         timeout: float = None,
         cache: bool = False,
@@ -205,7 +222,7 @@ def detect(
 
     Wrapper Parameters
     ------------------
-    trk_out_path (str): path to redirect stdout of `fmdt-detect`
+    trk_path (str): path to redirect stdout of `fmdt-detect`
     log (bool): Print logging messages to stdout (True) or do nothing (False). Default False.
     timeout (float): timeout in seconds of the Python subprocess executing `fmdt-detect`. Default None. 
         Used to speed up ground truth testing.
@@ -213,11 +230,36 @@ def detect(
 
 
     # Wrap up all of the arguments into an Args object
-    args = fmdt.args.detect_args(vid_in_path, vid_in_start, vid_in_stop, 
-        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
-        ccl_fra_path, ccl_fra_id, mrp_s_min, mrp_s_max, knn_k, knn_d, knn_s, trk_ext_d,
-        trk_ext_o, trk_angle, trk_star_min, trk_meteor_min, trk_meteor_max, trk_ddev, 
-        trk_all, trk_bb_path, trk_mag_path, log_path, trk_out_path, log)
+    args = fmdt.args.detect_args(vid_in_path=vid_in_path,
+                                 vid_in_start=vid_in_start,
+                                 vid_in_stop=vid_in_stop,
+                                 vid_in_skip=vid_in_skip,
+                                 vid_in_buff=vid_in_buff,
+                                 vid_in_loop=vid_in_loop,
+                                 vid_in_threads=vid_in_threads,
+                                 ccl_hyst_lo=ccl_hyst_lo,
+                                 ccl_hyst_hi=ccl_hyst_hi,
+                                 ccl_fra_path=ccl_fra_path,
+                                 ccl_fra_id=ccl_fra_id,
+                                 cca_mag=cca_mag,
+                                 cca_ell=cca_ell,
+                                 mrp_s_min=mrp_s_min,
+                                 mrp_s_max=mrp_s_max,
+                                 knn_k=knn_k,
+                                 knn_d=knn_d,
+                                 knn_s=knn_s,
+                                 trk_ext_d=trk_ext_d,
+                                 trk_ext_o=trk_ext_o,
+                                 trk_angle=trk_angle,
+                                 trk_star_min=trk_star_min,
+                                 trk_meteor_min=trk_meteor_min,
+                                 trk_meteor_max=trk_meteor_max,
+                                 trk_ddev=trk_ddev,
+                                 trk_all=trk_all,
+                                 trk_roi_path=trk_roi_path,
+                                 log_path=log_path,
+                                 trk_path=trk_path,
+                                 log=log)
     
     if save_df and log_path is None:
         print("Save_df activated in final detect call")
@@ -231,10 +273,10 @@ def detect(
         cache_file = args.detect_args.cache_trk()
 
     #============ Retrieve Tracked list ===========================================#
-    if trk_out_path is None:
+    if trk_path is None:
         trk_list, nframes = _run_detect_stdout(argv, timeout, log, cache, cache_file) 
     else:
-        trk_list, nframes = _run_detect_trk_path(trk_out_path, argv, timeout, log, cache, cache_file) 
+        trk_list, nframes = _run_detect_trk_path(trk_path, argv, timeout, log, cache, cache_file)
 
     #============= Recover data if log_path =======================================#
     if not args.detect_args.log_path is None:
@@ -258,6 +300,39 @@ def detect(
             })
 
     return fmdt.res.DetectionResult(nframes, df, args, trk_list)   
+
+def log_parser(
+        log_path: str = None,
+        trk_roi_path: str = None,
+        log_flt: str = None,
+        fra_path: str = None,
+        ftr_name: str = None,
+        ftr_path: str = None,
+        trk_path: str = None,
+        trk_json_path: str = None,
+        trk_bb_path: str = None,
+    ) -> fmdt.args.Args:
+    """Wrapper to executable fmdt-detect.
+
+    Parameters
+    ----------
+    Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/log.html
+    """
+    log_parser_args = fmdt.args.log_parser_args(log_path=log_path,
+                                                trk_roi_path=trk_roi_path,
+                                                log_flt=log_flt,
+                                                fra_path=fra_path,
+                                                ftr_name=ftr_name,
+                                                ftr_path=ftr_path,
+                                                trk_path=trk_path,
+                                                trk_json_path=trk_json_path,
+                                                trk_bb_path=trk_bb_path)
+
+    argv = fmdt.args.handle_log_parser_args(**log_parser_args.to_dict())
+
+    subprocess.run(argv)
+
+    return fmdt.args.Args(log_parser_args=log_parser_args, detect_args=None, visu_args=None)
             
 def visu(
         vid_in_path: str = None,
@@ -278,23 +353,23 @@ def visu(
     ----------
     Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/visu.html
     """
-    visu_args = fmdt.args.visu_args(vid_in_path, 
-                                    vid_in_start,
-                                    vid_in_stop,
-                                    vid_in_threads,
-                                    trk_path,
-                                    trk_bb_path,
-                                    trk_id,
-                                    trk_nat_num,
-                                    trk_only_meteor,
-                                    gt_path,
-                                    vid_out_path)
+    visu_args = fmdt.args.visu_args(vid_in_path=vid_in_path,
+                                    vid_in_start=vid_in_start,
+                                    vid_in_stop=vid_in_stop,
+                                    vid_in_threads=vid_in_threads,
+                                    trk_path=trk_path,
+                                    trk_bb_path=trk_bb_path,
+                                    trk_id=trk_id,
+                                    trk_nat_num=trk_nat_num,
+                                    trk_only_meteor=trk_only_meteor,
+                                    gt_path=gt_path,
+                                    vid_out_path=vid_out_path)
 
     argv = fmdt.args.handle_visu_args(**visu_args.to_dict())
 
     subprocess.run(argv)
 
-    return fmdt.args.Args(visu_args=visu_args, detect_args=None)
+    return fmdt.args.Args(visu_args=visu_args, detect_args=None, log_parser_args=None)
 
 def check(
         trk_path: str,
@@ -337,8 +412,6 @@ def check(
 
     return fmdt.res.CheckResult(gt_table=gt_table, stats=stats)
 
-
-
 def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     """Call `fmdt-detect` on all videos in the directory `dir_name` using the settings stored in `args`
     
@@ -360,9 +433,9 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     failing_cmds = []
     i = 0
     for v in videos:
-        # res = fmdt.detect(directory + "/" + v, light_min=150, light_max=245, trk_all=True, log=False, trk_out_path="tracks.txt")
+        # res = fmdt.detect(directory + "/" + v, ccl_hyst_lo=150, ccl_hyst_hi=245, trk_all=True, log=False, trk_path="tracks.txt")
         # a = fmdt.args.video_input(directory + "/" + v)
-        # a.detect_args["trk_out_path"] = "tracks.txt"
+        # a.detect_args["trk_path"] = "tracks.txt"
 
         # if i > 10:
         #     break

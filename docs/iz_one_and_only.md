@@ -1,6 +1,7 @@
 # Core Usage
 
-This section presents the core usage of `fmdt-python`. Any examples assume that `fmdt` has already been imported:
+This section presents the core usage of `fmdt-python`. Any examples assume that 
+`fmdt` has already been imported:
 
 ```
 import fmdt
@@ -14,10 +15,9 @@ We call the main executables `fmdt-*` using `fmdt.*`
 
     ``` py
     fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
-                trk_bb_path="bb.txt",
-                trk_out_path="trk.txt",
-                light_min=100,
-                light_max=150,
+                trk_path="trk.txt",
+                ccl_hyst_lo=55,
+                ccl_hyst_hi=80,
                 log_path="log") 
     ```
 
@@ -25,7 +25,7 @@ We call the main executables `fmdt-*` using `fmdt.*`
 
         ``` py
         def detect(
-                #=================== fmdt-detect parameters ================
+                #=================== fmdt-detect parameters ===================
                 vid_in_path: str, 
                 vid_in_start: int = None,
                 vid_in_stop: int = None,
@@ -37,6 +37,8 @@ We call the main executables `fmdt-*` using `fmdt.*`
                 light_max: int = None,
                 ccl_fra_path: str = None,
                 ccl_fra_id: bool = None,
+                cca_mag: bool = None,
+                cca_ell: bool = None,
                 mrp_s_min: int = None,
                 mrp_s_max: int = None,
                 knn_k: int = None,
@@ -50,11 +52,10 @@ We call the main executables `fmdt-*` using `fmdt.*`
                 trk_meteor_max: int = None,
                 trk_ddev: float = None,
                 trk_all: bool = None,
-                trk_bb_path: str = "bb.txt",
-                trk_mag_path: str = None,
+                trk_roi_path: str = None,
                 log_path: str = None,
-                #================== Additional Parameters ====================
-                trk_out_path: str = "trk.txt",
+                #================== Additional Parameters =====================
+                trk_path: str = "trk.txt",
                 log: bool = False,
                 timeout: float = None,
                 cache: bool = False,
@@ -90,24 +91,29 @@ We call the main executables `fmdt-*` using `fmdt.*`
 
 ---
 
-Consult [`fmdt.api`](./reference/home.md#fmdtapi) for more information about `fmdt`'s interface.
+Consult [`fmdt.api`](./reference/home.md#fmdtapi) for more information about 
+`fmdt`'s interface.
 
 ## Configuration
 
 ???+ info 
 
-    You only need to configure `fmdt-python` once. If you haven't already done so, follow [these instruction](./howto/0_initialization.md)
+    You only need to configure `fmdt-python` once. If you haven't already done 
+    so, follow [these instruction](./howto/0_initialization.md)
 
-We configure `fmdt-python` by indicating where our [database videos](./explanation/video_database.md) are stored on disk using `fmdt.init()`:
+We configure `fmdt-python` by indicating where our 
+[database videos](./explanation/video_database.md) are stored on disk using 
+`fmdt.init()`:
 ```
 fmdt.init(d6_dir: str, d12_dir: str, win_dir: str) -> None
 ```
 
 ??? example 
 
-    For unix user `ejovo` with videos stored on a remote hard drive `Seagate Portable Drive` we configure `fmdt` with:
+    For unix user `ejovo` with videos stored on a remote hard drive 
+    `Seagate Portable Drive` we configure `fmdt` with:
 
-    ```
+    ``` py
     fmdt.init(
         d6_dir  = "/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor",
         d12_dir = "/run/media/ejovo/Seagate Portable Drive/Meteors/Watec12mm/Meteor",
@@ -121,16 +127,17 @@ fmdt.init(d6_dir: str, d12_dir: str, win_dir: str) -> None
     ```
 
 
-Print information about our local database configuration with the function `local_info()`:
+Print information about our local database configuration with the function 
+`local_info()`:
 
 === "code"
-    ```
+    ``` py
     fmdt.local_info()
     ```
 
 === "output"
 
-    ``` 
+    ``` py
     Printing information about the local environment
     ================================================================================
     Draconids-6mm*.avi videos configured with dir: /run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/
@@ -157,11 +164,11 @@ After configuration we can load in `Video` objects using `fmdt.load_*`
 
 === "demo"
 
-    ```
+    ``` py
     fmdt.load_demo()
     ```
 
-    ```
+    ``` py
     >>> fmdt.load_demo()
     2022_05_31_tauh_34_meteors.mp4
     ```
@@ -169,33 +176,33 @@ After configuration we can load in `Video` objects using `fmdt.load_*`
 
 === "draco6"
 
-    ```
+    ``` py
     fmdt.load_draco6()
     ```
 
-    ```
+    ``` py
     >>> fmdt.load_draco6()
     [Draconids-6mm1.00-2750-163200.avi, Draconids-6mm1.05-0750-164200.avi, Draconids-6mm1.14-1400-170300.avi, Draconids-6mm1.20-2350-171600.avi, Draconids-6mm1.29-2550-173600.avi, Draconids-6mm1.30-2050-173800.avi, Draconids-6mm1.32-3150-174200.avi, Draconids-6mm1.34-3050-174700.avi, Draconids-6mm2.00.01-1000-201100.avi, Draconids-6mm2.00.01-1500-201200.avi, Draconids-6mm2.00.01-2150-201200.avi, Draconids-6mm2.00.02-0700-201300.avi, Draconids-6mm2.00.03-0450-201500.avi, Draconids-6mm2.00.03-0550-201500.avi, Draconids-6mm2.00.03-0950-201500.avi, Draconids-6mm2.00.04-1500-201800.avi, Draconids-6mm2.00.04-1900-201900.avi, Draconids-6mm2.00.04-2950-201900.avi, Draconids-6mm2.00.05-0120-202000.avi, Draconids-6mm2.00.05-0200-202000.avi, Draconids-6mm2.00.05-0350-202000.avi, Draconids-6mm2.00.07-0900-202400.avi, Draconids-6mm2.00.07-2400-202500.avi, Draconids-6mm2.00.07-3000-202530.avi, Draconids-6mm2.00.09-0600-202900.avi, Draconids-6mm2.00.09-1650-203000.avi, Draconids-6mm2.00.09-3000-203030.avi, Draconids-6mm2.00.10-0300-203100.avi, Draconids-6mm2.00.10-0350-203110.avi, Draconids-6mm2.00.10-1050-203200.avi, Draconids-6mm2.00.11-2100-203400.avi, Draconids-6mm2.00.11-680-203300.avi, Draconids-6mm2.00.11-780-203310.avi, Draconids-6mm2.00.12-1550-203600.avi, Draconids-6mm2.00.12-2550-203700.avi, Draconids-6mm2.00.12-3100-203730.avi, Draconids-6mm2.00.13-0680-203800.avi, Draconids-6mm2.00.13-3100-204000.avi, Draconids-6mm2.00.15-0750-204200.avi, Draconids-6mm2.00.15-2300-204300.avi, Draconids-6mm2.00.15-2850-204330.avi, Draconids-6mm2.00.170050-204700.avi, Draconids-6mm2.00.18-0000-204900.avi, Draconids-6mm2.00.18-2850-205000.avi, Draconids-6mm2.00.19-0680-205100.avi, Draconids-6mm2.00.19-1550-205200.avi, Draconids-6mm2.00.20-2600-205500.avi, Draconids-6mm2.00.20-2900-205510.avi, Draconids-6mm2.00.22-3150-205900.avi, Draconids-6mm2.00.25-2250-210600.avi, Draconids-6mm2.00.26-450-210700.avi, Draconids-6mm2.00.28-1950-211200.avi]
     ```
 
 === "draco12"
 
-    ```
+    ``` py
     fmdt.load_draco12()
     ```
 
-    ```
+    ``` py
     >>> fmdt.load_draco12()
     [Draconids-12mm1.01-1950-163100.avi, Draconids-12mm1.02-1500-163500.avi, Draconids-12mm1.09-800-164900.avi, Draconids-12mm1.11-150-165300.avi, Draconids-12mm1.13-1350-165800.avi, Draconids-12mm1.15-650-170200.avi, Draconids-12mm1.16-250-170400.avi, Draconids-12mm1.19-2400-171200.avi, Draconids-12mm1.20-650-171300.avi, Draconids-12mm1.26-3100-172700.avi, Draconids-12mm1.27-2800-173000.avi, Draconids-12mm1.28-350-173100.avi, Draconids-12mm1.30-1700-173600.avi, Draconids-12mm1.33-2350-174300.avi, Draconids-12mm2.00.01-3000-201200.avi, Draconids-12mm2.00.01-3100-201200.avi, Draconids-12mm2.00.02-1550-201300.avi, Draconids-12mm2.00.02-2950-201400.avi, Draconids-12mm2.00.03-2000-201600.avi, Draconids-12mm2.00.03-550-201500.avi, Draconids-12mm2.00.04-1550-201900.avi, Draconids-12mm2.00.04-2550-201900.avi, Draconids-12mm2.00.04-750-201800.avi, Draconids-12mm2.00.05-150-202000.avi, Draconids-12mm2.00.05-1600-202100.avi, Draconids-12mm2.00.05-2900-202100.avi, Draconids-12mm2.00.05-2950-202100.avi, Draconids-12mm2.00.06-1400-202200.avi, Draconids-12mm2.00.08-3250-202700.avi, Draconids-12mm2.00.09-1250-202900.avi, Draconids-12mm2.00.09-1450-202900.avi, Draconids-12mm2.00.11-650-203300.avi, Draconids-12mm2.00.14-800-204000.avi, Draconids-12mm2.00.15-1850-204300.avi, Draconids-12mm2.00.15-2950-204300.avi, Draconids-12mm2.00.15-3050-204300.avi, Draconids-12mm2.00.21-1250-205500.avi, Draconids-12mm2.00.22-2250-205900.avi, Draconids-12mm2.00.27-1750-210900.avi, Draconids-12mm2.00.28-1800-211100.avi, Draconids-12mm2.00.28-2400-211200.avi]
     ```
 
 === "window"
 
-    ```
+    ``` py
     fmdt.load_window()
     ```
 
-    ```
+    ``` py
     >>> fmdt.load_window()
     [window_3_sony_0400-0405UTC.mp4, window_3_sony_0405-0410UTC.mp4, window_3_sony_0410-0415UTC.mp4, window_3_sony_0415-0420UTC.mp4, window_3_sony_0420-0425UTC.mp4, window_3_sony_0425-0430UTC.mp4, window_3_sony_0500-0505UTC.mp4, 2022_05_31_tauh_34_meteors.mp4]
     ```
@@ -203,7 +210,9 @@ After configuration we can load in `Video` objects using `fmdt.load_*`
 
 ## Video interface
 
-The `Video` class allows use to call our FMDT executables using a very succinct syntax. Let's get familiar with how we use this class by loading in our demo video `2022_05_31_tauh_34_meteors.mp4` using `fmdt.load_demo()`
+The `Video` class allows use to call our FMDT executables using a very succinct 
+syntax. Let's get familiar with how we use this class by loading in our demo 
+video `2022_05_31_tauh_34_meteors.mp4` using `fmdt.load_demo()`
 
 === "code"
 
@@ -213,7 +222,7 @@ The `Video` class allows use to call our FMDT executables using a very succinct 
 
 === "example"
 
-    ``` 
+    ``` py
     >>> v
     2022_05_31_tauh_34_meteors.mp4
 
@@ -224,16 +233,22 @@ The `Video` class allows use to call our FMDT executables using a very succinct 
 
 ??? warning
 
-    This operation instantiates a `Video` object associated with 2022_05_31_tauh_34_meteors.mp4 from our `video.db` file. The presence of `v` does not imply that 2022_05_31_tauh_32_meteors.mp4 exists on disk nor that it will be found by fmdt in the case that it does. For more information, consult our page on [configuring fmdt](./howto/0_initialization.md) 
+    This operation instantiates a `Video` object associated with 
+    2022_05_31_tauh_34_meteors.mp4 from our `video.db` file. The presence of `v` 
+    does not imply that 2022_05_31_tauh_32_meteors.mp4 exists on disk nor that 
+    it will be found by fmdt in the case that it does. For more information, 
+    consult our page on [configuring fmdt](./howto/0_initialization.md) 
 
 <!-- 
-1. `fmdt.load_demo()` loads in the `Video` object associated with 2022_05_31_tauh_34_meteors.mp4. The existence of this object does not imply
-that the actual video file exists on disk -->
+1. `fmdt.load_demo()` loads in the `Video` object associated with 
+2022_05_31_tauh_34_meteors.mp4. The existence of this object does not imply that 
+the actual video file exists on disk -->
 
-We can get the full path of a `Video` with the `full_path()` function and check if the file that we are pointing to exists on disk with `exists()`:
+We can get the full path of a `Video` with the `full_path()` function and check 
+if the file that we are pointing to exists on disk with `exists()`:
 
 
-```
+``` py
 >>> v.full_path()
 '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4'
 
@@ -244,16 +259,17 @@ True
 ### Meteors
 
 
-We can check if `v` has any meteors in our ground truth database using `has_meteors()`
+We can check if `v` has any meteors in our ground truth database using 
+`has_meteors()`
 
-```
+``` py
 >>> v.has_meteors()
 True
 ```
 
 and use `meteors()` to retrieve them when the previous result is `True`.
 
-```
+``` py 
 >>> v.meteors()
 [<fmdt.truth.HumanDetection object at 0x7fec74ccbee0>, <fmdt.truth.HumanDetection object at 0x7febad89b520>, <fmdt.truth.HumanDetection object at 0x7febad89b3d0>, <fmdt.truth.HumanDetection object at 0x7febad89b5e0>, <fmdt.truth.HumanDetection object at 0x7febad89b430>, <fmdt.truth.HumanDetection object at 0x7febad89b640>, <fmdt.truth.HumanDetection object at 0x7febad89b490>, <fmdt.truth.HumanDetection object at 0x7febad89b6a0>, <fmdt.truth.HumanDetection object at 0x7febad89b4f0>, <fmdt.truth.HumanDetection object at 0x7febad89b700>, <fmdt.truth.HumanDetection object at 0x7febad89b550>, <fmdt.truth.HumanDetection object at 0x7febad89b760>, <fmdt.truth.HumanDetection object at 0x7febad89b5b0>, <fmdt.truth.HumanDetection object at 0x7febad89b7c0>, <fmdt.truth.HumanDetection object at 0x7febad89b610>, <fmdt.truth.HumanDetection object at 0x7febad89b820>, <fmdt.truth.HumanDetection object at 0x7febad89b670>, <fmdt.truth.HumanDetection object at 0x7febad89b880>, <fmdt.truth.HumanDetection object at 0x7febad89b6d0>, <fmdt.truth.HumanDetection object at 0x7febad89b8e0>, <fmdt.truth.HumanDetection object at 0x7febad89b730>, <fmdt.truth.HumanDetection object at 0x7febad89b940>, <fmdt.truth.HumanDetection object at 0x7febad89b790>, <fmdt.truth.HumanDetection object at 0x7febad89b9a0>, <fmdt.truth.HumanDetection object at 0x7febad89b7f0>, <fmdt.truth.HumanDetection object at 0x7febad89ba00>, <fmdt.truth.HumanDetection object at 0x7febad89b850>, <fmdt.truth.HumanDetection object at 0x7febad89ba60>, <fmdt.truth.HumanDetection object at 0x7febad89b8b0>, <fmdt.truth.HumanDetection object at 0x7febad89bac0>, <fmdt.truth.HumanDetection object at 0x7febad89b910>, <fmdt.truth.HumanDetection object at 0x7febad89bb20>, <fmdt.truth.HumanDetection object at 0x7febad89b970>, <fmdt.truth.HumanDetection object at 0x7febad89bb80>]
 ```
@@ -266,49 +282,51 @@ We can run all three of our core executables starting with a `Video` object.
 
     !!! warning
 
-        If `v` is not on disc (`v.exists() == False`) then `v.detect()` will raise an exception
+        If `v` is not on disc (`v.exists() == False`) then `v.detect()` will 
+        raise an exception
 
     We can run a detection with `detect()`:
 
-    ```
+    ``` py
     >>> res = v.detect()
     (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
     ```
 
     === "`res`"
 
-        ```
+        ``` py
         fmdt.res.DetectionResult with args digest: 31a2dd4832e985d6
         objects in trk_list: 38 meteor(s), 0 star(s), 0 noise
         ```
 
     === "`res.trk_list`"
 
-        ```
+        ``` py
         [<Meteor (102, 108)>, <Meteor (110, 126)>, <Meteor (111, 118)>, <Meteor (121, 123)>, <Meteor (127, 129)>, <Meteor (129, 131)>, <Meteor (133, 141)>, <Meteor (134, 143)>, <Meteor (134, 137)>, <Meteor (136, 138)>, <Meteor (139, 144)>, <Meteor (139, 142)>, <Meteor (140, 150)>, <Meteor (146, 149)>, <Meteor (156, 158)>, <Meteor (156, 165)>, <Meteor (157, 162)>, <Meteor (160, 163)>, <Meteor (164, 167)>, <Meteor (167, 169)>, <Meteor (171, 175)>, <Meteor (174, 180)>, <Meteor (178, 185)>, <Meteor (179, 181)>, <Meteor (179, 189)>, <Meteor (180, 184)>, <Meteor (183, 189)>, <Meteor (194, 197)>, <Meteor (197, 199)>, <Meteor (199, 201)>, <Meteor (200, 205)>, <Meteor (201, 203)>, <Meteor (202, 204)>, <Meteor (223, 229)>, <Meteor (224, 228)>, <Meteor (227, 231)>, <Meteor (249, 252)>, <Meteor (251, 253)>]
         ```
 
     === "`res.nframes`"
 
-        ```
+        ``` py
         256
         ```
 
     === "`res.args`"
 
-        ```
+        ``` py
         <fmdt.args.Args object>
         ====================
         Detect parameters: 
-        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
         ```
 
 
     ### Movement Statistics
 
-    We can additionally store movement statistics if we manually specify a log directory with the `log_path` argument.
+    We can additionally store movement statistics if we manually specify a log 
+    directory with the `log_path` argument.
 
-    ```
+    ``` py
     >>> res = v.detect(log_path="log")
     (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
     Trying to retrieve log info here: log
@@ -332,20 +350,26 @@ We can run all three of our core executables starting with a `Video` object.
     [256 rows x 4 columns]
     ```
 
-    The estimated movement statistics are stored in the `df` member of our `fmdt.res.DetectionResult`.
+    The estimated movement statistics are stored in the `df` member of our 
+    `fmdt.res.DetectionResult`.
 
     #### Unique `log_path`
 
-    When running multiple diffent videos with the same core set of arguments, it might be a good idea to isolate out `log_path`. To automatically cache the log information in a unique folder, call `detect` with the `save_df` parameter set to `True` instead of using `log_path`:
+    When running multiple diffent videos with the same core set of arguments, it 
+    might be a good idea to isolate out `log_path`. To automatically cache the 
+    log information in a unique folder, call `detect` with the `save_df` 
+    parameter set to `True` instead of using `log_path`:
 
-    ```
+    ``` py
     >>> res = v.detect(save_df=True)
     Save_df activated in final detect call
     (II) Frame n° 255 -- Tracks = ['meteor':  38, 'star':   0, 'noise':   0, 'total':  38]
     Trying to retrieve log info here: /home/ejovo/.cache/fmdt_python/31a2dd4832e985d6
     ```
 
-    This will automatically cache our log results in a unique directory. Consult [this](./howto/4_use_the_cache.md) to guide to learn how to monitor and clear the cache.
+    This will automatically cache our log results in a unique directory. Consult 
+    [this](./howto/4_use_the_cache.md) to guide to learn how to monitor and 
+    clear the cache.
 
 === "visu"
 
@@ -355,15 +379,16 @@ We can run all three of our core executables starting with a `Video` object.
 
 === "check"
 
-    We can retrieve the tracking statistics produced by `fmdt-check` by chaining the function calls `detect()` and `check()` together.
+    We can retrieve the tracking statistics produced by `fmdt-check` by chaining 
+    the function calls `detect()` and `check()` together.
 
-    ```
+    ``` py
     check_res = v.detect().check()
     ```
 
     === "`check_res.gt_path`"
 
-        ```
+        ``` py
         >>> check_res.gt_table
             id   types  detects  gts  starts  stops  tracks
         0    1  meteor        7    7     102    108       1
@@ -405,7 +430,7 @@ We can run all three of our core executables starting with a `Video` object.
 
     === "`check_res.stats`"
 
-        ```
+        ``` py
         >>> check_res.stats
             type  gt  ntrk  tpos  fpos  tneg  fneg  trk_rate
         0  meteor  34    38    35     3     0     0      0.95
@@ -416,7 +441,7 @@ We can run all three of our core executables starting with a `Video` object.
 
     === "`check_res.*_stats()`"
 
-        ```
+        ``` py
         >>> check_res.meteor_stats()
         type        meteor
         gt              34
@@ -465,47 +490,53 @@ We can run all three of our core executables starting with a `Video` object.
         Name: 3, dtype: object
         ```
 
-For more information about the results of these executables, consult [this section](./reference/res.md)
-
+For more information about the results of these executables, consult 
+[this section](./reference/res.md)
 
 ## VideoClip
 
-The class `fmdt.VideoClip` is a subclass of `fmdt.Video` and is used to represent a portion of specific video that contains meteors. This class is primarily used when working with the [`window`](./explanation/video_database.md) videos as they are all 5 minutes long and each contain multiple meteors.
+The class `fmdt.VideoClip` is a subclass of `fmdt.Video` and is used to 
+represent a portion of specific video that contains meteors. This class is 
+primarily used when working with the [`window`](./explanation/video_database.md) 
+videos as they are all 5 minutes long and each contain multiple meteors.
 
 ### Creation
 
-We can create a `list[VideoClip]` starting from a `Video` with known ground truths. Let's take the first `window` as an example.
+We can create a `list[VideoClip]` starting from a `Video` with known ground 
+truths. Let's take the first `window` as an example.
 
-```
+``` py
 w = fmdt.load_window()[0]
 ```
 
-Make sure our video has ground truths in our database with `has_meteors()` and then instantiate some `VideoClip` objects with `create_clips()`
+Make sure our video has ground truths in our database with `has_meteors()` and 
+then instantiate some `VideoClip` objects with `create_clips()`
 
 === "code"
 
-    ```
+    ``` py
     clips = w.create_clips()
     ```
 
 === "output"
 
-    ```
+    ``` py
     >>> clips
     [window_3_sony_0400-0405UTC.mp4 [773, 802], window_3_sony_0400-0405UTC.mp4 [1213, 1262], window_3_sony_0400-0405UTC.mp4 [1414, 1451], window_3_sony_0400-0405UTC.mp4 [2276, 2335], window_3_sony_0400-0405UTC.mp4 [2823, 2862], window_3_sony_0400-0405UTC.mp4 [2850, 2900], window_3_sony_0400-0405UTC.mp4 [2916, 2945], window_3_sony_0400-0405UTC.mp4 [3414, 3446], window_3_sony_0400-0405UTC.mp4 [3845, 3874], window_3_sony_0400-0405UTC.mp4 [4143, 4191], window_3_sony_0400-0405UTC.mp4 [4250, 4280], window_3_sony_0400-0405UTC.mp4 [4435, 4472], window_3_sony_0400-0405UTC.mp4 [5311, 5342], window_3_sony_0400-0405UTC.mp4 [6778, 6823], window_3_sony_0400-0405UTC.mp4 [7187, 7219]]
     ```
 
-If we want to actually save these clips to disk, we add the parameter `save_to_disk=True`
+If we want to actually save these clips to disk, we add the parameter 
+`save_to_disk=True`
 
 === "code"
 
-    ```
+    ``` py
     clips = w.create_clips(save_to_disk=True)
     ```
 
 === "output"
 
-    ```
+    ``` py
     Running command 'ffmpeg -ss 00:00:30.920 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.160 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f0773-0802_.mp4 -loglevel error'
     Running command 'ffmpeg -ss 00:00:48.520 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.960 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f1213-1262_.mp4 -loglevel error'
     Running command 'ffmpeg -ss 00:00:56.560 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.480 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f1414-1451_.mp4 -loglevel error'
@@ -523,19 +554,20 @@ If we want to actually save these clips to disk, we add the parameter `save_to_d
     Running command 'ffmpeg -ss 00:04:47.480 -i /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC.mp4 -t 00:00:01.280 /run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f7187-7219_.mp4 -loglevel error'
     ```
 
-Each individual clip can be interfaced just like as a `Video` above thanks to class inheritance. Here we showcase a few examples.
+Each individual clip can be interfaced just like as a `Video` above thanks to 
+class inheritance. Here we showcase a few examples.
 
 ??? example "Get meteors"
 
     === "code"
 
-        ```
+        ``` py
         clips[0].meteors()
         ```
 
     === "output"
 
-        ```
+        ``` py
         [<fmdt.truth.HumanDetection object at 0x7f2b0c156ad0>]
         ```
 
@@ -543,13 +575,13 @@ Each individual clip can be interfaced just like as a `Video` above thanks to cl
 
     === "code"
 
-        ```
+        ``` py
         clips[0].parent_path()
         ```
 
     === "output"
 
-        ```
+        ``` py
         '/run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/'
         ```
 
@@ -557,13 +589,13 @@ Each individual clip can be interfaced just like as a `Video` above thanks to cl
 
     === "code"
 
-        ```
+        ``` py
         clips[0].full_path()
         ```
 
     === "output"
 
-        ```
+        ``` py
         '/run/media/ejovo/Seagate Portable Drive/Meteors/window_3_sony_0400-0405UTC/f0773-0802_.mp4'
         ```
 
@@ -571,13 +603,13 @@ Each individual clip can be interfaced just like as a `Video` above thanks to cl
 
     === "code"
 
-        ```
+        ``` py
         clips[0].detect()
         ```
 
     === "output"
 
-        ```
+        ``` py
         (II) Frame n°  28 -- Tracks = ['meteor':   0, 'star':   0, 'noise':   0, 'total':   0]
         <fmdt.res.DetectionResult object at 0x7f2b0c1571f0>
         ```
@@ -586,28 +618,29 @@ Each individual clip can be interfaced just like as a `Video` above thanks to cl
 
     === "code"
 
-        ```
+        ``` py
         clips[0].nb_frames()
         ```
 
     === "output"
 
-        ```
+        ``` py
         29
         ```
 
 
-
 ## Ground Truths
 
-We can retrieve all the ground truths from our database that are associated with a particular video by using the `Video.meteors()` function. Start by loading in our Draco6 videos.
+We can retrieve all the ground truths from our database that are associated with 
+a particular video by using the `Video.meteors()` function. Start by loading in 
+our Draco6 videos.
 
-```
+``` py
 d6_all = fmdt.load_draco6() # Loads all 52 Draco6 videos in our database
 d6 = [v for v in d6_all if v.has_meteors()] # Filter out the 38 that have gts in our database
 ```
 
-```
+``` py
 >>> len(d6_all)
 52
 
@@ -618,9 +651,10 @@ d6 = [v for v in d6_all if v.has_meteors()] # Filter out the 38 that have gts in
 [Draconids-6mm1.00-2750-163200.avi, Draconids-6mm1.05-0750-164200.avi, Draconids-6mm1.14-1400-170300.avi, Draconids-6mm1.20-2350-171600.avi, Draconids-6mm1.29-2550-173600.avi, Draconids-6mm1.30-2050-173800.avi, Draconids-6mm1.32-3150-174200.avi, Draconids-6mm1.34-3050-174700.avi, Draconids-6mm2.00.01-1000-201100.avi, Draconids-6mm2.00.01-1500-201200.avi, Draconids-6mm2.00.01-2150-201200.avi, Draconids-6mm2.00.02-0700-201300.avi, Draconids-6mm2.00.03-0450-201500.avi, Draconids-6mm2.00.03-0550-201500.avi, Draconids-6mm2.00.03-0950-201500.avi, Draconids-6mm2.00.04-1500-201800.avi, Draconids-6mm2.00.04-1900-201900.avi, Draconids-6mm2.00.04-2950-201900.avi, Draconids-6mm2.00.05-0120-202000.avi, Draconids-6mm2.00.05-0350-202000.avi, Draconids-6mm2.00.07-0900-202400.avi, Draconids-6mm2.00.07-2400-202500.avi, Draconids-6mm2.00.07-3000-202530.avi, Draconids-6mm2.00.09-0600-202900.avi, Draconids-6mm2.00.09-1650-203000.avi, Draconids-6mm2.00.09-3000-203030.avi, Draconids-6mm2.00.10-0300-203100.avi, Draconids-6mm2.00.10-0350-203110.avi, Draconids-6mm2.00.10-1050-203200.avi, Draconids-6mm2.00.11-2100-203400.avi, Draconids-6mm2.00.11-680-203300.avi, Draconids-6mm2.00.11-780-203310.avi, Draconids-6mm2.00.12-1550-203600.avi, Draconids-6mm2.00.12-2550-203700.avi, Draconids-6mm2.00.12-3100-203730.avi, Draconids-6mm2.00.13-0680-203800.avi, Draconids-6mm2.00.13-3100-204000.avi, Draconids-6mm2.00.15-0750-204200.avi]
 ```
 
-After only keeping videos that have ground truths in our database we retrieve the list of meteors associated with the first video:
+After only keeping videos that have ground truths in our database we retrieve 
+the list of meteors associated with the first video:
 
-```
+``` py
 >>> d6[2].full_path()
 '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi'
 
@@ -628,18 +662,18 @@ After only keeping videos that have ground truths in our database we retrieve th
 [<fmdt.truth.HumanDetection object at 0x7fcd9ae92bf0>]
 ```
 
-So we can conclude that Draconids-6mm1.14-1400-170300.avi has one human-verified ground truth meteor 
-in our database.
+So we can conclude that Draconids-6mm1.14-1400-170300.avi has one human-verified 
+ground truth meteor in our database.
 
 Let's hold onto that truth.
 
-```
+``` py
 hum_det = d6[2].meteors()[0]
 ```
 
 Retrieve the trk list to see if the human detection is spotted.
 
-```
+``` py
 res = d6[2].detect(light_min=253, light_max=255)
 
 >>> fmdt.truth.is_meteor_detected(meteor=hum_det, tracking_list=res.trk_list)
@@ -648,23 +682,23 @@ True
 
 Awesome! With args:
 
-```
+``` py
 >>> print(res.args)
 <fmdt.args.Args object>
 ====================
 Detect parameters: 
-{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'light_min': 253, 'light_max': 255, 'trk_bb_path': 'bb.txt', 'trk_out_path': 'trk.txt'}
+{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'light_min': 253, 'light_max': 255, 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
 ```
 
 The meteor
-```
+``` py
 >>> print(hum_det)
 (Draconids-6mm1.14-1400-170300.avi, f0: 11, fT: 24, pos0: (11.0, 233.0), posT: (14.0, 273.0))
 ```
 
 is associated with 
 
-```
+``` py
 >>> print(res.trk_list[0])
 <Meteor (19, 22), pos0: ((10.2, 260.4)), posT: (12.1, 267.6)>
 ```

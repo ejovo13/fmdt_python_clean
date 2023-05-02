@@ -147,6 +147,9 @@ class DetectionResult:
     def detect(self):
         return self.args.detect()
 
+    def log_parser(self):
+        return self.args.log_parser()
+
     def visu(self):
         return self.args.visu()
     
@@ -187,7 +190,7 @@ class DetectionResult:
         
         """
 
-        assert not self.args.detect_args.trk_out_path is None, "To call fmdt.check we must specify the `trk_out_path`"
+        assert not self.args.detect_args.trk_path is None, "To call fmdt.check we must specify the `trk_path`"
 
         if gt_path is None:
             # If we dont have ground truth meteors, assure that the meteor acutally exists
@@ -198,7 +201,7 @@ class DetectionResult:
             return self.video.evaluate_args(self.args, self.video.meteors(), stdout=stdout, log=log)
 
         else:
-            return fmdt.check(self.args.detect_args.trk_out_path, gt_path, stdout=stdout, log=log)
+            return fmdt.check(self.args.detect_args.trk_path, gt_path, stdout=stdout, log=log)
 
     # @staticmethod
     # def from_file(trk_path: str, log_path: str):
@@ -207,7 +210,7 @@ class DetectionResult:
     # @staticmethod
     # def from_detect(args: fmdt.args.Args):
 
-    #     trk_path = args.detect_args.trk_out_path
+    #     trk_path = args.detect_args.trk_path
     #     log_path = args.detect_args.log_path
 
     #     if trk_path is None:
