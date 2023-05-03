@@ -296,15 +296,15 @@ def detect(
     return fmdt.res.DetectionResult(nframes, df, args, trk_list)   
 
 def log_parser(
-        log_path: str = None,
-        trk_roi_path: str = None,
-        log_flt: str = None,
-        fra_path: str = None,
-        ftr_name: str = None,
-        ftr_path: str = None,
-        trk_path: str = None,
-        trk_json_path: str = None,
-        trk_bb_path: str = None,
+        log_path: str,
+        trk_roi_path: str | None = None,
+        log_flt: str | None = None,
+        fra_path: str | None = None,
+        ftr_name: str | None = None,
+        ftr_path: str | None = None,
+        trk_path: str | None = None,
+        trk_json_path: str | None = None,
+        trk_bb_path: str | None = None,
     ) -> fmdt.args.Args:
     """Wrapper to executable fmdt-log-parser.
 
@@ -329,17 +329,17 @@ def log_parser(
     return fmdt.args.Args(log_parser_args=log_parser_args, detect_args=None, visu_args=None)
             
 def visu(
-        vid_in_path: str = None,
-        vid_in_start: int = None,
-        vid_in_stop: int = None,
-        vid_in_threads: int = None,
-        trk_path: str = None,
-        trk_bb_path: str = None,
-        trk_id: bool = None,
-        trk_nat_num: bool = None,
-        trk_only_meteor: bool = None,
-        gt_path: str = None,
-        vid_out_path: str = None
+        vid_in_path: str,
+        trk_path: str,
+        trk_bb_path: str,
+        vid_out_path: str,
+        vid_in_start: int | None = None,
+        vid_in_stop: int | None = None,
+        vid_in_threads: int | None = None,
+        trk_id: bool | None = None,
+        trk_nat_num: bool | None = None,
+        trk_only_meteor: bool | None = None,
+        gt_path: str | None = None
     ) -> fmdt.args.Args:
     """Wrapper to executable fmdt-visu.
 
