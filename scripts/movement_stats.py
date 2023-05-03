@@ -11,12 +11,12 @@ print(len(d12))
 
 # Video With Detection (VWD) 
 
-def get_vwd_ids(vids: list[fmdt.Video], light_min, light_max) -> list[int]:
+def get_vwd_ids(vids: list[fmdt.Video], ccl_hyst_lo, ccl_hyst_hi) -> list[int]:
 
     video_ids = []
     
     for v in vids:
-        res = v.detect(light_min=light_min, light_max=light_max, save_df=True, timeout=1.0)
+        res = v.detect(ccl_hyst_lo=ccl_hyst_lo, ccl_hyst_hi=ccl_hyst_hi, save_df=True, timeout=1.0)
         c_res = res.check()
         trk_rate = c_res.meteor_stats()["trk_rate"]
 
@@ -59,8 +59,8 @@ def discrete_video_measure(vid: fmdt.Video, interval: tuple[int, int], step_size
     """Returns the number of successes (n_successes, total_intervals)"""
 
     assert vid.exists(), f"Video {vid} does not exist on disk. Check your local config with fmdt.local_info() and fmdt.load_config()"
-    assert interval[0] >= 0, f"light_min ({interval[0]}) must be >= 0"
-    assert interval[1] <= 255, f"light_max ({interval[1]}) must be <= 0"
+    assert interval[0] >= 0, f"ccl_hyst_lo ({interval[0]}) must be >= 0"
+    assert interval[1] <= 255, f"ccl_hyst_hi ({interval[1]}) must be <= 0"
 
     gap = interval[1] - interval[0]
     
@@ -71,7 +71,7 @@ def discrete_video_measure(vid: fmdt.Video, interval: tuple[int, int], step_size
 
     for lmin in range(interval[0], interval[1] - step_size + 1, step_size):
         print(colored(f"[{lmin}, {lmin + step_size}]", "red"))
-        c_res = vid.detect(light_min=lmin, light_max=lmin + step_size, save_df=True, log=log).check()
+        c_res = vid.detect(ccl_hyst_lo=lmin, ccl_hyst_hi=lmin + step_size, save_df=True, log=log).check()
         total_intervals += 1
 
         if c_res.meteors_detected():
@@ -130,8 +130,8 @@ v = fmdt.db.get_video_by_id(2)
 # print(v)
 
 # args = {
-#     "light_min": 240,
-#     "light_max": 255,
+#     "ccl_hyst_lo": 240,
+#     "ccl_hyst_hi": 255,
 #     "save_df": True
 # }
 
@@ -145,9 +145,9 @@ v = fmdt.db.get_video_by_id(2)
 import numpy as np
 import pandas as pd
 
-def generate_data(vid: fmdt.Video, light_min_min, light_max_max):
+def generate_data(vid: fmdt.Video, ccl_hyst_lo_min, ccl_hyst_hi_max):
 
-    int_size = light_max_max - light_min_min
+    int_size = ccl_hyst_hi_max - ccl_hyst_lo_min
     
     x = np.arange(1, int_size + 1)
     f = lambda i: np.floor(int_size / i)
@@ -172,9 +172,9 @@ def generate_data(vid: fmdt.Video, light_min_min, light_max_max):
 
     for step_size in x:
 
-        for lmin in range(light_min_min, light_max_max - step_size + 1, step_size):
+        for lmin in range(ccl_hyst_lo_min, ccl_hyst_hi_max - step_size + 1, step_size):
             print(colored(f"[{lmin}, {lmin + step_size}]", "red"))
-            res = vid.detect(light_min=lmin, light_max=lmin + step_size,
+            res = vid.detect(ccl_hyst_lo=lmin, ccl_hyst_hi=lmin + step_size,
                                save_df=True, log=False)
             
             c_res = res.check()
@@ -197,9 +197,9 @@ def generate_data(vid: fmdt.Video, light_min_min, light_max_max):
         "mean_std_dev": mean_std_dev
     })
 
-def generate_data_for_videos(vids: list[fmdt.Video], light_min_min, light_max_max):
+def generate_data_for_videos(vids: list[fmdt.Video], ccl_hyst_lo_min, ccl_hyst_hi_max):
 
-    int_size = light_max_max - light_min_min
+    int_size = ccl_hyst_hi_max - ccl_hyst_lo_min
 
     x = [1]
     i = 0
@@ -237,9 +237,9 @@ def generate_data_for_videos(vids: list[fmdt.Video], light_min_min, light_max_ma
 
         for step_size in x:
 
-            for lmin in range(light_min_min, light_max_max - step_size + 1, step_size):
+            for lmin in range(ccl_hyst_lo_min, ccl_hyst_hi_max - step_size + 1, step_size):
                 print(colored(f"[{lmin}, {lmin + step_size}]", "red"))
-                res = vid.detect(light_min=lmin, light_max=lmin + step_size,
+                res = vid.detect(ccl_hyst_lo=lmin, ccl_hyst_hi=lmin + step_size,
                                 save_df=True, log=False, timeout=1.0)
                 
                 c_res = res.check()

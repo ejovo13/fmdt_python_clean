@@ -27,8 +27,8 @@ print(gt6)
 # videos in our database with GroundTruth.try_command
 
 d_args = {
-    "light_min": 251,
-    "light_max": 252,
+    "ccl_hyst_lo": 251,
+    "ccl_hyst_hi": 252,
     "trk_out_path": "tracks.txt",
     "timeout": 1, #! Special parameter of the pyhton SUBPROCESS managing fmdt-detect
 }

@@ -183,8 +183,8 @@ class Video:
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
         cca_mag: bool | None = None,
@@ -215,7 +215,7 @@ class Video:
         """Call fmdt-detect with the provided parameters"""
 
         args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
-        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
+        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, 
         ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
         knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
         trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, log,
@@ -280,8 +280,8 @@ class Video:
         vid_in_buff: bool | None = None,
         vid_in_loop: int | None = None,
         vid_in_threads: int | None = None,
-        light_min: int | None = None,
-        light_max: int | None = None,
+        ccl_hyst_lo: int | None = None,
+        ccl_hyst_hi: int | None = None,
         ccl_fra_path: str | None = None,
         ccl_fra_id: bool | None = None,
         cca_mag: bool | None = None,
@@ -311,7 +311,7 @@ class Video:
         ):
 
         args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
-        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, light_min, light_max, 
+        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, 
         ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
         knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
         trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, log,
@@ -429,6 +429,21 @@ class Video:
     def exists(self) -> bool:
         """Check whether the video path in self.full_path() exists on disk"""
         return os.path.exists(self.full_path())
+
+    def md5_local(self) -> str:
+        return fmdt.utils.md5sum(self.full_path())
+
+    def md5_db(
+            self,
+            db_file: str = "videos.db",
+            db_dir = DEFAULT_DATA_DIR
+        ) -> str:
+
+        con = sqlite3.connect(fmdt.utils.join(db_dir, db_file))
+
+        df = pd.read_sql_query(f"select * from video where video.name = {self.name}")
+
+        return df["md5"].iloc[0]
     
     def compute_trk_rate(self, **detect_args):
 
@@ -440,6 +455,9 @@ class Video:
     
     def nb_frames(self) -> int:
         return fmdt.utils.get_video_nb_frames(self.full_path())
+
+    def nb_meteors(self) -> int:
+        return len(self.meteors())
     
     def duration(self) -> float:
         return fmdt.utils.get_video_duration(self.full_path())
@@ -828,7 +846,7 @@ def load_window_clips(
     return retrieve_video_clips(db_file, db_dir, require_exist, require_best_det)
 
     
-def load_demo(db_filename: str = "videos.db", db_dir = DEFAULT_DATA_DIR) -> list[Video]:
+def load_demo(db_filename: str = "videos.db", db_dir = DEFAULT_DATA_DIR) -> Video:
     """Load video 2022_05_31_tauh_34_meteors.mp4 from our database"""
     vids = retrieve_videos(db_filename, db_dir)
     win = [v for v in vids if v.name == "2022_05_31_tauh_34_meteors.mp4"]
@@ -1176,7 +1194,7 @@ import json
 # ==================== Functions dealing with Json output =================== #
 
 def best_draco6(
-        parameter_subset: list[str] = ["light_min", "light_max", "kdd_n"],
+        parameter_subset: list[str] = ["ccl_hyst_lo", "ccl_hyst_hi", "kdd_n"],
         db_file = "videos.db",
         db_dir = DEFAULT_DATA_DIR
 ) -> str:

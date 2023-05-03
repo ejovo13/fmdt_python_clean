@@ -1,7 +1,7 @@
 # Convert the results obtained from `run_args.sh` into a three arrays of the same size:
 #
-# light_min
-# light_max
+# ccl_hyst_lo
+# ccl_hyst_hi
 # n_detected
 
 # file = "draco6_random_lminmax_results.txt"

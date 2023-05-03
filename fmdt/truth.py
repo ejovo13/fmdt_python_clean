@@ -116,8 +116,8 @@ class HumanDetection:
             self,
             vid: str,
             offset: int = 25,
-            light_min_start: int = 150,
-            light_min_end: int = 230,
+            ccl_hyst_lo_start: int = 150,
+            ccl_hyst_lo_end: int = 230,
             k_trials: int = 10,
             log: bool = False
         ):
@@ -126,8 +126,8 @@ class HumanDetection:
             vid=vid,
             truth=self,
             offset=offset,
-            light_min_start=light_min_start,
-            light_min_end=light_min_end,
+            ccl_hyst_lo_start=ccl_hyst_lo_start,
+            ccl_hyst_lo_end=ccl_hyst_lo_end,
             k_trials=k_trials,
             log=log
         )
@@ -250,17 +250,17 @@ class GroundTruth:
         """Return the list of unique videos that appear in this database"""
         return set([m.video_name for m in self.meteors])
 
-    def test_span(self, light_min_min, light_min_max, diff):
+    def test_span(self, ccl_hyst_lo_min, ccl_hyst_lo_max, diff):
         # Record the pairs that are successful, and the number of meteors detected 
         
-        # n = (light_min_min - light_min_max) // diff
-        print(f"test_span({light_min_min}, {light_min_max}, {diff})")
+        # n = (ccl_hyst_lo_min - ccl_hyst_lo_max) // diff
+        print(f"test_span({ccl_hyst_lo_min}, {ccl_hyst_lo_max}, {diff})")
 
         min_max = []
         dets = []
         successes = []
 
-        n = (light_min_max - light_min_min) / diff + 1
+        n = (ccl_hyst_lo_max - ccl_hyst_lo_min) / diff + 1
 
         # d_args = {
         #     "trk_path": "trk.txt",
@@ -270,11 +270,11 @@ class GroundTruth:
 
         args = fmdt.args.detect_args(timeout=0.5)
 
-        for lmin in np.linspace(light_min_min, light_min_max, int(n)):
+        for lmin in np.linspace(ccl_hyst_lo_min, ccl_hyst_lo_max, int(n)):
 
             # Get the list
-            args.detect_args.light_min = lmin
-            args.detect_args.light_max = lmin + diff 
+            args.detect_args.ccl_hyst_lo = lmin
+            args.detect_args.ccl_hyst_hi = lmin + diff 
 
             success_list = self.try_command(args)
 
@@ -511,8 +511,8 @@ def vary_light_intervals(
         vid: str,
         truth: HumanDetection,
         offset: int,
-        light_min_start: int,
-        light_min_end: int,
+        ccl_hyst_lo_start: int,
+        ccl_hyst_lo_end: int,
         k_trials: int,
         log: bool = False
     ) -> list[fmdt.args.Args]:
@@ -523,11 +523,11 @@ def vary_light_intervals(
 
     args = []
 
-    for lmin in np.linspace(light_min_start, light_min_end, k_trials, dtype=int):
+    for lmin in np.linspace(ccl_hyst_lo_start, ccl_hyst_lo_end, k_trials, dtype=int):
 
 
-        light_min = int(lmin)
-        light_max = light_min + offset
+        ccl_hyst_lo = int(lmin)
+        ccl_hyst_hi = ccl_hyst_lo + offset
 
         track_file = "tracks.txt"
         track_bb_path = "track_bb.txt"
@@ -538,8 +538,8 @@ def vary_light_intervals(
         res = fmdt.detect(vid, 
                         trk_path=track_file,
                         log=True,
-                        light_min=light_min,
-                        light_max=light_max,
+                        ccl_hyst_lo=ccl_hyst_lo,
+                        ccl_hyst_hi=ccl_hyst_hi,
                         trk_all=True,
                         trk_bb_path=track_bb_path)
 
@@ -556,7 +556,7 @@ def vary_light_intervals(
             else:
                 addon = ""
 
-            fmdt.visu(vid, track_file, track_bb_path, f"{vname}/lmin{light_min}_lmax{light_max}{addon}.{ext}", show_id=True)
+            fmdt.visu(vid, track_file, track_bb_path, f"{vname}/lmin{ccl_hyst_lo}_lmax{ccl_hyst_hi}{addon}.{ext}", show_id=True)
 
         if log: 
             meteors = [m for m in res.tracking_list if m.is_meteor()]

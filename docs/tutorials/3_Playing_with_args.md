@@ -72,7 +72,7 @@ vid_list = ["Draconids-6mm1-04.avi", ..., "Draconids-6mm2-18.avi"]
 We can then define a set of parameters:
 
 ```Python
-args = fmdt.detect_args(light_min=150, light_max=160)
+args = fmdt.detect_args(ccl_hyst_lo=150, ccl_hyst_hi=160)
 ```
 
 And call `fmdt-detect` on all of the videos with `args`:

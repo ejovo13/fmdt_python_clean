@@ -19,4 +19,4 @@ vid = "draco1.avi"; human = fmdt.truth.HumanDetection(vid, 45, 59, 240, 226, 125
 if vid is None and len(sys.argv) < 2:
     assert False, "No video selected. Pass the path of a video as an argument or change the variable `vid` in this script"
 
-human.test_detection_vary_light(vid, offset=25, light_min_start=150, light_min_end=235, k_trials=15, log=True)
+human.test_detection_vary_light(vid, offset=25, ccl_hyst_lo_start=150, ccl_hyst_lo_end=235, k_trials=15, log=True)

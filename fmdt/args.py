@@ -671,7 +671,7 @@ class Args:
 
         # Make sure the detecting arguments are not none
         if self.detect_args is None:
-            self.detect_args = DetectArgs(**default_detect_args())
+            self.detect_args = DetectArgs(**empty_detect_args())
         
         return self.detect_args.exec(self.log, self.timeout, cache, save_df)
     
@@ -837,7 +837,7 @@ def csv_to_list_args(csv_file: str) -> list[Args]:
 
 def video_input(filename: str) -> Args:
     a = Args()
-    a.detect_args = default_detect_args()
+    a.detect_args = empty_detect_args()
     a.detect_args.vid_in_path = filename
     return a
 
@@ -918,7 +918,7 @@ def log_parser_args(
         trk_bb_path: str = None,
     ) -> VisuArgs:
 
-    # wtf man
+    # While this is extremely ugly, it allows us to have a nicer user-facing api
     return LogParserArgs( **{
         "log_path": log_path,
         "trk_roi_path": trk_roi_path,
@@ -946,7 +946,7 @@ def visu_args(
         vid_out_path: str = None
     ) -> VisuArgs:
 
-    # wtf man
+    # While this is extremely ugly, it allows us to have a nicer user-facing api
     return VisuArgs( **{
         "vid_in_path": vid_in_path,
         "vid_in_start": vid_in_start,
@@ -962,8 +962,10 @@ def visu_args(
     }
     )
 
-def default_detect_args() -> dict:       
-    # Hi 
+def empty_detect_args() -> dict:       
+
+    """Create a new Dictionary of detect args with all None entries."""
+
     default_detect = {
         "vid_in_path": None, 
         "vid_in_start": None,
@@ -1191,7 +1193,6 @@ def detect_args_to_cmd(args: dict) -> list[str]:
     
 def main() -> None:
     a = Args()
-    # a.detect_args = default_detect_args()
     a.detect_args = detect_args(vid_in_path="demo.mp4")
     print(a.detect_csv_header())
     print(a.detect_to_csv_row())

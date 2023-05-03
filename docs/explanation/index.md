@@ -1,10 +1,18 @@
 # High-Level Overview
 
-In order to understand this library, both as a developer and as an end user, you 
-only need to be familiar with the four fundamental classes: `Args`, 
-`TrackedObject`, `HumanDetection`, and `GroundTruth`.
+This section introduces the four fundamental classes of `fmdt-python`:
+
+- `Video`
+- `Args`
+- `HumanDetection`
+- `TrackedObject`
 
 ---
+
+## Video
+defined in: `fmdt.db` <br>
+aliased as: `fmdt.Video`
+
 
 ## Args
 
@@ -48,7 +56,7 @@ res = fmdt.detect(vid_in_path="demo.mp4")
 print(res.args)
 ```
 
-### Chain together function calls
+### Chaining together function calls
 
 We can utilize the fact that a call to `fmdt.detect` returns an `Args` type and 
 the fact that an `Args` type has the member functions `detect`, `log_parser` and 

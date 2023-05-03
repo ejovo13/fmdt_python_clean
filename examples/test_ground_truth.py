@@ -23,7 +23,7 @@ fmdt.download_csvs()
 gt6 = fmdt.load_gt6()
 gt12 = fmdt.load_gt12()
 
-args = fmdt.detect_args(light_min=253, light_max=255)
+args = fmdt.detect_args(ccl_hyst_lo=253, ccl_hyst_hi=255)
 success_list = gt6.try_command(args)
 
 print(success_list)

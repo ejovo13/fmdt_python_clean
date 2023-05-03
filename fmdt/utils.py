@@ -4,6 +4,9 @@ import sys
 import numpy as np
 import subprocess
 
+# from hashlib import md5
+from functools import partial
+
 from termcolor import (
     colored
 )
@@ -294,3 +297,26 @@ def join(dir: str, file: str):
 def stderr(message: str) -> None:
     """Print a message to stderr that will show up as red in most terminals"""
     print(colored(message, "red"), file=sys.stderr)
+
+# def md5sum(filename: str) -> str:
+#     """Compute the md5sum of a file. Used to check the integrity of video files
+    
+#     Taken from https://stackoverflow.com/a/7829658/11838135
+#     """
+#     with open(filename, mode='rb') as f:
+#         d = md5()
+#         for buf in iter(partial(f.read, 128), b''):
+#             d.update(buf)
+
+#     return d.hexdigest()
+
+def md5ssl(filename: str) -> str:
+    """Compute the md5sum of a file using ssl"""
+
+    cmd = ["openssl", "md5", filename]
+
+    run_out = subprocess.run(cmd, stdout=subprocess.PIPE)
+    out = run_out.stdout.decode()
+
+    return out.split('=')[-1].strip()
+

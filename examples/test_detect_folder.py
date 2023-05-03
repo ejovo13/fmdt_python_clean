@@ -19,8 +19,8 @@ elif directory is None:
 
 args = {
     "trk_out_path": "tracks.txt",
-    "light_min": 190,
-    "light_max": 235, # None of the videos fail with _just_ a light max
+    "ccl_hyst_lo": 190,
+    "ccl_hyst_hi": 235, # None of the videos fail with _just_ a light max
     "trk_all": True,
     "log": True
 }

@@ -15,8 +15,8 @@ assert os.path.exists(draco6_db), f"draco6_db: '{draco6_db}' does not exist"
 gt6 = fmdt.GroundTruth(csv=draco6_db, vid_dir=vid_dir)
 
 d_args = {
-    "light_min": 250,
-    "light_max": 253,
+    "ccl_hyst_lo": 250,
+    "ccl_hyst_hi": 253,
     "trk_out_path": "trk.txt",
     "trk_bb_path": "bb.txt",
     "timeout": 1          # timeout in seconds for the fmdt-detect subprocess
@@ -24,8 +24,8 @@ d_args = {
 
 args = fmdt.Args(detect_args=d_args)
 
-args.detect_args["light_min"] = 240
-args.detect_args["light_max"] = 250
+args.detect_args["ccl_hyst_lo"] = 240
+args.detect_args["ccl_hyst_hi"] = 250
 
 # success_list = gt6.try_command(args)
 
@@ -38,8 +38,8 @@ args.detect_args["light_max"] = 250
 
 # Sample randomly in the range 
 
-LIGHT_MIN_MIN = 230
-LIGHT_MIN_MAX = 240
+ccl_hyst_lo_MIN = 230
+ccl_hyst_lo_MAX = 240
 DIFF_MAX = 30
 
 k_trials = 7 
@@ -48,13 +48,13 @@ k_trials = 7
 
 #     for k in range(k_trials):
 
-#         light_min  = random.randint(LIGHT_MIN_MIN, LIGHT_MIN_MAX)
-#         light_diff = random.randint(1, min(255 - light_min, DIFF_MAX))
+#         ccl_hyst_lo  = random.randint(ccl_hyst_lo_MIN, ccl_hyst_lo_MAX)
+#         light_diff = random.randint(1, min(255 - ccl_hyst_lo, DIFF_MAX))
 
-#         light_max = light_min + light_diff
+#         ccl_hyst_hi = ccl_hyst_lo + light_diff
 
-#         args.detect_args["light_min"] = light_min 
-#         args.detect_args["light_max"] = light_max 
+#         args.detect_args["ccl_hyst_lo"] = ccl_hyst_lo 
+#         args.detect_args["ccl_hyst_hi"] = ccl_hyst_hi 
 
 #         success_list = gt6.try_command(args)
 
@@ -65,27 +65,27 @@ k_trials = 7
 #             file.write(str(i) + ",")
 
 
-# Let's try to hold the interval constant, and systematically check all of the light_min values
+# Let's try to hold the interval constant, and systematically check all of the ccl_hyst_lo values
 
 DIFF = 5
-LIGHT_MIN_MIN = 245
-LIGHT_MIN_MAX = 255 - DIFF 
+ccl_hyst_lo_MIN = 245
+ccl_hyst_lo_MAX = 255 - DIFF 
 
 import numpy as np
 
 # for k in range(k_trials):
-def test_span_gt6(light_min_min, light_min_max, diff):
+def test_span_gt6(ccl_hyst_lo_min, ccl_hyst_lo_max, diff):
     # Record the pairs that are successful, and the number of meteors detected 
 
     min_max = []
     dets = []
 
 
-    for lmin in np.linspace(light_min_min, light_min_max, 3):
+    for lmin in np.linspace(ccl_hyst_lo_min, ccl_hyst_lo_max, 3):
 
         # Get the list
-        args.detect_args["light_min"] = lmin
-        args.detect_args["light_max"] = lmin + diff 
+        args.detect_args["ccl_hyst_lo"] = lmin
+        args.detect_args["ccl_hyst_hi"] = lmin + diff 
 
         success_list = gt6.try_command(args)
 
@@ -100,7 +100,7 @@ MIN_MAX = []
 DETS = []
 
 # for diff in [1, 3, 5]:
-#     min_max, dets = test_span_gt6(LIGHT_MIN_MIN, LIGHT_MIN_MAX, diff)
+#     min_max, dets = test_span_gt6(ccl_hyst_lo_MIN, ccl_hyst_lo_MAX, diff)
 #     MIN_MAX.append(min_max)
 #     DETS.append(dets)
 
@@ -124,7 +124,7 @@ gt_small.meteors = red_mets
 
 print(len(gt_small.meteors))
 
-def test_span_gt_small(light_min_min, light_min_max, diff):
+def test_span_gt_small(ccl_hyst_lo_min, ccl_hyst_lo_max, diff):
     # Record the pairs that are successful, and the number of meteors detected 
 
     min_max = []
@@ -132,11 +132,11 @@ def test_span_gt_small(light_min_min, light_min_max, diff):
     successes = []
 
 
-    for lmin in np.linspace(light_min_min, light_min_max, 2):
+    for lmin in np.linspace(ccl_hyst_lo_min, ccl_hyst_lo_max, 2):
 
         # Get the list
-        args.detect_args["light_min"] = lmin
-        args.detect_args["light_max"] = lmin + diff 
+        args.detect_args["ccl_hyst_lo"] = lmin
+        args.detect_args["ccl_hyst_hi"] = lmin + diff 
 
         success_list = gt_small.try_command(args)
 
@@ -154,7 +154,7 @@ SUCCESS = []
 
 # for diff in [1, 3, 5]:
 # for diff in [5]:
-#     min_max, dets, success = test_span_gt_small(LIGHT_MIN_MIN, LIGHT_MIN_MAX, diff)
+#     min_max, dets, success = test_span_gt_small(ccl_hyst_lo_MIN, ccl_hyst_lo_MAX, diff)
 #     MIN_MAX.append(min_max)
 #     DETS.append(dets)
 #     SUCCESS.append(success)
@@ -218,8 +218,8 @@ def draw_heatmap(gt: fmdt.GroundTruth, lmin_min, lmax_max, n_intervals):
     for lmin in np.linspace(lmin_min, lmax_max - diff, n_intervals):
 
         # Get the list
-        args.detect_args["light_min"] = lmin
-        args.detect_args["light_max"] = lmin + diff 
+        args.detect_args["ccl_hyst_lo"] = lmin
+        args.detect_args["ccl_hyst_hi"] = lmin + diff 
 
         success_list = gt.try_command(args)
 

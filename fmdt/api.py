@@ -23,17 +23,13 @@ def help():
         fmdt[.api].detect
         fmdt[.api].log_parser
         fmdt[.api].visu
-        fmdt[.api].detect_directory
 
     fmdt.api.count counts the number of celestial objects specified by the parameters
     fmdt.api.detect calls `fmdt-detect` with the given arguments
     fmdt.api.log_parser calls `fmdt-log-parser`
     fmdt.api.visu calls `fmdt-visu`
-    fmdt.api.detect_directory
-        
-        
-        
-"""
+    """
+    return s
 
 def count(
         trk_path: str,
@@ -143,9 +139,8 @@ def _run_detect_trk_path(
 
         if not timeout is None:
             try: 
-                # subprocess.run(argv, stdout=outfile, timeout=timeout)
                 proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
-                outs, errs = proc.communicate(timeout=timeout)
+                outs, _ = proc.communicate(timeout=timeout)
                 lines = outs.decode("utf-8").split("\n")
                 for line in lines:
                     print(line)
@@ -159,9 +154,8 @@ def _run_detect_trk_path(
                 print("==================================================================")
                 return [], 0
         else:
-            # subprocess.run(argv, stdout=outfile)
             proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
-            outs, errs = proc.communicate()
+            outs, _ = proc.communicate()
             lines = outs.decode("utf-8").split("\n")
             for line in lines:
                 print(line)
@@ -312,7 +306,7 @@ def log_parser(
         trk_json_path: str = None,
         trk_bb_path: str = None,
     ) -> fmdt.args.Args:
-    """Wrapper to executable fmdt-detect.
+    """Wrapper to executable fmdt-log-parser.
 
     Parameters
     ----------
@@ -347,7 +341,7 @@ def visu(
         gt_path: str = None,
         vid_out_path: str = None
     ) -> fmdt.args.Args:
-    """Wrapper to executable fmdt-detect.
+    """Wrapper to executable fmdt-visu.
 
     Parameters
     ----------

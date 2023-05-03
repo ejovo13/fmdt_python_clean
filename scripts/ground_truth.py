@@ -35,8 +35,8 @@ print(gt6.vids())
 
 
 d_args = {
-    "light_min": 221,
-    "light_max": 246,
+    "ccl_hyst_lo": 221,
+    "ccl_hyst_hi": 246,
     "trk_bb_path": "bb.txt",
     "trk_out_path": "trk.txt",
     "timeout": 1
@@ -57,14 +57,14 @@ print(f"Sum detections: {sum(detections)}")
 print(gt6)
 
 def roll_parameters():
-    light_min = random.randint(0, 254)
-    diff = random.randint(1, 255 - light_min)
+    ccl_hyst_lo = random.randint(0, 254)
+    diff = random.randint(1, 255 - ccl_hyst_lo)
 
-    d_args["light_min"] = light_min
-    d_args["light_max"] = light_min + diff
+    d_args["ccl_hyst_lo"] = ccl_hyst_lo
+    d_args["ccl_hyst_hi"] = ccl_hyst_lo + diff
 
     det = gt6.try_command(fmdt.Args(detect_args=d_args))
-    print(f"[{light_min}, {light_min + diff}] detected {sum(det)} gts")
+    print(f"[{ccl_hyst_lo}, {ccl_hyst_lo + diff}] detected {sum(det)} gts")
 
 # roll_parameters()
 
@@ -78,22 +78,22 @@ gts_det  = []
 lst_detections = [[]]
 
 MAX_LIGHT_DIFF = 40
-LIGHT_MIN_MIN = 150
-LIGHT_MIN_MAX = 254
+ccl_hyst_lo_MIN = 150
+ccl_hyst_lo_MAX = 254
 
 # ============================ ~ 20 minute run ========================
 for k in range(N_TRIALS):
-    light_min = random.randint(LIGHT_MIN_MIN, LIGHT_MIN_MAX)
-    diff = random.randint(1, min(255 - light_min, MAX_LIGHT_DIFF))
+    ccl_hyst_lo = random.randint(ccl_hyst_lo_MIN, ccl_hyst_lo_MAX)
+    diff = random.randint(1, min(255 - ccl_hyst_lo, MAX_LIGHT_DIFF))
 
-    d_args["light_min"] = light_min
-    d_args["light_max"] = light_min + diff
+    d_args["ccl_hyst_lo"] = ccl_hyst_lo
+    d_args["ccl_hyst_hi"] = ccl_hyst_lo + diff
 
     # det = gt6.try_command(fmdt.Args(detect_args=d_args))
     det = gt12.try_command(fmdt.Args(detect_args=d_args))
-    print(f"[{light_min}, {light_min + diff}] detected {sum(det)} gts")
+    print(f"[{ccl_hyst_lo}, {ccl_hyst_lo + diff}] detected {sum(det)} gts")
 
-    lm_pairs.append((light_min, light_min + diff))
+    lm_pairs.append((ccl_hyst_lo, ccl_hyst_lo + diff))
     gts_det.append(sum(det))
     lst_detections.append(det)
 

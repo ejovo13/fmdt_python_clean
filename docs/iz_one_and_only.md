@@ -3,7 +3,7 @@
 This section presents the core usage of `fmdt-python`. Any examples assume that 
 `fmdt` has already been imported:
 
-```
+```python
 import fmdt
 ```
 
@@ -13,7 +13,7 @@ We call the main executables `fmdt-*` using `fmdt.*`
 
 === "fmdt-detect"
 
-    ``` py
+    ```python
     fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
                 trk_path="trk.txt",
                 ccl_hyst_lo=55,
@@ -23,7 +23,7 @@ We call the main executables `fmdt-*` using `fmdt.*`
 
     ??? info "signature"
 
-        ``` py
+        ```python
         def detect(
                 #=================== fmdt-detect parameters ===================
                 vid_in_path: str, 
@@ -33,8 +33,8 @@ We call the main executables `fmdt-*` using `fmdt.*`
                 vid_in_buff: bool = None,
                 vid_in_loop: int = None,
                 vid_in_threads: int = None,
-                light_min: int = None,
-                light_max: int = None,
+                ccl_hyst_lo: int = None,
+                ccl_hyst_hi: int = None,
                 ccl_fra_path: str = None,
                 ccl_fra_id: bool = None,
                 cca_mag: bool = None,
@@ -61,6 +61,28 @@ We call the main executables `fmdt-*` using `fmdt.*`
                 cache: bool = False,
                 save_df: bool = False
             ) -> fmdt.res.DetectionResult
+        ```
+
+=== "fmdt-log-parser"
+
+    ```python
+    fmdt.log_parser()
+    ```
+
+    ??? info "full signature"
+
+        ``` py
+        def log_parser(
+                log_path: str = None,
+                trk_roi_path: str = None,
+                log_flt: str = None,
+                fra_path: str = None,
+                ftr_name: str = None,
+                ftr_path: str = None,
+                trk_path: str = None,
+                trk_json_path: str = None,
+                trk_bb_path: str = None,
+            ) -> fmdt.args.Args:
         ```
 
 === "fmdt-visu"
@@ -674,7 +696,7 @@ hum_det = d6[2].meteors()[0]
 Retrieve the trk list to see if the human detection is spotted.
 
 ``` py
-res = d6[2].detect(light_min=253, light_max=255)
+res = d6[2].detect(ccl_hyst_lo=253, ccl_hyst_hi=255)
 
 >>> fmdt.truth.is_meteor_detected(meteor=hum_det, tracking_list=res.trk_list)
 True
@@ -687,7 +709,7 @@ Awesome! With args:
 <fmdt.args.Args object>
 ====================
 Detect parameters: 
-{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'light_min': 253, 'light_max': 255, 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
+{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'ccl_hyst_lo': 253, 'ccl_hyst_hi': 255, 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
 ```
 
 The meteor

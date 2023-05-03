@@ -136,7 +136,14 @@ def retrieve_log_df(log_path: str) -> pd.DataFrame:
 
 class DetectionResult:
 
-    def __init__(self, nframes: int, df: pd.DataFrame, args: fmdt.args.Args, trk_list: list[fmdt.core.TrackedObject], video = None):
+    def __init__(
+            self,
+            nframes: int,
+            df: pd.DataFrame,
+            args: fmdt.args.Args,
+            trk_list: list[fmdt.core.TrackedObject],
+            video = None
+        ):
 
         self.nframes = nframes
         self.df = df
