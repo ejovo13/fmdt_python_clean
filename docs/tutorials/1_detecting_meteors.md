@@ -55,9 +55,16 @@ For a complete list of parameters, see [API](../reference/api.md).
 
 ## Visualizing
 
-Before the visualization we need to generate intermediate files (e. g. the log,
-tracks to the Regions of Interest (RoIs) and bounding boxes). For this, we need 
-to run `fmdt.detect` an to output log files and the "tracks to RoIs" file.
+Before the visualization we need to generate intermediate files:
+
+- the log files (contains all the characteristics for each Regions of Interest 
+  (RoI) depending on the frame number),
+- a file that contains the correspondence between the track ids and the 
+  RoIs ids,
+- a file that contains the bounding boxes for each frames.
+
+For this, we need to run `fmdt.detect` and to output 1) log files and 2) the 
+"tracks to RoIs" file.
 
 ``` py title="hello_visu_fmdt.py"
 """ A sample program to call `fmdt-detect` using fmdt-python"""

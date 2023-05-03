@@ -22,30 +22,19 @@ specific combination of arguments used to run `fmdt`'s suite of executables.
 ### Creation
 
 We create a new `Args` object by providing a dictionary of the arguments that we 
-want to use for `fmdt-detect`.
-
-```Python
-d_args_dict = {
-    "ccl_hyst_lo": 55,
-    "ccl_hyst_hi": 80,
-    "trk_all": True
-}
-
-args = fmdt.Args(detect_args=d_args_dict)
-```
-
-We can use the `Args` class to call `fmdt.detect`:
+want to use for `fmdt-detect`:
 
 ```Python
 d_args = {
     "vid_in_path": "demo.mp4",
     "trk_path": "trk.txt",
     "ccl_hyst_lo": 55,
-    "ccl_hyst_hi": 80
+    "ccl_hyst_hi": 80,
+    "trk_all": True
 }
 
 args = fmdt.Args(detect_args=fmdt.DetectArgs(**d_args))
-args = args.detect()
+res = args.detect()
 ```
 
 It's important to know that we can also get an `Args` instance as the return 
@@ -80,7 +69,7 @@ res = args.detect().log_parser().visu()
 
 A `TrackedOjbect` encodes the results of a call to `fmdt-detect`. A list of 
 `TrackedObject` is our representation of the table of tracks outputted by 
-`fmdt-detect` (corresponding to the `trk_path` parameter)
+`fmdt-detect` (corresponding to the `trk_path` parameter).
 
 ### Creation
 
@@ -105,12 +94,12 @@ print(res.trk_list) #! Actually a list of TrackedObject
 Tada! We've actually already automatically been storing the results in our 
 returned `Args`.
 
-If the tracking table is already stored in a file ("track.txt" for example) and 
+If the tracking table is already stored in a file (`tracks.txt` for example) and 
 we want to just load it into Python, then we can use the function 
 `extract_all_information`:
 
 ```Python
-fmdt.extract_all_information("track.txt")
+fmdt.extract_all_information("tracks.txt")
 ```
 
 which could return a list of `TrackedObject`:
@@ -130,7 +119,7 @@ which could return a list of `TrackedObject`:
 
 ---
 
-# GroundTruth
+## Ground Truth
 
 A `GroundTruth` represents a database of `HumanDetection` instances. For 
 example, we can study the databases of the Draconids-6mm (draco6) and 
@@ -162,8 +151,16 @@ We can go ahead and apply a single `Args` object across our entire `GroundTruth`
 database using the function `GroundTruth.try_command()`:
 
 ```Python
-truth_detected = gtdemo.try_command(args=fmdt.Args.new(**d_args)) # use any fmdt.Args from before
+truth_detected = gt_demo.try_command(args=fmdt.Args.new(**d_args)) # use any fmdt.Args from before
 ```
+
+!!! danger 
+    
+    TODO: Here, for the `try_command()` method, we could add an option to be 
+    more efficient. The idea is that we do not need to execute `fmdt-detect` on 
+    the whole video sequence each time. We could run `fmdt-detect` only on the 
+    frames of interest (where the meteor is located) using the `--vid-in-start` 
+    and `--vid-in-stop` parameters.
 
 which will store a list of booleans indicating whether or not the corresponding 
 `HumanDetection` was found after a call to `fmdt-detect` with the parameters 
@@ -187,9 +184,15 @@ gt12 = fmdt.GroundTruth(csv=csv_file, vid_dir=vid_dir)
 gt12.draw_heatmap(150, 250, 20)
 ```
 
+!!! danger 
+    
+    TODO: `draw_heatmap()` method runs a lot of `fmdt-detect` instances and 
+    displays a graph at the end. However the produced graph is completely 
+    black... One may note that all the `fmdt-detect` runs were `unsuccessful`.
+
 ---
 
-# HumanDetection
+## HumanDetection
 
 A `HumanDetection` represents the blood, sweat, and tears of a human being that 
 was spent to painstakenly detect a meteor. It records the video in which the 
@@ -225,3 +228,10 @@ hum_detected = fmdt.truth.is_meteor_detected(hum, objects)
 
 which returns `True` if the `HumanDetection` `hum` matches up with any of the 
 `TrackedObject`s in `objects`.
+
+
+!!! danger 
+    
+    TODO: considering the same example as the previous one but with 
+    `hum = gt_demo.meteors[0]` (`0` instead of `2`). The `hum_detected` value is 
+    `False` while it should be `True`...

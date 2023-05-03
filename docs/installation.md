@@ -1,7 +1,7 @@
 
 !!! warning 
 
-    `fmdt-python` requires a version of Python more recent than `3.10` 
+    `fmdt-python` requires a version of Python more recent than `3.10`.
 
 We can access the `fmdt` module using either `pip` or by directly cloning the 
 source code repository. We recommend using `pip` as it ensures that `fmdt` will 
@@ -9,10 +9,12 @@ be located when we use `import`.
 
 === "pip"
 
-    `fmdt-python` can be installed using `pip`
+    `fmdt-python` can be installed using `pip`:
+
     ```bash
     pip install fmdt-python
     ```
+    
     If you are using Windows or MacOS, you may have to replace `pip` by `pip3`.
 
     Once you've installed `fmdt-python`, open up any python instance and try 

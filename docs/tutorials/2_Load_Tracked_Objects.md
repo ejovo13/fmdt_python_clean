@@ -37,7 +37,8 @@ objects detected by `fmdt-detect`.
 
 The `--trk-path` parameters tells `fmdt-detect` where to store its list of 
 tracked objects. This entity, which we refer to as a Tracking List, is very 
-useful for analyzing the performance of `fmdt-detect`. 
+useful for analyzing the performance of `fmdt-detect`.
+
 <!-- Here we are actually creating a DetectionResult and not an Args -->
 <!-- ![diagram](../media/detect_diagram.png) -->
 

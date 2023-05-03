@@ -46,8 +46,8 @@ is not.
 
 !!! danger 
 
-    TODO: The latest is not true anymore because of the `**args` parameter in 
-    the `fmdt.detect_args` function.
+    TODO: The latest does not fail (while it should) because of the `**args` 
+    parameter in the `fmdt.detect_args` function.
 
 ## Calling `fmdt-detect` from an `Args` instance
 

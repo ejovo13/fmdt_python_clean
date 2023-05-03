@@ -15,10 +15,11 @@ We call the main executables `fmdt-*` using `fmdt.*`
 
     ```python
     fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
-                trk_path="trk.txt",
                 ccl_hyst_lo=55,
                 ccl_hyst_hi=80,
-                log_path="log") 
+                log_path="log"
+                trk_path="trk.txt",
+                trk_roi_path="trk2roi.txt") 
     ```
 
     ??? info "signature"
@@ -66,22 +67,24 @@ We call the main executables `fmdt-*` using `fmdt.*`
 === "fmdt-log-parser"
 
     ```python
-    fmdt.log_parser()
+    fmdt.log_parser(log_path="log",
+                    trk_roi_path="trk2roi.txt",
+                    trk_bb_path="bb.txt")
     ```
 
     ??? info "full signature"
 
         ``` py
         def log_parser(
-                log_path: str = None,
-                trk_roi_path: str = None,
-                log_flt: str = None,
-                fra_path: str = None,
-                ftr_name: str = None,
-                ftr_path: str = None,
-                trk_path: str = None,
-                trk_json_path: str = None,
-                trk_bb_path: str = None,
+                log_path: str,
+                trk_roi_path: str | None = None,
+                log_flt: str | None = None,
+                fra_path: str | None = None,
+                ftr_name: str | None = None,
+                ftr_path: str | None = None,
+                trk_path: str | None = None,
+                trk_json_path: str | None = None,
+                trk_bb_path: str | None = None,
             ) -> fmdt.args.Args:
         ```
 
@@ -89,8 +92,8 @@ We call the main executables `fmdt-*` using `fmdt.*`
 
     ``` py
     fmdt.visu(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
-              trk_bb_path="bb.txt",
-              trk_path="trk.txt")
+              trk_path="trk.txt",
+              trk_bb_path="bb.txt")
     ```
 
 === "fmdt-check"
@@ -121,7 +124,7 @@ Consult [`fmdt.api`](./reference/home.md#fmdtapi) for more information about
 ???+ info 
 
     You only need to configure `fmdt-python` once. If you haven't already done 
-    so, follow [these instruction](./howto/0_initialization.md)
+    so, follow [these instruction](./howto/0_initialization.md).
 
 We configure `fmdt-python` by indicating where our 
 [database videos](./explanation/video_database.md) are stored on disk using 
@@ -259,7 +262,7 @@ video `2022_05_31_tauh_34_meteors.mp4` using `fmdt.load_demo()`
     2022_05_31_tauh_34_meteors.mp4 from our `video.db` file. The presence of `v` 
     does not imply that 2022_05_31_tauh_32_meteors.mp4 exists on disk nor that 
     it will be found by fmdt in the case that it does. For more information, 
-    consult our page on [configuring fmdt](./howto/0_initialization.md) 
+    consult our page on [configuring fmdt](./howto/0_initialization.md).
 
 <!-- 
 1. `fmdt.load_demo()` loads in the `Video` object associated with 
@@ -339,11 +342,11 @@ We can run all three of our core executables starting with a `Video` object.
         <fmdt.args.Args object>
         ====================
         Detect parameters: 
-        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
+        {'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/2022_05_31_tauh_34_meteors.mp4', 'trk_path': 'trk.txt'}
         ```
 
 
-    ### Movement Statistics
+    #### Movement Statistics
 
     We can additionally store movement statistics if we manually specify a log 
     directory with the `log_path` argument.
@@ -382,6 +385,10 @@ We can run all three of our core executables starting with a `Video` object.
     log information in a unique folder, call `detect` with the `save_df` 
     parameter set to `True` instead of using `log_path`:
 
+    !!! danger 
+        
+        TODO: Explain the `save_df` argument. What does the `df` acronym mean?
+
     ``` py
     >>> res = v.detect(save_df=True)
     Save_df activated in final detect call
@@ -393,11 +400,17 @@ We can run all three of our core executables starting with a `Video` object.
     [this](./howto/4_use_the_cache.md) to guide to learn how to monitor and 
     clear the cache.
 
+=== "log_parser"
+
+    !!! failure 
+        
+        `fmdt.log_parser()` is currently unavailable.
+
 === "visu"
 
     !!! failure 
         
-        `Video.visu()` is currently unavailable
+        `Video.visu()` is currently unavailable.
 
 === "check"
 
@@ -513,7 +526,7 @@ We can run all three of our core executables starting with a `Video` object.
         ```
 
 For more information about the results of these executables, consult 
-[this section](./reference/res.md)
+[this section](./reference/res.md).
 
 ## VideoClip
 
@@ -684,8 +697,8 @@ the list of meteors associated with the first video:
 [<fmdt.truth.HumanDetection object at 0x7fcd9ae92bf0>]
 ```
 
-So we can conclude that Draconids-6mm1.14-1400-170300.avi has one human-verified 
-ground truth meteor in our database.
+So we can conclude that `Draconids-6mm1.14-1400-170300.avi` has one 
+human-verified ground truth meteor in our database.
 
 Let's hold onto that truth.
 
@@ -709,7 +722,7 @@ Awesome! With args:
 <fmdt.args.Args object>
 ====================
 Detect parameters: 
-{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'ccl_hyst_lo': 253, 'ccl_hyst_hi': 255, 'trk_bb_path': 'bb.txt', 'trk_path': 'trk.txt'}
+{'vid_in_path': '/run/media/ejovo/Seagate Portable Drive/Meteors/Watec6mm/Meteor/Draconids-6mm1.14-1400-170300.avi', 'ccl_hyst_lo': 253, 'ccl_hyst_hi': 255, 'trk_path': 'trk.txt'}
 ```
 
 The meteor
