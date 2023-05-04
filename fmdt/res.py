@@ -38,13 +38,25 @@ class AbstractResult:
     def vid_path(self):
         raise AbstractResultError(f"vid_path not implemented for child {type(self)}")
 
-    def detect(self):
+    def detect(self, verbose: bool = None):
+
+        if not verbose is None:
+            self.args.verbose = verbose
+
         return self.args.detect()
 
-    def log_parser(self):
+    def log_parser(self, verbose: bool = None):
+
+        if not verbose is None:
+            self.args.verbose = verbose
+
         return self.args.log_parser()
 
-    def visu(self):
+    def visu(self, verbose: bool = None):
+
+        if not verbose is None:
+            self.args.verbose = verbose
+
         return self.args.visu()
 
     def split(
@@ -54,8 +66,12 @@ class AbstractResult:
         overwrite=True,
         condense=True,
         out_dir=None,
+        verbose: bool = None
     ) -> None:
         """Split a video into small segments containing detected meteors"""
+
+        if not verbose is None:
+            self.args.verbose = verbose
 
         vid_in_path = self.vid_path()
 
@@ -86,9 +102,9 @@ class AbstractResult:
         clutter = self.clutter_files()
 
         if self.args.verbose:
-            print(f"Cleaning up clutter files: {set(clutter)}")
+            print(f"Cleaning up clutter files: {clutter}")
 
-        for f in self.clutter_files():
+        for f in clutter:
             if os.path.exists(f):
                 os.remove(f)
 

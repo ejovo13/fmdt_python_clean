@@ -263,7 +263,7 @@ def log_parser(
     else:
         _run_process(stdout, argv, verbose)
 
-    args = fmdt.args.Args(log_parser_args=log_parser_args, detect_args=None, visu_args=None)
+    args = fmdt.args.Args(log_parser_args=log_parser_args, detect_args=None, visu_args=None, verbose=verbose)
 
     return fmdt.res.LogParserResult(args)
             

@@ -778,6 +778,11 @@ class Args:
 
         vres = self.visu_args.exec(verbose=self.verbose) 
 
+        # When calling self.visu_args.exec, only the visu_args are stored.
+        # Overwrite the other two args with this args's parameters
+        vres.args.detect_args = self.detect_args
+        vres.args.log_parser_args = self.log_parser_args
+
         return vres
 
     # TODO: Add .check interface
@@ -983,7 +988,7 @@ class Args:
         if self.has_visu_args():
             clut.extend(self.visu_args.clutter())
 
-        return clut
+        return set(clut)
     
     def modify_log_path(self):
         """Create a new log_path corresponding to the relevant video and modify self.detect_args"""
