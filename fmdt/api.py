@@ -131,6 +131,7 @@ def detect(
         Used to speed up ground truth testing.
     """
 
+    assert os.path.exists(vid_in_path), f"vid_in_path: '{vid_in_path}' does not exists, aborting fmdt.detect"
 
     # Wrap up all of the arguments into an Args object
     args = fmdt.args.detect_args(vid_in_path=vid_in_path,
@@ -189,10 +190,10 @@ def detect(
         cache_file = args.detect_args.cache_trk()
 
     #============ Retrieve Tracked list ===========================================#
-    if trk_path is None:
+    if args.trk_path() is None:
         trk_list, nframes = _run_detect(args.gen_unique_trk(), argv, timeout, verbose, cache, cache_file, tmp_file=True)
     else:
-        trk_list, nframes = _run_detect(trk_path, argv, timeout, verbose, cache, cache_file)
+        trk_list, nframes = _run_detect(args.trk_path(), argv, timeout, verbose, cache, cache_file)
 
     #============= Recover data if log_path =======================================#
     if not args.detect_args.log_path is None:

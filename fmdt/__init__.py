@@ -101,7 +101,7 @@ init_cache()
 # from fmdt.truth import HumanDetection
 
 MAJOR_VERSION = 0
-MINOR_VERSION = 0
-PATCH         = 46 
+MINOR_VERSION = 1 
+PATCH         = 0 
 
 VERSION = str(MAJOR_VERSION) + "." + str(MINOR_VERSION) + "." + str(PATCH)
