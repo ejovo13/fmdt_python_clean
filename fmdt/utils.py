@@ -151,6 +151,7 @@ def extract_video_frames(
         out_file: str | None = None,
         quiet = True,
         overwrite = False,
+        verbose = False
     ) -> None:
     """Extract videos frames using ffmpeg"""
 
@@ -177,12 +178,12 @@ def extract_video_frames(
     if overwrite:
         args.append("-y")
 
-    print(f"Running command '{' '.join(args)}'")
+    if verbose:
+        print(f"Running command '{' '.join(args)}'")
+
     subprocess.run(args)
 
-
-
-def convert_video_to_ndarray(filename: str, log=False) -> np.ndarray:
+def convert_video_to_ndarray(filename: str, verbose=False) -> np.ndarray:
     """
     Convert a video file to a numpy array of size [n_frames, height, width, 3] 
 
@@ -192,7 +193,7 @@ def convert_video_to_ndarray(filename: str, log=False) -> np.ndarray:
 
     assert_file_exists(filename)
 
-    if log:
+    if verbose:
         print(f"converting '{filename}' to ndarray", file=sys.stderr)
 
     fps = get_avg_frame_rate(filename)
@@ -231,7 +232,7 @@ def convert_ndarray_to_video(
         frames: np.ndarray,
         framerate=60,
         vcodec='libx264',
-        log=False
+        verbose=False
     ) -> None:
     """
     Convert a rgb numpy array to video using ffmpeg-python
@@ -239,7 +240,7 @@ def convert_ndarray_to_video(
     Adapted from https://github.com/kkroening/ffmpeg-python/issues/246#issuecomment-520200981 
     """
 
-    if log:
+    if verbose:
         print(f"converting ndarray to '{filename_out}'", file=sys.stderr)
 
     _, h, w, _ = frames.shape

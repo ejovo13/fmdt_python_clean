@@ -127,7 +127,8 @@ class Video:
 
     def detect_best(
             self,
-            log = False 
+            log_path = None,
+            verbose = False 
         ) -> fmdt.res.DetectionResult:
         """Use the arguments from our best_detections database file to call a detection. 
         
@@ -139,7 +140,7 @@ class Video:
             best_args = self.best_args()
             d_args_stripped = best_args.detect_args.to_stripped_dict()
 
-            return self.detect(**d_args_stripped, log=log)
+            return self.detect(**d_args_stripped, verbose=verbose, log_path=log_path)
 
         else:
 
@@ -148,7 +149,7 @@ class Video:
 
     def validate_best(
             self,
-            log = False
+            verbose = False
         ) -> bool:
         """Call detect_best().check() and see if the trk_rate is the same as what is recorded in our database
         
@@ -165,7 +166,7 @@ class Video:
             best_args, trk_rate, true_pos = self.best_detection()
             d_args_stripped = best_args.detect_args.to_stripped_dict()
 
-            c_res = self.detect(**d_args_stripped, log=log).check()
+            c_res = self.detect(**d_args_stripped, verbose=verbose).check()
 
             return trk_rate == c_res.trk_rate() and true_pos == c_res.true_pos()
 
@@ -205,10 +206,10 @@ class Video:
         trk_roi_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
-        trk_path: str | None = "trk.txt",
-        log: bool = False,
+        trk_path: str | None = None,
         timeout: float = None,
         #================== Parameters for logging ===================
+        verbose: bool = False,
         cache: bool = False,
         save_df: bool = False
     ) -> fmdt.res.DetectionResult:
@@ -218,7 +219,7 @@ class Video:
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, 
         ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
         knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
-        trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, log,
+        trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, verbose,
         timeout=timeout)
 
         res = args.detect(cache=cache, save_df=save_df)
@@ -303,7 +304,7 @@ class Video:
         log_path: str | None = None,
         #================== Additional Parameters ====================
         trk_path: str | None = "trk.txt",
-        log: bool = False,
+        verbose: bool = False,
         timeout: float = None,
         #================== Check ====================================
         stdout: str = None,
@@ -314,12 +315,12 @@ class Video:
         vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, 
         ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
         knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
-        trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, log,
+        trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, verbose,
         timeout=timeout)
 
         res = args.detect()
 
-        self.evaluate_args(args, res.trk_list, stdout, log=log_check)
+        self.evaluate_args(args, res.trk_list, stdout, verbose=log_check)
 
 
     # Lookup the id in our default database file.
@@ -494,7 +495,7 @@ class Video:
             rerun: bool = False,
             tmp_gt_file = "tmp_meteors.txt",
             stdout: str = None,
-            log = False
+            verbose = False
         ):
         """Call fmdt-detect and fmdt-check to evaluate how well a given set of arguments detects our ground truth
         
@@ -524,7 +525,7 @@ class Video:
 
         # Then call fmdt_check
 
-        return fmdt.check(args.detect_args.trk_path, tmp_gt_file, stdout, log)
+        return fmdt.check(args.detect_args.trk_path, tmp_gt_file, stdout, verbose)
     
     def create_clip(self, start_frame: int, end_frame: int):
 
@@ -897,7 +898,7 @@ def retrieve_videos(
 
     # Download if the database file requested doesnt exist
     if not os.path.exists(db_path):
-        fmdt.download.download_videos_db(db_file, log=False, overwrite=False, dir=db_dir)
+        fmdt.download.download_videos_db(db_file, verbose=False, overwrite=False, dir=db_dir)
 
     con = sqlite3.connect(db_path)
     df = pd.read_sql_query("select * from video", con)
@@ -950,7 +951,7 @@ def retrieve_meteors(
     db_path = fmdt.utils.join(db_dir, db_filename)
 
     if not os.path.exists(db_path):
-        fmdt.download.download_videos_db(db_filename, log=False, overwrite=False, dir=db_dir)
+        fmdt.download.download_videos_db(db_filename, verbose=False, overwrite=False, dir=db_dir)
 
     query = f"""
         select * from human_detections where video_name = '{video_name}'

@@ -9,3 +9,11 @@ class LogError(Exception):
 class DatabaseError(Exception):
     """Raised when there is an issue retrieving information from our database"""
     pass
+
+class AbstractExecutableArgsError(Exception):
+    """Raised when an implementer of the ABC AbstractExecutableArgs does not fulfill 
+    the required condiitons
+    """
+
+class AbstractResultError(Exception):
+    """Raised when an implementer of the ABC AbstractResult does not fulfull a necessary condition"""
