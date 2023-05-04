@@ -51,14 +51,14 @@ _VISU_UNIQUE_ARGS = ['trk_id', 'trk_nat_num', 'trk_only_meteor', 'gt_path', 'vid
 _LOG_PARSER_UNIQUE_ARGS = []
 
 # Configuration to find fmdt-detect if it doesn't exist on the path
-__EXECUTABLE_PATH = None
+_EXECUTABLE_PATH = None
 
 def set_exec_path(path: str):
-    global __EXECUTABLE_PATH
-    __EXECUTABLE_PATH = path
+    global _EXECUTABLE_PATH
+    _EXECUTABLE_PATH = path
 
 def get_exec_path() -> str:
-    return __EXECUTABLE_PATH
+    return _EXECUTABLE_PATH
 
 
 class AbstractExecutableArgs:
@@ -66,7 +66,6 @@ class AbstractExecutableArgs:
     
     Any implementer must conform to the following requirements:
 
-    - has a .to_dict() function 
     - has a .api_callable() function that returns the corresponding fmdt.api function.
         For example, VisuArgs.api_callable() returns fmdt.api.visu
     - has a .argument_handler() function that returns the corresponding argument handler.
@@ -74,10 +73,8 @@ class AbstractExecutableArgs:
     - has a .clutter_list() -> list[str] function
     - [OPTIONAL] has a .video_path() function returning the full path to the most 'relevant' video
     
-    
     """
-    def to_dict(self):
-        raise AbstractExecutableArgs(f"to_dict() not implemented in child {type(self)}")
+
     
     def api_callable(self):
         """Return the function in fmdt.api that corresponds to this executable"""
@@ -98,8 +95,84 @@ class AbstractExecutableArgs:
         """Return a list of parameters whose files may clutter a users workspace"""
         raise AbstractExecutableArgs(f"clutter_list() not implemented in child {type(self)}")
     
-    def to_reduced_dict(self) -> dict:
+    def to_dict(self, subset: list[str] = None):
+        """Convert this AbstractExecutableArgs into a dictionary of FMDT arguments
+        
+        Parameters
+        ----------
+
+        subset (list[str]): a subset of key values to retain.
+
+        Examples
+        --------
+
+        >>> d = fmdt.DetectArgs(vid_in_path='demo.mp4', ccl_hyst_lo=150, ccl_hyst_hi=160)
+        >>> d.to_dict(subset=['vid_in_path', 'ccl_hyst_lo', 'ccl_hyst_hi'])
+
+        ```
+        {'vid_in_path': 'demo.mp4', 'ccl_hyst_lo': 150, 'ccl_hyst_hi': 160}
+        ```
+
+        >>> d.to_dict()
+
+        ```
+        {'vid_in_path': 'demo.mp4',
+         'vid_in_start': None,
+         'vid_in_stop': None,
+         'vid_in_skip': None,
+         'vid_in_buff': None,
+         'vid_in_loop': None,
+         'vid_in_threads': None,
+         'ccl_hyst_lo': 150,
+         'ccl_hyst_hi': 160,
+         'ccl_fra_path': None,
+         'ccl_fra_id': None,
+         'cca_mag': None,
+         'cca_ell': None,
+         'mrp_s_min': None,
+         'mrp_s_max': None,
+         'knn_k': None,
+         'knn_d': None,
+         'knn_s': None,
+         'trk_ext_d': None,
+         'trk_ext_o': None,
+         'trk_angle': None,
+         'trk_star_min': None,
+         'trk_meteor_min': None,
+         'trk_meteor_max': None,
+         'trk_ddev': None,
+         'trk_all': None,
+         'trk_roi_path': None,
+         'log_path': None,
+         'trk_path': None}
+        ```
+        """
+        d = vars(self)
+
+        if subset is None:
+            return d
+        
+        dsub = {}
+        for k in subset:
+            dsub[k] = d[k]
+    
+        return dsub
+
+    def to_stripped_dict(self, subset: list[str] = None) -> dict:
+        """Return a stripped dictionary that drops all parameters pertaining to paths"""
         d = self.to_dict()
+
+        stripped_dict = {}
+
+        for k in d.keys():
+            if 'path' not in k:
+                stripped_dict[k] = d[k]
+
+        return stripped_dict 
+
+    def to_reduced_dict(self, subset: list[str] = None) -> dict:
+        """Return a new dict where all None values have been filtered out"""
+        d = self.to_dict(subset)
         out = {}
         for (k, v) in d.items():
             if not v is None:
@@ -155,37 +228,37 @@ class AbstractExecutableArgs:
 class DetectArgs(AbstractExecutableArgs):
 
     def __init__( 
-        self,
-        vid_in_path: str, 
-        vid_in_start: int | None = None,
-        vid_in_stop: int | None = None,
-        vid_in_skip: int | None = None,
-        vid_in_buff: bool | None = None,
-        vid_in_loop: int | None = None,
-        vid_in_threads: int | None = None,
-        ccl_hyst_lo: int | None = None,
-        ccl_hyst_hi: int | None = None,
-        ccl_fra_path: str | None = None,
-        ccl_fra_id: bool | None = None,
-        cca_mag: bool | None = None,
-        cca_ell: bool | None = None,
-        mrp_s_min: int | None = None,
-        mrp_s_max: int | None = None,
-        knn_k: int | None = None,
-        knn_d: int | None = None,
-        knn_s: int | None = None,
-        trk_ext_d: int | None = None,
-        trk_ext_o: int | None = None,
-        trk_angle: float | None = None,
-        trk_star_min: int | None = None,
-        trk_meteor_min: int | None = None,
-        trk_meteor_max: int | None = None,
-        trk_ddev: float | None = None,
-        trk_all: bool | None = None,
-        trk_roi_path: str | None = None,
-        log_path: str | None = None,
-        trk_path: str | None = None,
-    ):
+            self,
+            vid_in_path: str, 
+            vid_in_start: int | None = None,
+            vid_in_stop: int | None = None,
+            vid_in_skip: int | None = None,
+            vid_in_buff: bool | None = None,
+            vid_in_loop: int | None = None,
+            vid_in_threads: int | None = None,
+            ccl_hyst_lo: int | None = None,
+            ccl_hyst_hi: int | None = None,
+            ccl_fra_path: str | None = None,
+            ccl_fra_id: bool | None = None,
+            cca_mag: bool | None = None,
+            cca_ell: bool | None = None,
+            mrp_s_min: int | None = None,
+            mrp_s_max: int | None = None,
+            knn_k: int | None = None,
+            knn_d: int | None = None,
+            knn_s: int | None = None,
+            trk_ext_d: int | None = None,
+            trk_ext_o: int | None = None,
+            trk_angle: float | None = None,
+            trk_star_min: int | None = None,
+            trk_meteor_min: int | None = None,
+            trk_meteor_max: int | None = None,
+            trk_ddev: float | None = None,
+            trk_all: bool | None = None,
+            trk_roi_path: str | None = None,
+            log_path: str | None = None,
+            trk_path: str | None = None,
+        ):
 
         self.vid_in_path = vid_in_path
         self.vid_in_start = vid_in_start
@@ -216,53 +289,7 @@ class DetectArgs(AbstractExecutableArgs):
         self.trk_roi_path = trk_roi_path
         self.log_path = log_path
         self.trk_path = trk_path
-
-    def to_dict(
-            self,
-            subset: list[str] = None
-        ) -> dict:
-
-        d = {
-            "vid_in_path": self.vid_in_path, 
-            "vid_in_start": self.vid_in_start,
-            "vid_in_stop": self.vid_in_stop,
-            "vid_in_skip": self.vid_in_skip,
-            "vid_in_buff": self.vid_in_buff,
-            "vid_in_loop": self.vid_in_loop,
-            "vid_in_threads": self.vid_in_threads,
-            "ccl_hyst_lo": self.ccl_hyst_lo,
-            "ccl_hyst_hi": self.ccl_hyst_hi,
-            "ccl_fra_path": self.ccl_fra_path,
-            "ccl_fra_id": self.ccl_fra_id,
-            "cca_mag": self.cca_mag,
-            "cca_ell": self.cca_ell,
-            "mrp_s_min": self.mrp_s_min,
-            "mrp_s_max": self.mrp_s_max,
-            "knn_k": self.knn_k,
-            "knn_d": self.knn_d,
-            "knn_s": self.knn_s,
-            "trk_ext_d": self.trk_ext_d,
-            "trk_ext_o": self.trk_ext_o,
-            "trk_angle": self.trk_angle,
-            "trk_star_min": self.trk_star_min,
-            "trk_meteor_min": self.trk_meteor_min,
-            "trk_meteor_max": self.trk_meteor_max,
-            "trk_ddev": self.trk_ddev,
-            "trk_all": self.trk_all,
-            "trk_roi_path": self.trk_roi_path,
-            "log_path": self.log_path,
-            "trk_path": self.trk_path
-        }
-
-        if subset is None:
-            return d
         
-        else:
-            dsub = {}
-            for k in subset:
-                dsub[k] = d[k]
-        
-            return dsub
     # ========================= ABC overrides =================================
     def api_callable(self):
         return fmdt.api.detect
@@ -275,18 +302,6 @@ class DetectArgs(AbstractExecutableArgs):
 
     def clutter_list(self):
         return ["trk_path", "ccl_fra_path", "trk_roi_path"]
-
-    def to_stripped_dict(self) -> dict:
-        """Return a stripped dictionary that drops all parameters pertaining to paths"""
-        d = self.to_dict()
-
-        del d["vid_in_path"]
-        del d["ccl_fra_path"]
-        del d["trk_roi_path"]
-        del d["log_path"]
-        del d["trk_path"]
-
-        return d
 
     def to_default_stripped_dict(self) -> dict:
         """Produce a stripped dict where all the none values are set to their default""" 
@@ -410,20 +425,6 @@ class LogParserArgs(AbstractExecutableArgs):
         self.trk_bb_path = trk_bb_path
 
     # ========================= ABC overrides =================================
-    def to_dict(self) -> dict:
-        return {
-
-            "log_path": self.log_path,
-            "trk_roi_path": self.trk_roi_path,
-            "log_flt": self.log_flt,
-            "fra_path": self.fra_path,
-            "ftr_name": self.ftr_name,
-            "ftr_path": self.ftr_path,
-            "trk_path": self.trk_path,
-            "trk_json_path": self.trk_json_path,
-            "trk_bb_path": self.trk_bb_path,
-        }
-
     def api_callable(self):
         return fmdt.api.log_parser
     
@@ -464,22 +465,6 @@ class VisuArgs(AbstractExecutableArgs):
         self.vid_out_path = vid_out_path
 
     # ========================= ABC overrides =================================
-    def to_dict(self) -> dict:
-        return {
-
-            "vid_in_path": self.vid_in_path,
-            "vid_in_start": self.vid_in_start,
-            "vid_in_stop": self.vid_in_stop,
-            "vid_in_threads": self.vid_in_threads,
-            "trk_path": self.trk_path,
-            "trk_bb_path": self.trk_bb_path,
-            "trk_id": self.trk_id,
-            "trk_nat_num": self.trk_nat_num,
-            "trk_only_meteor": self.trk_only_meteor,
-            "gt_path": self.gt_path,
-            "vid_out_path": self.vid_out_path
-        }
-
     def api_callable(self):
         return fmdt.api.visu
     
@@ -495,23 +480,15 @@ class VisuArgs(AbstractExecutableArgs):
 class CheckArgs(AbstractExecutableArgs):
 
     def __init__(
-        self, 
-        trk_path: str,
-        gt_path: str | None = None
-    ):
+            self, 
+            trk_path: str,
+            gt_path: str | None = None
+        ):
 
         self.trk_path = trk_path
         self.gt_path = gt_path
 
-
     # ========================= ABC overrides =================================
-    def to_dict(self) -> dict:
-        
-        return {
-            "trk_path": self.trk_path,
-            "gt_path": self.gt_path,
-        }
-
     def api_callable(self):
         return fmdt.api.check
     
