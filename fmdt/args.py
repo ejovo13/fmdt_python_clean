@@ -46,6 +46,10 @@ _DEFAULT_DETECT_ARGS = {
     "log_path": None
 }
 
+# List of keyword arguments that are unique to visu
+_VISU_UNIQUE_ARGS = ['trk_id', 'trk_nat_num', 'trk_only_meteor', 'gt_path', 'vid_out_path']
+_LOG_PARSER_UNIQUE_ARGS = []
+
 # Configuration to find fmdt-detect if it doesn't exist on the path
 __EXECUTABLE_PATH = None
 
@@ -56,26 +60,99 @@ def set_exec_path(path: str):
 def get_exec_path() -> str:
     return __EXECUTABLE_PATH
 
-def _filter_dict(d: dict):
-    """Filter out None values in a dict, returning a new dict"""
-    out = {}
 
-    for (k, v) in d.items():
-        if not v is None:
-            out[k] = v
-
-    return out
-
-def _row_to_dict(row: pd.Series) -> dict:
-    """Convert the non Na values of a pd.DataFrame row to a dict"""
-    out = {}
-    for k in row.keys():
-        if not pd.isna(row[k]):
-            out[k] = row[k]
+class AbstractExecutableArgs:
+    """Abstract Base Class for args of a specific FMDT executable
     
-    return out
+    Any implementer must conform to the following requirements:
+
+    - has a .to_dict() function 
+    - has a .api_callable() function that returns the corresponding fmdt.api function.
+        For example, VisuArgs.api_callable() returns fmdt.api.visu
+    - has a .argument_handler() function that returns the corresponding argument handler.
+        For example, VisuArgs.argument_handler() returns fmdt.args.handle_visu_args
+    - has a .clutter_list() -> list[str] function
+    - [OPTIONAL] has a .video_path() function returning the full path to the most 'relevant' video
     
-class DetectArgs:
+    
+    """
+    def to_dict(self):
+        raise AbstractExecutableArgs(f"to_dict() not implemented in child {type(self)}")
+    
+    def api_callable(self):
+        """Return the function in fmdt.api that corresponds to this executable"""
+        raise AbstractExecutableArgs(f"api_callable() not implemented in child {type(self)}")
+
+    def argument_handler(self):
+        """Return the function in fmdt.args that handles this executables arguments"""
+        raise AbstractExecutableArgs(f"argument_handler() not implemented in child {type(self)}")
+
+    def video_path(self):
+        """Return the full path to the most relevant video for this executable
+
+        For example, VisuArgs should return the name of the OUTPUT video that has been visualized 
+        """
+        raise AbstractExecutableArgs(f"video_path() not implemented in child {type(self)}")
+    
+    def clutter_list(self):
+        """Return a list of parameters whose files may clutter a users workspace"""
+        raise AbstractExecutableArgs(f"clutter_list() not implemented in child {type(self)}")
+    
+    def to_reduced_dict(self) -> dict:
+        d = self.to_dict()
+        out = {}
+        for (k, v) in d.items():
+            if not v is None:
+                out[k] = v
+        
+        return out
+    
+    def clutter(self):
+
+        clut_list = self.clutter_list()
+        clut = []
+        d = self.to_reduced_dict()
+
+        for k in clut_list:
+            if k in d:
+                clut.append(d[k])
+        
+        return clut    
+    
+    def to_bytes(self) -> bytes:
+        """Convert to bytes, removing influence of all path variables"""
+        return pickle.dumps(self.to_reduced_dict())
+    
+    def digest(self) -> str:
+        return hashlib.md5(self.to_bytes()).hexdigest()
+
+    def __hash__(self) -> int:
+        return int(self.digest(), 16)
+
+    def gen_unique_dir(self) -> str:
+        return self.digest()[0:16] 
+    
+    def gen_unique_file(self, prefix="", suffix=".txt") -> str:
+        h = self.digest()
+        return prefix + h[0:16] + suffix
+
+    def cache_dir(self) -> str:
+        return fmdt.cache_dir() + "/" + self.gen_unique_dir()
+
+    def argv(self) -> list[str]:
+        """Return a list of arguments that will be used to execute fmdt-detect"""
+        return self.argument_handler()(**self.to_dict())
+
+    def cmd(self) -> str:
+        return ' '.join(self.argv())
+    
+    def exec(self, verbose: bool = False):
+        
+        fmdt_api = self.api_callable()
+
+        return fmdt_api(**self.to_dict(), verbose=verbose)
+    
+class DetectArgs(AbstractExecutableArgs):
 
     def __init__( 
         self,
@@ -143,7 +220,7 @@ class DetectArgs:
     def to_dict(
             self,
             subset: list[str] = None
-    ) -> dict:
+        ) -> dict:
 
         d = {
             "vid_in_path": self.vid_in_path, 
@@ -186,6 +263,18 @@ class DetectArgs:
                 dsub[k] = d[k]
         
             return dsub
+    # ========================= ABC overrides =================================
+    def api_callable(self):
+        return fmdt.api.detect
+    
+    def argument_handler(self):
+        return handle_detect_args
+
+    def video_path(self):
+        return self.vid_in_path
+
+    def clutter_list(self):
+        return ["trk_path", "ccl_fra_path", "trk_roi_path"]
 
     def to_stripped_dict(self) -> dict:
         """Return a stripped dictionary that drops all parameters pertaining to paths"""
@@ -239,24 +328,8 @@ class DetectArgs:
 
         return sql
     
-    def to_reduced_dict(self) -> dict:
-        d = self.to_dict()
-        out = {}
-        for (k, v) in d.items():
-            if not v is None:
-                out[k] = v
-        
-        return out
-    
-    def argv(self) -> list[str]:
-        """Return a list of arguments that will be used to execute fmdt-detect"""
-        return handle_detect_args(**self.to_dict())
-
-    def cmd(self) -> str:
-        return ' '.join(self.argv())
-    
-    def exec(self, log: bool = False, timeout: float = None, cache: bool = False, save_df: bool = False):
-        res = fmdt.api.detect(**self.to_dict(), log=log, timeout=timeout, cache=cache, save_df=save_df)
+    def exec(self, verbose: bool = False, timeout: float = None, cache: bool = False, save_df: bool = False):
+        res = fmdt.api.detect(**self.to_dict(), verbose=verbose, timeout=timeout, cache=cache, save_df=save_df)
         return res
     
     def strip(self):
@@ -269,25 +342,7 @@ class DetectArgs:
         c.trk_path = None
 
         return c
-        
-
-    def to_bytes(self) -> bytes:
-        """Convert to bytes, removing influence of all path variables"""
-        return pickle.dumps(self.strip())
-    
-    def digest(self) -> str:
-        return hashlib.md5(self.to_bytes()).hexdigest()
-
-    def __hash__(self) -> int:
-        # return int.from_bytes(pickle.dumps(self), "big")
-        return int(self.digest(), 16)
-    
-    def gen_unique_dir(self) -> str:
-        return self.digest()[0:16] 
-    
-    def cache_dir(self) -> str:
-        return fmdt.cache_dir() + "/" + self.gen_unique_dir()
-
+            
     def cache_trk(self) -> str:
         """Generate the full path to a unique file to store the results of this detection"""
         return self.cache_dir() + "_trk.txt"
@@ -329,8 +384,7 @@ class DetectArgs:
 
         return sql
 
-
-class LogParserArgs:
+class LogParserArgs(AbstractExecutableArgs):
 
     def __init__(
             self,
@@ -355,6 +409,7 @@ class LogParserArgs:
         self.trk_json_path = trk_json_path
         self.trk_bb_path = trk_bb_path
 
+    # ========================= ABC overrides =================================
     def to_dict(self) -> dict:
         return {
 
@@ -369,27 +424,17 @@ class LogParserArgs:
             "trk_bb_path": self.trk_bb_path,
         }
 
-    def to_reduced_dict(self) -> dict:
-        d = self.to_dict()
-        out = {}
-        for (k, v) in d.items():
-            if not v is None:
-                out[k] = v
+    def api_callable(self):
+        return fmdt.api.log_parser
+    
+    def argument_handler(self):
+        return handle_log_parser_args
+    
+    def clutter_list(self):
+        return ["trk_roi_path", "trk_bb_path", "trk_json_path", "fra_path", "trk_path"]
 
-        return out
 
-    def argv(self) -> list[str]:
-        """Return a list of arguments that will be used to execute fmdt-detect"""
-        return handle_log_parser_args(**self.to_dict())
-
-    def cmd(self) -> str:
-        return ' '.join(self.argv())
-
-    def exec(self, log: bool = False, timeout: float = None):
-        res = fmdt.api.log_parser(**self.to_dict())
-        return res
-
-class VisuArgs:
+class VisuArgs(AbstractExecutableArgs):
 
     def __init__(
             self, 
@@ -418,6 +463,7 @@ class VisuArgs:
         self.gt_path = gt_path
         self.vid_out_path = vid_out_path
 
+    # ========================= ABC overrides =================================
     def to_dict(self) -> dict:
         return {
 
@@ -433,29 +479,49 @@ class VisuArgs:
             "gt_path": self.gt_path,
             "vid_out_path": self.vid_out_path
         }
+
+    def api_callable(self):
+        return fmdt.api.visu
     
-    def to_reduced_dict(self) -> dict:
-        d = self.to_dict()
-        out = {}
-        for (k, v) in d.items():
-            if not v is None:
-                out[k] = v
+    def argument_handler(self):
+        return handle_visu_args
+
+    def video_path(self):
+        return self.vid_out_path
+
+    def clutter_list(self):
+        return ["trk_bb_path", "gt_path", "trk_path"]
+    
+class CheckArgs(AbstractExecutableArgs):
+
+    def __init__(
+        self, 
+        trk_path: str,
+        gt_path: str | None = None
+    ):
+
+        self.trk_path = trk_path
+        self.gt_path = gt_path
+
+
+    # ========================= ABC overrides =================================
+    def to_dict(self) -> dict:
         
-        return out
+        return {
+            "trk_path": self.trk_path,
+            "gt_path": self.gt_path,
+        }
+
+    def api_callable(self):
+        return fmdt.api.check
     
-    def argv(self) -> list[str]:
-        """Return a list of arguments that will be used to execute fmdt-detect"""
-        return handle_visu_args(**self.to_dict())
+    def argument_handler(self):
+        return handle_check_args
 
-    def cmd(self) -> str:
-        return ' '.join(self.argv())
-    
-    def exec(self, log: bool = False, timeout: float = None):
-        res = fmdt.api.visu(**self.to_dict())
-        return res
+    def clutter_list(self):
+        return ["gt_path", "trk_path"]
 
-
-
+_DEFAULT_LOG_SUFFIX = '_log'
 
 class Args:
     """Args keeps track of a configuration of parameters for all of fmdt's
@@ -504,7 +570,7 @@ class Args:
     detect_args: DetectArgs
     log_parser_args: LogParserArgs
     visu_args: VisuArgs
-    log: bool
+    verbose: bool
     timeout: float
     """
 
@@ -513,13 +579,13 @@ class Args:
         detect_args: DetectArgs | None = None,
         log_parser_args: LogParserArgs | None = None,
         visu_args: VisuArgs | None = None,
-        log: bool = False,
+        verbose: bool = False,
         timeout: float | None = None
     ):
         self.detect_args = detect_args
         self.log_parser_args = log_parser_args
         self.visu_args = visu_args
-        self.log = log
+        self.verbose = verbose
         self.timeout = timeout
 
     @staticmethod
@@ -570,8 +636,8 @@ class Args:
         trk_only_meteor: bool | None = None,
         gt_path: str | None = None,
         vid_out_path: str | None = None,
-        #================== PythonArgs=========================================
-        log: bool | None = False, 
+        #================== Python Args========================================
+        verbose: bool | None = False, 
         timeout: float | None = None,
     ):
 
@@ -607,6 +673,7 @@ class Args:
         
         log_parser_args = LogParserArgs(log_path=log_path,
                                         trk_roi_path=trk_roi_path,
+                                        log_flt=log_flt,
                                         fra_path=fra_path,
                                         ftr_name=ftr_name,
                                         ftr_path=ftr_path,
@@ -630,7 +697,7 @@ class Args:
                              gt_path=gt_path,
                              vid_out_path=os.path.basename(vid_out_path))
         
-        return Args(detect_args, log_parser_args, visu_args, log, timeout)
+        return Args(detect_args, log_parser_args, visu_args, verbose, timeout)
 
     def __str__(self) -> str:
 
@@ -641,27 +708,9 @@ class Args:
 
         return a0 + a1 + a2 + a
 
-
-    # We should change this to print out only the arguments that are not none
-    # def __str__(self) -> str:
-    #     if not self.detect_args:
-    #         f"detect_args:"
-
-    # def __repr__(self) -> str:
-
-    #     if not self.detect_args is None:
-    #         d = filter_dict(self.detect_args)
-
-    #     # s = ""
-    #     # for (k, v) in self.detect_args.items():
-    #         # if not v is None:
-    #             # s += f'"{k}": {v}, ' 
-        
-    #     # return "{" + s[:-2] + "}"
-    #     return d.__repr__()
-    
+    # ======================== Executables ====================================
     def detect(self, cache: bool = False, save_df: bool = False):
-        """OOP Interface to calling fmdt.api.detect()
+        """OOP Interface for calling fmdt.api.detect()
         
         Parameters
         ----------
@@ -672,50 +721,219 @@ class Args:
         # Make sure the detecting arguments are not none
         if self.detect_args is None:
             self.detect_args = DetectArgs(**empty_detect_args())
-        
-        return self.detect_args.exec(self.log, self.timeout, cache, save_df)
+
+        return self.detect_args.exec(self.verbose, self.timeout, cache, save_df)
     
-    def does_detect_fail(self, log=False) -> bool:
+    def log_parser(self, autocorrect=True):
+        """OOP Interface to calling fmdt.api.log_parser
+        
+        
+        Parameters
+        ----------
+        autocorrect (bool): If no log path exists, rerun a detection with a default log path 
+        
+        """
+
+        # Do we have log_parser arguments?
+        assert self.has_log_parser_args(), f"Cannot run Args.log_parser() as this arg's log_parser_args field is None"
+
+        if self.log_parser_args.log_path is None:
+
+            if not autocorrect:
+                raise AssertionError("Cannot run Args.log_parser() as no log_path has been set. Try rerunning fmdt.detect(log_path=YOUR_LOG_PATH)")
+
+            self.modify_log_path()
+
+            fmdt.utils.stderr(f"No log_path specified; rerunning Args.detect(log_path='{self.detect_args.log_path}') [.log_parser(autocorrect=False) to disable]")
+
+            return self.detect().log_parser()
+
+        res = self.log_parser_args.exec(verbose=self.verbose)
+
+        # When calling log_parser_args.exec, only the log_parser_args are stored.
+        # Overwrite the other two args with this args's parameters
+        res.args.detect_args = self.detect_args
+        res.args.visu_args = self.visu_args
+
+        return res
+
+    def visu(self, autocorrect=True):
+        """OOP Interface to calling fmdt.api.visu()
+
+        Parameters
+        ----------
+        autocorrect (bool): If no log path exists, rerun a detection with a default log path 
+        """ 
+
+
+        # Do we have visu arguments?
+        assert self.has_visu_args(), "No visu args for this object"
+
+
+        # visu depends on three files: trk_path, trk_bb_path, and trk_roi_path
+        # let's go through and verify that visu can be called from this args
+        trk_path_exists = os.path.exists(self.trk_path())
+        trk_roi_path_exists = os.path.exists(self.trk_roi_path())
+        trk_bb_path_exists = os.path.exists(self.trk_bb_path())
+
+        if trk_path_exists and trk_roi_path_exists and not trk_bb_path_exists:
+            # Then we need to only rerun log_parser
+
+            if not autocorrect:
+                raise AssertionError("trk_bb_path does not exist, run Args.log_parser() to generate it")
+
+            fmdt.utils.stderr(f"trk_bb_path does not exist; rerunning Args.log_parser() to generate it. [.visu(autocorrect=False) to disable]")
+
+            return self.log_parser().visu()
+
+        if not trk_bb_path_exists or not trk_roi_path_exists:
+            # Then we need to rerun the entire detection
+
+            if not autocorrect:
+                raise AssertionError("trk_path does not exist, rerun Args.detect(log_path=YOUR_LOG_PATH).log_parser() to generate it")
+
+            fmdt.utils.stderr(f"trk_path does not exist; rerunning Args.detect().log_parser() to generate it. [.visu(autocorrect=False) to disable]")
+
+            if not self.has_detect_args():
+                raise AssertionError(f"Cannot rerun detection because self.detect_args is empty [{self}]")
+
+            return self.detect().log_parser().visu()
+
+        vres = self.visu_args.exec(verbose=self.verbose) 
+
+        return vres
+
+    # TODO: Add .check interface
+
+    
+    # ========================== Inquiry functions ============================
+    def trk_path(self) -> str | None:
+        """Alias to Args.tracks"""
+        return self.tracks()
+
+    def trk_bb_path(self) -> str | None:
+        """Alias to Args.bbs"""
+        return self.bbs()
+
+    def trk_roi_path(self) -> str | None:
+        if self.has_detect_args():
+            if not self.detect_args.trk_roi_path is None:
+                return self.detect_args.trk_roi_path
+        elif self.has_log_parser_args():
+            if not self.log_parser_args.trk_roi_path is None:
+                return self.log_parser_args.trk_roi_path
+        else:
+            return None
+
+    def log_path(self) -> str | None:
+        if self.has_detect_args():
+            if not self.detect_args.log_path is None:
+                return self.detect_args.log_path
+        if self.has_log_parser_args():
+            if not self.log_parser_args.log_path is None:
+                return self.log_parser_args.log_path
+        else:
+            return None
+        
+    def vid_in_path(self) -> str | None:
+        """Return the name of the input video file"""
+        if self.has_detect_args():
+            if not self.detect_args.vid_in_path is None:
+                return self.detect_args.vid_in_path
+        elif self.has_visu_args():
+            if not self.visu_args.vid_in_path is None:
+                return self.visu_args.vid_in_path
+        else:
+            return None
+    
+    def vid_out_path(self) -> str | None:
+        return self.visu_vid()
+        
+        
+    def tracks(self) -> str | None:
+        """Return the name of the tracks file, if it exists"""
+
+        if self.has_detect_args():
+            if not self.detect_args.trk_path is None:
+                return self.detect_args.trk_path
+        elif self.has_log_parser_args():
+            if not self.log_parser_args.trk_path is None:
+                return self.log_parser_args.trk_path
+        elif self.has_visu_args():
+            if not self.visu_args.trk_path is None:
+                return self.visu_args.trk_path
+        else:
+            return None
+
+    def bbs(self) -> str | None:
+        """Return the name of the bounding boxes (BBs) file, if it exists"""
+        if self.has_log_parser_args():
+            if not self.log_parser_args.trk_bb_path is None:
+                return self.log_parser_args.trk_bb_path
+        elif self.has_visu_args():
+            if not self.visu_args.trk_bb_path is None:
+                return self.visu_args.trk_bb_path
+        else:
+            return None
+
+    def detect_cmd(self) -> str | None:
+        if self.has_detect_args():
+            return self.detect_args.cmd()
+        else:
+            return None
+    
+    def visu_cmd(self) -> str | None:
+        if self.has_visu_args():
+            return self.visu_args.cmd()
+        else:
+            return None
+
+    def log_parser_cmd(self) -> str | None:
+        if self.has_log_parser_args():
+            return self.log_parser_args.cmd()
+        else:
+            return None
+
+    def does_detect_fail(self, verbose=False) -> bool:
         """Returns true if the stderr pipe of a call to fmdt-detect is not empty"""
 
         if self.detect_args["vid_in_path"] is None:
             return True
 
-        detect_cmd = detect_args_to_cmd(self.detect_args)
-        if (log):
+        detect_cmd = self.detect_args.cmd()
+        if (verbose):
             print(detect_cmd)
         res = subprocess.run(detect_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-
-        # print(res.stderr.decode())
 
         if res.returncode != 0:
             return True
         
         return False
     
-    def detect_cmd(self) -> str:
-        return handle_detect_args(**self.detect_args.to_dict())
-
-    def log_parser(self, **kwargs):
-        """OOP Interface to calling fmdt.api.visu()"""
-
-        # Do we have visu arguments?
-        assert not self.log_parser_args is None, "No log parser args for this object"
-
-        self.log_parser_args.exec()
-
-        return self
-
-    def visu(self, **kwargs):
-        """OOP Interface to calling fmdt.api.visu()"""
-
-        # Do we have visu arguments?
-        assert not self.visu_args is None, "No visu args for this object"
-
-        self.visu_args.exec() 
-
-        return self
+    # ================================= Helper functions ======================
+    def has_detect_args(self) -> bool:
+        return not self.detect_args is None
     
+    def has_visu_args(self) -> bool:
+        return not self.visu_args is None
+    
+    def has_log_parser_args(self) -> bool:
+        return not self.log_parser_args is None
+
+    def visu_vid(self) -> str | None:
+        """Return the path of the video output by fmdt-visu"""
+        if self.has_visu_args():
+            return self.visu_args.video_path()
+        else:
+            return None
+
+    def detect_vid(self) -> str | None:
+        """Return the path of the video input to fmdt-detect"""
+        if self.has_detect_args(): 
+            return self.detect_args.video_path()
+        else:
+            return None
+
     def vid(self) -> str | None:
         """Return the name of the video, if it exists"""
         if not self.detect_args.vid_in_path is None:
@@ -724,43 +942,13 @@ class Args:
             return self.visu_args.vid_in_path
         else:
             return None
-        
-    def tracks(self) -> str | None:
-        """Return the name of the tracks file, if it exists"""
-        if not self.detect_args.trk_path is None:
-            return self.detect_args.trk_path
-        elif not self.log_parser_args.trk_path is None:
-            return self.log_parser_args.trk_path
-        elif not self.visu_args.trk_path is None:
-            return self.visu_args.trk_path
-        else:
-            return None
-
-    def bbs(self) -> str | None:
-        """Return the name of the bounding boxes (BBs) file, if it exists"""
-        if not self.log_parser_args.trk_bb_path is None:
-            return self.log_parser_args.trk_bb_path
-        elif not self.visu_args.trk_bb_path is None:
-            return self.visu_args.trk_bb_path
-        else:
-            return None
-
-    def split(self, nframes_buffer=3, overwrite=False, exact_split=False, log=False):
-        # Check to see if we have the tracks saved.
-        fmdt.core.split_video_at_meteors(video_filename=self.vid(), 
-                                         detect_tracks_in=self.tracks(),
-                                         nframes_before=nframes_buffer,
-                                         nframes_after=nframes_buffer,
-                                         overwrite=overwrite,
-                                         exact_split=exact_split,
-                                         log=log)
 
     # Take the detect argument dictionary and write out a comma separated value string
     def detect_csv_header(self) -> str:
         """Return the header line used in a csv file storing multiple argument configurations"""
         header = ""
         for k in self.detect_args.keys():
-            if k == "log":
+            if k == "verbose":
                 continue
             header = header + f"{k},"
 
@@ -797,13 +985,34 @@ class Args:
     
     def gen_unique_trk(self) -> str:
         """Generate a unique trk file corresponding to this set of parameters"""
-
         h = self.digest()
         return "trk_" + h[0:16] + ".txt" 
-
     
-    # Write the dictionary of fmdt-detect arguments to a csv file
-    # def detect_to_csv(self, csv_filename) -> None:
+    def gen_unique_file(self, prefix="", suffix=".txt") -> str:
+        h = self.digest()
+        return prefix + h[0:16] + suffix
+
+    def clutter(self) -> list[str]:
+        """Return a list of files that have been created throughout this args lifetime"""
+
+        clut = []
+
+        if self.has_detect_args():
+            clut.extend(self.detect_args.clutter())
+
+        if self.has_log_parser_args():
+            clut.extend(self.log_parser_args.clutter())
+        
+        if self.has_visu_args():
+            clut.extend(self.visu_args.clutter())
+
+        return clut
+    
+    def modify_log_path(self):
+        """Create a new log_path corresponding to the relevant video and modify self.detect_args"""
+        name, _ = fmdt.utils.decompose_video_filename(self.vid_in_path())
+        self.detect_args.log_path = os.path.basename(name) + _DEFAULT_LOG_SUFFIX
+
 
 class FMDTResult:
 
@@ -841,6 +1050,8 @@ def video_input(filename: str) -> Args:
     a.detect_args.vid_in_path = filename
     return a
 
+__DEFAULT_TRK_ROI_PATH_SUFFIX = "_trk2roi.txt"
+__DEFAULT_TRK_PATH_SUFFIX = "_trk.txt"
 
 # Create an Args object from the fmdt-detect parameters
 def detect_args(
@@ -873,13 +1084,27 @@ def detect_args(
         trk_roi_path: str | None = None,
         log_path: str | None = None,
         trk_path: str | None = None,
-        log: bool = False,
+        verbose: bool = False,
         timeout: float = None,
         **args # any leftovers, useful when converting sql query to args object
     ) -> Args:
     """Convert the parameters used in fmdt.detect into an Args object"""
 
     assert not vid_in_path is None, "vid_in_path cannot be None"
+
+    vid_basename = os.path.basename(vid_in_path)
+    name, _ = fmdt.utils.decompose_video_filename(vid_basename)
+
+    if trk_roi_path is None:
+        trk_roi_path = name + __DEFAULT_TRK_ROI_PATH_SUFFIX
+
+    if trk_path is None:
+        trk_path = name + __DEFAULT_TRK_PATH_SUFFIX
+
+    # Make sure that the leftovers in **args doesnt contain any visu parameters
+    for k in args.keys():
+        if k in _VISU_UNIQUE_ARGS:
+            raise TypeError(f"{k} is not a fmdt-detect parameter. Consider calling fmdt.Args.new instead")
 
     d_args = DetectArgs(vid_in_path, vid_in_start, vid_in_stop, vid_in_skip, vid_in_buff,
                         vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, ccl_fra_path,
@@ -904,7 +1129,7 @@ def detect_args(
                       trk_bb_path=os.path.basename(bb_name),
                       vid_out_path=os.path.basename(visu_name))
     
-    return Args(d_args, l_args, v_args, log, timeout)
+    return Args(d_args, l_args, v_args, verbose, timeout)
 
 def log_parser_args(
         log_path: str = None,
@@ -916,7 +1141,7 @@ def log_parser_args(
         trk_path: str = None,
         trk_json_path: str = None,
         trk_bb_path: str = None,
-    ) -> VisuArgs:
+    ) -> LogParserArgs:
 
     # While this is extremely ugly, it allows us to have a nicer user-facing api
     return LogParserArgs( **{
@@ -1127,8 +1352,6 @@ def handle_log_parser_args(
     add_arg(trk_json_path, "--trk-json-path")
     add_arg(trk_bb_path, "--trk-bb-path")
 
-    print(args)
-
     return args
 
 def handle_visu_args(
@@ -1187,10 +1410,27 @@ def handle_visu_args(
 
     return args
 
-def detect_args_to_cmd(args: dict) -> list[str]:
-    return handle_detect_args(**args)            
+def handle_check_args(
+        trk_path: str,
+        gt_path: str
+    ) -> list[str]:
 
+    if get_exec_path() is None:
+         fmdt_check_exe = shutil.which("fmdt-check")
+    else:
+         fmdt_check_exe = shutil.which("fmdt-check", path=get_exec_path())
+
+    fmdt_check_found = not fmdt_check_exe is None
+    assert fmdt_check_found, "fmdt-check executable not found"
+
+    assert not trk_path is None, "No input track path"
+    assert not gt_path is None, "No input track path"
+
+    args = [fmdt_check_exe, "--trk-path", trk_path, "--gt-path", gt_path] 
+
+    return args
     
+
 def main() -> None:
     a = Args()
     a.detect_args = detect_args(vid_in_path="demo.mp4")
