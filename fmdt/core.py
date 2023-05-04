@@ -293,8 +293,8 @@ def split_video_at_meteors(
         nframes_before=3,
         nframes_after=3,
         overwrite=False,
-        exact_split: bool = False,
-        log: bool = False
+        verbose: bool = False,
+        out_dir = None
     ) -> None:
     """
     Split a video into small segments of length (nframes_before + nframes_after + sequence_length) frames
@@ -317,7 +317,7 @@ def split_video_at_meteors(
         seeking functionality (False). For long videos with high resolution, use False otherwise the program 
         might crash. 
         (Default value of False)
-    `log` (bool): When True, print to console the current action being performed
+    `verbose` (bool): When True, print to console the current action being performed
     """
     utils.assert_file_exists(detect_tracks_in)
 
@@ -326,7 +326,14 @@ def split_video_at_meteors(
     tracking_list = utils.retain_meteors(tracking_list)
     seqs = utils.separate_meteor_sequences(tracking_list)
 
-    split_video_at_intervals(video_filename, seqs, nframes_before, nframes_after, overwrite, exact_split, log, condense=False)
+    split_video_at_intervals(video_filename, 
+                             seqs, 
+                             nframes_before, 
+                             nframes_after, 
+                             overwrite, 
+                             verbose, 
+                             condense=False,
+                             out_dir=out_dir)
 
 def get_dir(filename: str):
     return '/'.join(filename.split()[:-1])
@@ -337,9 +344,9 @@ def split_video_at_intervals(
         nframes_before=3,
         nframes_after=3,
         overwrite=False,
-        exact_split: bool = False,
-        log: bool = False,
-        condense: bool = True
+        verbose: bool = False,
+        condense: bool = True,
+        out_dir = None 
     ) -> None:
     """
     Split a video into small segments of length (nframes_before + nframes_after + sequence_length) frames
@@ -356,12 +363,7 @@ def split_video_at_intervals(
     `overwrite` (bool): Tells ffmpeg to overwrite (True) the generated output videos if they already
         exist. If false then ffmpeg will ask for manual confirmation
         (Default value of False)
-    `exact_split` (bool): Determine whether to extract the _exact_ frames requested (True) - which requires loading
-        the entire video into memory as a numpy array - or approximate the frames requested using ffmpeg's 
-        seeking functionality (False). For long videos with high resolution, use False otherwise the program 
-        might crash. 
-        (Default value of False)
-    `log` (bool): When True, print to console the current action being performed
+    `verbose` (bool): When True, print to console the current action being performed
 
     Examples
     --------
@@ -390,50 +392,37 @@ def split_video_at_intervals(
         seqs = utils.condense_start_end(start_end)
     else:
         seqs = start_end
+
     video_name, extension = utils.decompose_video_filename(video_filename) 
+
+    if not out_dir is None:
+        # Override the output directory
+        video_name = utils.join(out_dir, os.path.basename(video_name))
+
     utils.mkdir_p(video_name)
 
     # Bookkeeping for formatting the name of the output videos
     max_digits = len(str(seqs[-1][1]))
     format_str = '0' + str(max_digits)
 
-    # Selection of splitting algorithm
-    if exact_split:
-        
-        # Querying of video information, extraction of frames
-        frames = utils.convert_video_to_ndarray(video_filename, log=log)
-        frame_rate = utils.get_avg_frame_rate(video_filename)
-        total_frames, _, _, _ = frames.shape
-        seq_video_name = lambda seq: (
-            f'{video_name}/f{format(seq[0], format_str)}-{format(seq[1], format_str)}.{extension}'
-        )
+    def seq_video_name(seq): 
+        file_name = f'f{format(seq[0], format_str)}-{format(seq[1], format_str)}.{extension}'
+        return utils.join(video_name, file_name)
 
-        def exact_splitting(seq) -> None:
-            """Function call that will convert a 'meteor seq' to a frame perfect video sequence"""
+    def approx_splitting(seq) -> None:
+        """Function call that will convert a 'meteor seq' to an approximate video sequence"""
 
-            # Ensure that f_start and f_end are valid
-            f_start = s[0] - nframes_before if s[0] - nframes_before >= 0 else 0
-            f_end   = s[1] + nframes_after  if s[1] + nframes_after  <= total_frames else total_frames
-            frames_seq = frames[f_start:f_end, :, :, :]
-            utils.convert_ndarray_to_video(seq_video_name(s), frames_seq, frame_rate, log=log)
+        f_start = seq[0] - nframes_before if seq[0] - nframes_before >= 0 else 0
+        f_end   = seq[1] + nframes_after
 
-        splitting_algorithm = exact_splitting
-    
-    else:
+        utils.extract_video_frames(video_filename, 
+                                   f_start, 
+                                   f_end,
+                                   seq_video_name(s),
+                                   overwrite=overwrite,
+                                   verbose=verbose)
 
-        seq_video_name = lambda seq: (
-            f'{video_name}/f{format(seq[0], format_str)}-{format(seq[1], format_str)}_.{extension}'
-        )
-
-        def approx_splitting(seq) -> None:
-            """Function call that will convert a 'meteor seq' to an approximate video sequence"""
-
-            f_start = s[0] - nframes_before if s[0] - nframes_before >= 0 else 0
-            f_end   = s[1] + nframes_after
-            utils.extract_video_frames(video_filename, f_start, f_end,
-                                       seq_video_name(s), overwrite=overwrite)
-
-        splitting_algorithm = approx_splitting
+    splitting_algorithm = approx_splitting
 
     for s in seqs:
         splitting_algorithm(s)
