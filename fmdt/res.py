@@ -97,7 +97,10 @@ class AbstractResult:
     def clutter_files(self) -> list[str]:
         return self.args.clutter()
         
-    def cleanup(self) -> None:
+    def cleanup(self, verbose = None) -> None:
+
+        if not verbose is None:
+            self.args.verbose = verbose
 
         clutter = self.clutter_files()
 
@@ -258,12 +261,6 @@ class DetectionResult(AbstractResult):
 
     def vid_path(self) -> str:
         return self.args.vid_in_path()
-
-    def log_parser(self):
-
-        assert len(self.trk_list) != 0, f"trk_list empty, aborting call to DetectionResult.log_parser(). Consider setting trk_all=True during detection to ensure a nonempty trk_list" 
-
-        return self.args.log_parser()
 
     def cmd(self) -> str:
         """Return the command used to call this detect"""
