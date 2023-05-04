@@ -16,14 +16,14 @@ def split_video_at_intervals(
         nframes_before=3,
         nframes_after=3,
         overwrite=False,
-        exact_split: bool = False,
-        log: bool = False,
-        condense: bool = True
+        verbose: bool = False,
+        condense: bool = True,
+        out_dir = None 
     ) -> None:
 ```
 
-If we wanted to make two frame-perfect cuts of our video demo.mp4, say with the 
-two pairs (5, 20) and (100, 200), we would call:
+Let's use `split_video_at_intervals` to make two frame-perfect cuts of `demo.mp4` using the 
+intervals `(5, 20)` and `(100, 200)`
 
 ```python
 import fmdt
@@ -31,13 +31,16 @@ import fmdt
 vid = "demo.mp4"
 start_end = [(5, 20), (100, 200)]
 
-fmdt.split_video_at_intervals(vid, start_end, 0, 0, True, exact_split=True)
+fmdt.split_video_at_intervals(vid, start_end, 0, 0, True)
 ```
 
-When `exact_split` is set to `True` we load in the entire video as a numpy array 
-and are able to make frame-perfect cuts. We can quickly run out of RAM when 
-dealing with large videos so in general we should avoid `exact_split=True` 
-unless the video is only a few seconds long.
+This will create a new folder `demo` with the following structure:
+
+```sh
+./demo
+├── f005-020.mp4
+└── f100-200.mp4
+```
 
 ## Split video at meteors
 
@@ -49,12 +52,7 @@ import fmdt
 fmdt.detect(vid_in_path="demo.mp4", trk_path="tracks.txt").split()
 ```
 
-!!! danger 
-
-    TODO: The latest is not working anymore, the `fmdt.DetectionResult` class 
-    does not have a `split()` method :-(.
-
-Which uses `ffmpeg` to _approximately_ trim a video around non-overlapping 
+Which uses `ffmpeg` to approximately (to the nearest millisecond) trim a video around non-overlapping 
 meteor detections.
 
 There is also a more verbose alternative which accomplishes the same split:
@@ -74,26 +72,14 @@ vid = "demo.mp4"
 trk = "tracks.txt"
 log = "detect_log"
 trk2roi = "trk2roi.txt"
-fmdt.detect(vid_in_path=vid, trk_path=trk, log_path=log, trk_roi_path=trk2roi).log_parser().visu().split()
 
-# here is an alternative way to do the same thing
-d_args = { "vid_in_path": "demo.mp4", 
-           "trk_path": "tracks.txt", 
-           "log_path": "detect_log", 
-           "trk_roi_path": "trk2roi.txt" }
-args = fmdt.Args.new(**d_args)
-args.detect().log_parser().visu().split()
+dres = fmdt.detect(vid_in_path=vid, 
+                   trk_path=trk,
+                   log_path=log, 
+                   trk_roi_path=trk2roi)
 
+dres.log_parser().visu().split()
 ```
-
-!!! danger 
-
-    TODO: The latest is not working, the `fmdt.Args` class has a `split()` 
-    method but this method will select the video path to split according to its
-    `vid()` method that will return `demo.mp4` instead of `demo_visu.mp4`.
-
-which will apply the split to the video that contains bounding boxes on objects 
-detected by `fmdt-detect`.
 
 ## Real Examples
 

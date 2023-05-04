@@ -1,7 +1,7 @@
 # Core Usage
 
 This section presents the core usage of `fmdt-python`. Any examples assume that 
-`fmdt` has already been imported:
+`fmdt` has already been imported with:
 
 ```python
 import fmdt
@@ -9,59 +9,68 @@ import fmdt
 
 ## FMDT executables
 
-We call the main executables `fmdt-*` using `fmdt.*`
+We call the main executables `fmdt-*` using `fmdt.*`.
 
 === "fmdt-detect"
 
     ```python
+    # Run a detection by itself
+    fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4")
+    ```
+
+    ```python
+    # Save the standard output of fmdt-detect to trk.txt
+    fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4", trk_path="trk.txt")
+    ```
+
+    ```python
+    # Run a detection and generate necessary files for log-parser and visu
     fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
-                ccl_hyst_lo=55,
-                ccl_hyst_hi=80,
-                log_path="log"
+                log_path="log",
                 trk_path="trk.txt",
                 trk_roi_path="trk2roi.txt") 
     ```
 
-    ??? info "signature"
+    ??? info "complete signature"
 
         ```python
         def detect(
-                #=================== fmdt-detect parameters ===================
+                #=================== fmdt-detect parameters ================
                 vid_in_path: str, 
-                vid_in_start: int = None,
-                vid_in_stop: int = None,
-                vid_in_skip: int = None,
-                vid_in_buff: bool = None,
-                vid_in_loop: int = None,
-                vid_in_threads: int = None,
-                ccl_hyst_lo: int = None,
-                ccl_hyst_hi: int = None,
-                ccl_fra_path: str = None,
-                ccl_fra_id: bool = None,
-                cca_mag: bool = None,
-                cca_ell: bool = None,
-                mrp_s_min: int = None,
-                mrp_s_max: int = None,
-                knn_k: int = None,
-                knn_d: int = None,
-                knn_s: int = None,
-                trk_ext_d: int = None,
-                trk_ext_o: int = None,
-                trk_angle: float = None,
-                trk_star_min: int = None,
-                trk_meteor_min: int = None,
-                trk_meteor_max: int = None,
-                trk_ddev: float = None,
-                trk_all: bool = None,
-                trk_roi_path: str = None,
-                log_path: str = None,
-                #================== Additional Parameters =====================
-                trk_path: str = "trk.txt",
-                log: bool = False,
+                vid_in_start: int | None = None,
+                vid_in_stop: int | None = None,
+                vid_in_skip: int | None = None,
+                vid_in_buff: bool | None = None,
+                vid_in_loop: int | None = None,
+                vid_in_threads: int | None = None,
+                ccl_hyst_lo: int | None = None,
+                ccl_hyst_hi: int | None = None,
+                ccl_fra_path: str | None = None,
+                ccl_fra_id: bool | None = None,
+                cca_mag: bool | None = None,
+                cca_ell: bool | None = None,
+                mrp_s_min: int | None = None,
+                mrp_s_max: int | None = None,
+                knn_k: int | None = None,
+                knn_d: int | None = None,
+                knn_s: int | None = None,
+                trk_ext_d: int | None = None,
+                trk_ext_o: int | None = None,
+                trk_angle: float | None = None,
+                trk_star_min: int | None = None,
+                trk_meteor_min: int | None = None,
+                trk_meteor_max: int | None = None,
+                trk_ddev: float | None = None,
+                trk_all: bool | None = None,
+                trk_roi_path: str | None = None,
+                log_path: str | None = None,
+                #================== Additional Parameters ====================
+                trk_path: str | None = None,
+                verbose: bool = False,
                 timeout: float = None,
                 cache: bool = False,
                 save_df: bool = False
-            ) -> fmdt.res.DetectionResult
+            ) -> fmdt.res.DetectionResult:
         ```
 
 === "fmdt-log-parser"
@@ -72,7 +81,7 @@ We call the main executables `fmdt-*` using `fmdt.*`
                     trk_bb_path="bb.txt")
     ```
 
-    ??? info "full signature"
+    ??? info "complete signature"
 
         ``` py
         def log_parser(
@@ -85,7 +94,7 @@ We call the main executables `fmdt-*` using `fmdt.*`
                 trk_path: str | None = None,
                 trk_json_path: str | None = None,
                 trk_bb_path: str | None = None,
-            ) -> fmdt.args.Args:
+            ) -> fmdt.res.LogParserResult:
         ```
 
 === "fmdt-visu"
@@ -96,6 +105,27 @@ We call the main executables `fmdt-*` using `fmdt.*`
               trk_bb_path="bb.txt")
     ```
 
+    ??? info "complete signature"
+
+        ```python
+        def visu(
+                vid_in_path: str,
+                trk_path: str,
+                trk_bb_path: str,
+                vid_out_path: str,
+                vid_in_start: int | None = None,
+                vid_in_stop: int | None = None,
+                vid_in_threads: int | None = None,
+                trk_id: bool | None = None,
+                trk_nat_num: bool | None = None,
+                trk_only_meteor: bool | None = None,
+                gt_path: str | None = None,
+                #========================== Additional Options ========================
+                verbose: bool = False,
+                stdout: str | None = None
+            ) -> fmdt.res.VisuResult:
+        ```
+
 === "fmdt-check"
 
     ``` py 
@@ -103,18 +133,38 @@ We call the main executables `fmdt-*` using `fmdt.*`
                gt_path="2022_05_31_tauh_34_meteors.txt")
     ```
 
-    ??? info "signature"
+    ??? info "complete signature"
 
         ``` py
         def check(
                 trk_path: str,
                 gt_path: str,
                 stdout: str = None,
-                log = False
+                verbose = False
             ) -> fmdt.res.CheckResult:
         ```
 
----
+These functions are designed to be chained together. 
+
+##### detect --> check
+
+```python
+fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4").check()
+```
+
+When calling `fmdt.check` in isolation, we need to specify the `trk_path` and `gt_path`. However, when
+chaining with a call to `fmdt.detect`, `fmdt`'s internal logic manages these parameters with sensible defaults.
+
+##### detect --> log-parser --> visu
+
+```python
+dres = fmdt.detect(vid_in_path="2022_05_31_tauh_34_meteors.mp4",
+                   log_path="log").log_parser().visu()
+```
+
+Similarly, `fmdt.detect` will automatically populate the parameters `trk_path` and `trk_roi_path` with
+`2022_05_31_tauh_34_meteors_trk.txt` and `2022_05_31_tauh_34_meteors_bb.txt`, respectively. However, 
+creating additional log files is opt-in and must be specified with `log_path`. 
 
 Consult [`fmdt.api`](./reference/home.md#fmdtapi) for more information about 
 `fmdt`'s interface.
@@ -232,6 +282,79 @@ After configuration we can load in `Video` objects using `fmdt.load_*`
     [window_3_sony_0400-0405UTC.mp4, window_3_sony_0405-0410UTC.mp4, window_3_sony_0410-0415UTC.mp4, window_3_sony_0415-0420UTC.mp4, window_3_sony_0420-0425UTC.mp4, window_3_sony_0425-0430UTC.mp4, window_3_sony_0500-0505UTC.mp4, 2022_05_31_tauh_34_meteors.mp4]
     ```
 
+=== "window_clips"
+
+    ```py
+    fmdt.load_window_clips()
+    ```
+
+    ```py
+    >>> fmdt.load_window_clips()
+    [window_3_sony_0400-0405UTC.mp4 [773, 802], window_3_sony_0400-0405UTC.mp4 [1213, 1262], window_3_sony_0400-0405UTC.mp4 [1414, 1451], window_3_sony_0400-0405UTC.mp4 [2276, 2335], window_3_sony_0400-0405UTC.mp4 [2823, 2862], window_3_sony_0400-0405UTC.mp4 [2850, 2900], window_3_sony_0400-0405UTC.mp4 [2916, 2945], window_3_sony_0400-0405UTC.mp4 [3414, 3446], window_3_sony_0400-0405UTC.mp4 [3845, 3874], window_3_sony_0400-0405UTC.mp4 [4143, 4191], window_3_sony_0400-0405UTC.mp4 [4250, 4280], window_3_sony_0400-0405UTC.mp4 [4435, 4472], window_3_sony_0400-0405UTC.mp4 [5311, 5342], window_3_sony_0400-0405UTC.mp4 [6778, 6823], window_3_sony_0400-0405UTC.mp4 [7187, 7219], window_3_sony_0405-0410UTC.mp4 [261, 290], window_3_sony_0405-0410UTC.mp4 [306, 349], window_3_sony_0405-0410UTC.mp4 [1454, 1489], window_3_sony_0405-0410UTC.mp4 [2405, 2441], window_3_sony_0405-0410UTC.mp4 [3046, 3076], window_3_sony_0405-0410UTC.mp4 [3780, 3814], window_3_sony_0405-0410UTC.mp4 [4601, 4645], window_3_sony_0405-0410UTC.mp4 [5568, 5600], window_3_sony_0405-0410UTC.mp4 [6842, 6874], window_3_sony_0405-0410UTC.mp4 [6906, 6948], window_3_sony_0405-0410UTC.mp4 [7069, 7120], window_3_sony_0405-0410UTC.mp4 [7475, 7500], window_3_sony_0410-0415UTC.mp4 [0, 18], window_3_sony_0410-0415UTC.mp4 [104, 141], window_3_sony_0410-0415UTC.mp4 [349, 377], window_3_sony_0410-0415UTC.mp4 [943, 979], window_3_sony_0410-0415UTC.mp4 [2006, 2038], window_3_sony_0410-0415UTC.mp4 [2232, 2262], window_3_sony_0410-0415UTC.mp4 [2768, 2801], window_3_sony_0410-0415UTC.mp4 [3551, 3587], window_3_sony_0410-0415UTC.mp4 [4316, 4352], window_3_sony_0410-0415UTC.mp4 [4342, 4377], window_3_sony_0410-0415UTC.mp4 [4507, 4540], window_3_sony_0410-0415UTC.mp4 [4636, 4663], window_3_sony_0410-0415UTC.mp4 [6076, 6116], window_3_sony_0410-0415UTC.mp4 [6162, 6192], window_3_sony_0410-0415UTC.mp4 [6585, 6624], window_3_sony_0410-0415UTC.mp4 [6727, 6769], window_3_sony_0410-0415UTC.mp4 [7239, 7286], window_3_sony_0415-0420UTC.mp4 [30, 68], window_3_sony_0415-0420UTC.mp4 [425, 458], window_3_sony_0415-0420UTC.mp4 [709, 736], window_3_sony_0415-0420UTC.mp4 [1054, 1086], window_3_sony_0415-0420UTC.mp4 [1363, 1406], window_3_sony_0415-0420UTC.mp4 [1413, 1446], window_3_sony_0415-0420UTC.mp4 [1890, 1922], window_3_sony_0415-0420UTC.mp4 [2068, 2111], window_3_sony_0415-0420UTC.mp4 [2299, 2329], window_3_sony_0415-0420UTC.mp4 [2689, 2745], window_3_sony_0415-0420UTC.mp4 [2878, 2907], window_3_sony_0415-0420UTC.mp4 [3362, 3392], window_3_sony_0415-0420UTC.mp4 [3711, 3761], window_3_sony_0415-0420UTC.mp4 [3963, 3999], window_3_sony_0415-0420UTC.mp4 [5592, 5626], window_3_sony_0415-0420UTC.mp4 [5880, 5920], window_3_sony_0415-0420UTC.mp4 [6481, 6524], window_3_sony_0415-0420UTC.mp4 [6775, 6810], window_3_sony_0415-0420UTC.mp4 [6961, 7009], window_3_sony_0420-0425UTC.mp4 [520, 549], window_3_sony_0420-0425UTC.mp4 [1743, 1779], window_3_sony_0420-0425UTC.mp4 [2173, 2213], window_3_sony_0420-0425UTC.mp4 [2656, 2693], window_3_sony_0420-0425UTC.mp4 [3091, 3127], window_3_sony_0420-0425UTC.mp4 [3292, 3329], window_3_sony_0420-0425UTC.mp4 [4286, 4330], window_3_sony_0420-0425UTC.mp4 [6043, 6079], window_3_sony_0420-0425UTC.mp4 [6230, 6262], window_3_sony_0425-0430UTC.mp4 [474, 507], window_3_sony_0425-0430UTC.mp4 [1001, 1033], window_3_sony_0425-0430UTC.mp4 [1125, 1156], window_3_sony_0425-0430UTC.mp4 [1314, 1353], window_3_sony_0425-0430UTC.mp4 [1914, 1952], window_3_sony_0425-0430UTC.mp4 [2104, 2143], window_3_sony_0425-0430UTC.mp4 [3921, 3956], window_3_sony_0425-0430UTC.mp4 [4256, 4290], window_3_sony_0425-0430UTC.mp4 [4865, 4896], window_3_sony_0425-0430UTC.mp4 [5484, 5516], window_3_sony_0425-0430UTC.mp4 [6595, 6639], window_3_sony_0425-0430UTC.mp4 [7058, 7091], window_3_sony_0500-0505UTC.mp4 [137, 170], window_3_sony_0500-0505UTC.mp4 [504, 537], window_3_sony_0500-0505UTC.mp4 [1172, 1203], window_3_sony_0500-0505UTC.mp4 [2262, 2289], window_3_sony_0500-0505UTC.mp4 [2532, 2566], window_3_sony_0500-0505UTC.mp4 [2624, 2667], window_3_sony_0500-0505UTC.mp4 [2883, 2912], window_3_sony_0500-0505UTC.mp4 [3528, 3560], window_3_sony_0500-0505UTC.mp4 [4537, 4568], window_3_sony_0500-0505UTC.mp4 [4781, 4809], window_3_sony_0500-0505UTC.mp4 [5147, 5184], window_3_sony_0500-0505UTC.mp4 [5217, 5271], window_3_sony_0500-0505UTC.mp4 [6314, 6349], window_3_sony_0500-0505UTC.mp4 [7073, 7109], window_3_sony_0500-0505UTC.mp4 [7377, 7404], window_3_sony_0500-0505UTC.mp4 [7422, 7457]]
+    ```
+
+Use `fmdt.load_all` to load all the sequences that contain a meteor in our
+[database](./explanation/video_database.md)
+
+```python
+fmdt.load_all()
+```
+
+```python
+>>> fmdt.load_all()
+[Draconids-6mm1.00-2750-163200.avi, Draconids-6mm1.05-0750-164200.avi, Draconids-6mm1.14-1400-170300.avi, Draconids-6mm1.20-2350-171600.avi, Draconids-6mm1.29-2550-173600.avi, Draconids-6mm1.30-2050-173800.avi, Draconids-6mm1.32-3150-174200.avi, Draconids-6mm1.34-3050-174700.avi, Draconids-6mm2.00.01-1000-201100.avi, Draconids-6mm2.00.01-1500-201200.avi, Draconids-6mm2.00.01-2150-201200.avi, Draconids-6mm2.00.02-0700-201300.avi, Draconids-6mm2.00.03-0450-201500.avi, Draconids-6mm2.00.03-0550-201500.avi, Draconids-6mm2.00.03-0950-201500.avi, Draconids-6mm2.00.04-1500-201800.avi, Draconids-6mm2.00.04-1900-201900.avi, Draconids-6mm2.00.04-2950-201900.avi, Draconids-6mm2.00.05-0120-202000.avi, Draconids-6mm2.00.05-0350-202000.avi, Draconids-6mm2.00.07-0900-202400.avi, Draconids-6mm2.00.07-2400-202500.avi, Draconids-6mm2.00.07-3000-202530.avi, Draconids-6mm2.00.09-0600-202900.avi, Draconids-6mm2.00.09-1650-203000.avi, Draconids-6mm2.00.09-3000-203030.avi, Draconids-6mm2.00.10-0300-203100.avi, Draconids-6mm2.00.10-0350-203110.avi, Draconids-6mm2.00.10-1050-203200.avi, Draconids-6mm2.00.11-2100-203400.avi, Draconids-6mm2.00.11-680-203300.avi, Draconids-6mm2.00.11-780-203310.avi, Draconids-6mm2.00.12-1550-203600.avi, Draconids-6mm2.00.12-2550-203700.avi, Draconids-6mm2.00.12-3100-203730.avi, Draconids-6mm2.00.13-0680-203800.avi, Draconids-6mm2.00.13-3100-204000.avi, Draconids-6mm2.00.15-0750-204200.avi, Draconids-12mm1.01-1950-163100.avi, Draconids-12mm1.02-1500-163500.avi, Draconids-12mm1.09-800-164900.avi, Draconids-12mm1.11-150-165300.avi, Draconids-12mm1.13-1350-165800.avi, Draconids-12mm1.15-650-170200.avi, Draconids-12mm1.16-250-170400.avi, Draconids-12mm1.20-650-171300.avi, Draconids-12mm1.26-3100-172700.avi, Draconids-12mm1.27-2800-173000.avi, Draconids-12mm1.28-350-173100.avi, Draconids-12mm1.30-1700-173600.avi, Draconids-12mm1.33-2350-174300.avi, Draconids-12mm2.00.01-3000-201200.avi, Draconids-12mm2.00.01-3100-201200.avi, Draconids-12mm2.00.02-1550-201300.avi, Draconids-12mm2.00.03-2000-201600.avi, Draconids-12mm2.00.04-1550-201900.avi, Draconids-12mm2.00.04-2550-201900.avi, Draconids-12mm2.00.05-150-202000.avi, Draconids-12mm2.00.05-1600-202100.avi, Draconids-12mm2.00.05-2900-202100.avi, Draconids-12mm2.00.05-2950-202100.avi, Draconids-12mm2.00.06-1400-202200.avi, Draconids-12mm2.00.08-3250-202700.avi, Draconids-12mm2.00.09-1250-202900.avi, Draconids-12mm2.00.09-1450-202900.avi, Draconids-12mm2.00.11-650-203300.avi, Draconids-12mm2.00.14-800-204000.avi, Draconids-12mm2.00.15-1850-204300.avi, Draconids-12mm2.00.15-2950-204300.avi, Draconids-12mm2.00.15-3050-204300.avi, Draconids-12mm2.00.21-1250-205500.avi, Draconids-12mm2.00.22-2250-205900.avi, Draconids-12mm2.00.27-1750-210900.avi, Draconids-12mm2.00.28-1800-211100.avi, Draconids-12mm2.00.28-2400-211200.avi, window_3_sony_0400-0405UTC.mp4 [773, 802], window_3_sony_0400-0405UTC.mp4 [1213, 1262], window_3_sony_0400-0405UTC.mp4 [1414, 1451], window_3_sony_0400-0405UTC.mp4 [2276, 2335], window_3_sony_0400-0405UTC.mp4 [2823, 2862], window_3_sony_0400-0405UTC.mp4 [2850, 2900], window_3_sony_0400-0405UTC.mp4 [2916, 2945], window_3_sony_0400-0405UTC.mp4 [3414, 3446], window_3_sony_0400-0405UTC.mp4 [3845, 3874], window_3_sony_0400-0405UTC.mp4 [4143, 4191], window_3_sony_0400-0405UTC.mp4 [4250, 4280], window_3_sony_0400-0405UTC.mp4 [4435, 4472], window_3_sony_0400-0405UTC.mp4 [5311, 5342], window_3_sony_0400-0405UTC.mp4 [6778, 6823], window_3_sony_0400-0405UTC.mp4 [7187, 7219], window_3_sony_0405-0410UTC.mp4 [261, 290], window_3_sony_0405-0410UTC.mp4 [306, 349], window_3_sony_0405-0410UTC.mp4 [1454, 1489], window_3_sony_0405-0410UTC.mp4 [2405, 2441], window_3_sony_0405-0410UTC.mp4 [3046, 3076], window_3_sony_0405-0410UTC.mp4 [3780, 3814], window_3_sony_0405-0410UTC.mp4 [4601, 4645], window_3_sony_0405-0410UTC.mp4 [5568, 5600], window_3_sony_0405-0410UTC.mp4 [6842, 6874], window_3_sony_0405-0410UTC.mp4 [6906, 6948], window_3_sony_0405-0410UTC.mp4 [7069, 7120], window_3_sony_0405-0410UTC.mp4 [7475, 7500], window_3_sony_0410-0415UTC.mp4 [0, 18], window_3_sony_0410-0415UTC.mp4 [104, 141], window_3_sony_0410-0415UTC.mp4 [349, 377], window_3_sony_0410-0415UTC.mp4 [943, 979], window_3_sony_0410-0415UTC.mp4 [2006, 2038], window_3_sony_0410-0415UTC.mp4 [2232, 2262], window_3_sony_0410-0415UTC.mp4 [2768, 2801], window_3_sony_0410-0415UTC.mp4 [3551, 3587], window_3_sony_0410-0415UTC.mp4 [4316, 4352], window_3_sony_0410-0415UTC.mp4 [4342, 4377], window_3_sony_0410-0415UTC.mp4 [4507, 4540], window_3_sony_0410-0415UTC.mp4 [4636, 4663], window_3_sony_0410-0415UTC.mp4 [6076, 6116], window_3_sony_0410-0415UTC.mp4 [6162, 6192], window_3_sony_0410-0415UTC.mp4 [6585, 6624], window_3_sony_0410-0415UTC.mp4 [6727, 6769], window_3_sony_0410-0415UTC.mp4 [7239, 7286], window_3_sony_0415-0420UTC.mp4 [30, 68], window_3_sony_0415-0420UTC.mp4 [425, 458], window_3_sony_0415-0420UTC.mp4 [709, 736], window_3_sony_0415-0420UTC.mp4 [1054, 1086], window_3_sony_0415-0420UTC.mp4 [1363, 1406], window_3_sony_0415-0420UTC.mp4 [1413, 1446], window_3_sony_0415-0420UTC.mp4 [1890, 1922], window_3_sony_0415-0420UTC.mp4 [2068, 2111], window_3_sony_0415-0420UTC.mp4 [2299, 2329], window_3_sony_0415-0420UTC.mp4 [2689, 2745], window_3_sony_0415-0420UTC.mp4 [2878, 2907], window_3_sony_0415-0420UTC.mp4 [3362, 3392], window_3_sony_0415-0420UTC.mp4 [3711, 3761], window_3_sony_0415-0420UTC.mp4 [3963, 3999], window_3_sony_0415-0420UTC.mp4 [5592, 5626], window_3_sony_0415-0420UTC.mp4 [5880, 5920], window_3_sony_0415-0420UTC.mp4 [6481, 6524], window_3_sony_0415-0420UTC.mp4 [6775, 6810], window_3_sony_0415-0420UTC.mp4 [6961, 7009], window_3_sony_0420-0425UTC.mp4 [520, 549], window_3_sony_0420-0425UTC.mp4 [1743, 1779], window_3_sony_0420-0425UTC.mp4 [2173, 2213], window_3_sony_0420-0425UTC.mp4 [2656, 2693], window_3_sony_0420-0425UTC.mp4 [3091, 3127], window_3_sony_0420-0425UTC.mp4 [3292, 3329], window_3_sony_0420-0425UTC.mp4 [4286, 4330], window_3_sony_0420-0425UTC.mp4 [6043, 6079], window_3_sony_0420-0425UTC.mp4 [6230, 6262], window_3_sony_0425-0430UTC.mp4 [474, 507], window_3_sony_0425-0430UTC.mp4 [1001, 1033], window_3_sony_0425-0430UTC.mp4 [1125, 1156], window_3_sony_0425-0430UTC.mp4 [1314, 1353], window_3_sony_0425-0430UTC.mp4 [1914, 1952], window_3_sony_0425-0430UTC.mp4 [2104, 2143], window_3_sony_0425-0430UTC.mp4 [3921, 3956], window_3_sony_0425-0430UTC.mp4 [4256, 4290], window_3_sony_0425-0430UTC.mp4 [4865, 4896], window_3_sony_0425-0430UTC.mp4 [5484, 5516], window_3_sony_0425-0430UTC.mp4 [6595, 6639], window_3_sony_0425-0430UTC.mp4 [7058, 7091], window_3_sony_0500-0505UTC.mp4 [137, 170], window_3_sony_0500-0505UTC.mp4 [504, 537], window_3_sony_0500-0505UTC.mp4 [1172, 1203], window_3_sony_0500-0505UTC.mp4 [2262, 2289], window_3_sony_0500-0505UTC.mp4 [2532, 2566], window_3_sony_0500-0505UTC.mp4 [2624, 2667], window_3_sony_0500-0505UTC.mp4 [2883, 2912], window_3_sony_0500-0505UTC.mp4 [3528, 3560], window_3_sony_0500-0505UTC.mp4 [4537, 4568], window_3_sony_0500-0505UTC.mp4 [4781, 4809], window_3_sony_0500-0505UTC.mp4 [5147, 5184], window_3_sony_0500-0505UTC.mp4 [5217, 5271], window_3_sony_0500-0505UTC.mp4 [6314, 6349], window_3_sony_0500-0505UTC.mp4 [7073, 7109], window_3_sony_0500-0505UTC.mp4 [7377, 7404], window_3_sony_0500-0505UTC.mp4 [7422, 7457]]
+>>> len(fmdt.load_all())
+175
+```
+
+### Filtering
+
+We can filter which videos to load using the `require_exist`, `require_gt` and `require_best_det`
+parameters.
+
+=== "require_exist"
+
+    ```python
+    fmdt.load_draco6(require_exist=True)
+    fmdt.load_draco12(require_exist=True)
+    fmdt.load_window(require_exist=True)
+    fmdt.load_window_clips(require_exist=True)
+    fmdt.all(require_exist=True)
+    ```
+
+=== "require_gt"
+
+    ```python
+    fmdt.load_draco6(require_gt=True)
+    fmdt.load_draco12(require_gt=True)
+    fmdt.load_window(require_gt=True)
+    ```
+
+=== "require_best_det"
+
+    ```python
+    fmdt.load_draco6(require_best_det=True)
+    fmdt.load_draco12(require_best_det=True)
+    fmdt.load_window(require_best_det=True)
+    fmdt.load_window_clips(require_best_det=True)
+    fmdt.all(require_best_det=True)
+    ```
+
+Of course, any combination of these three options is permitted, as long as the function supports 
+each filtering option. Note that having a best detection stored in our database implies the presence
+of a ground truth.
+
+Thus,
+
+```python
+fmdt.load_draco6(require_exist=True, require_gt=True)
+```
+
+returns a superset of
+
+```
+fmdt.load_draco6(require_exist=True, require_best_det=True)
+```
 
 ## Video interface
 

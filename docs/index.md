@@ -1,3 +1,7 @@
+!!! warning
+
+    This documentation is a work in progress for `fmdt-python` version `0.1.*`
+
 ### fmdt-python
 
 **fmdt-python** is the name of a **pypi** package that contains the _Python_ 
@@ -11,7 +15,7 @@ wide range of videos (resolution, noise, camera movement).
 
 To get familiar with the project:
 
-- [install fmdt](installation.md),
+- [install `fmdt-python`](installation.md),
 - Study the core usage docs [here](./iz_one_and_only.md),
 - check out the [source code](https://github.com/ejovo13/fmdt_python_clean/tree/build),
 - work through some [tutorials](tutorials/1_detecting_meteors.md).
