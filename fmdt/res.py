@@ -4,15 +4,95 @@ import re
 import pandas as pd
 import fmdt.args
 import fmdt.core
+import fmdt.truth
 
-from fmdt.exceptions import (
-    LogError
-)
+from fmdt.exceptions import *
 
 from fmdt.utils import (
     stderr,
-    join
+    join,
 )
+
+class AbstractResult:
+    """Abstract Base Clase for the Result type.
+    
+    Any implementer MUST conform to the following specifications:
+    - have an args field of type fmdt.args.Args 
+    - have a function .get_trk_list() that returns list[TrackedObject]
+    - have a function .vid_path() that returns the relevant video path.
+
+    For example, DetectionResult.vid_path() returns a path to the video that was detected
+    whereas VisuResult.vid_path() returns a path to the video that has bounding boxes drawn
+    """
+
+    args = None
+
+    def get_trk_list(self) -> list[fmdt.truth.TrackedObject]:
+
+        trk_path = self.args.trk_path()
+        if trk_path is None:
+            raise TypeError(f"No trk_path stored in args field of {type(self)}, cannot retrieve list of TrackedObject")
+
+        return fmdt.core.extract_all_information(self.args.trk_path())
+
+    def vid_path(self):
+        raise AbstractResultError(f"vid_path not implemented for child {type(self)}")
+
+    def detect(self):
+        return self.args.detect()
+
+    def log_parser(self):
+        return self.args.log_parser()
+
+    def visu(self):
+        return self.args.visu()
+
+    def split(
+        self,
+        nframes_before=3,
+        nframes_after=3,
+        overwrite=True,
+        condense=True,
+        out_dir=None,
+    ) -> None:
+        """Split a video into small segments containing detected meteors"""
+
+        vid_in_path = self.vid_path()
+
+        assert not vid_in_path is None, "Cannot call fmdt.DetectionResult.split() with empty vid_in_path"
+
+        meteors = [t for t in self.get_trk_list() if t.is_meteor()]
+        
+        # Extract the start and end frames
+        start_end = [(m.start_frame, m.end_frame) for m in meteors] 
+
+        if self.args.verbose:
+            stderr("Args set to verbose inside split")
+
+        fmdt.core.split_video_at_intervals(vid_in_path,
+                                           start_end,
+                                           nframes_before,
+                                           nframes_after,
+                                           overwrite,
+                                           verbose=self.args.verbose,
+                                           condense=condense,
+                                           out_dir=out_dir)
+
+    def clutter_files(self) -> list[str]:
+        return self.args.clutter()
+        
+    def cleanup(self) -> None:
+
+        clutter = self.clutter_files()
+
+        if self.args.verbose:
+            print(f"Cleaning up clutter files: {set(clutter)}")
+
+        for f in self.clutter_files():
+            if os.path.exists(f):
+                os.remove(f)
+
+
 
 def get_ordered_frames(log_path: str, max_frames = None) -> list[str]:
 
@@ -106,10 +186,15 @@ def retrieve_all_std_devs(log_path: str, frames: list[str]) -> list[float]:
     
     return [mean_err(f) for f in frames]
 
-def retrieve_log_info(log_path: str, max_frames = None) -> tuple[list[int], list[int], list[float], list[float]]:
+def retrieve_log_info(
+        log_path: str, 
+        max_frames = None,
+        verbose = False
+    ) -> tuple[list[int], list[int], list[float], list[float]]:
     """Return [nrois], [nassocs], [mean_errs], [std_devs]"""
 
-    print(f"Trying to retrieve log info here: {log_path}")
+    if verbose:
+        print(f"Retrieving log information from: {log_path}")
 
     frames = get_ordered_frames(log_path, max_frames)
 
@@ -134,7 +219,7 @@ def retrieve_log_df(log_path: str) -> pd.DataFrame:
         "std_dev": [0.0] + std_dev
     })
 
-class DetectionResult:
+class DetectionResult(AbstractResult):
 
     def __init__(
             self,
@@ -151,15 +236,19 @@ class DetectionResult:
         self.trk_list = trk_list
         self.video = video
 
-    def detect(self):
-        return self.args.detect()
+    # ============================ ABC overrides ==============================
+    def get_trk_list(self) -> list[fmdt.truth.TrackedObject]:
+        return self.trk_list
+
+    def vid_path(self) -> str:
+        return self.args.vid_in_path()
 
     def log_parser(self):
+
+        assert len(self.trk_list) != 0, f"trk_list empty, aborting call to DetectionResult.log_parser(). Consider setting trk_all=True during detection to ensure a nonempty trk_list" 
+
         return self.args.log_parser()
 
-    def visu(self):
-        return self.args.visu()
-    
     def cmd(self) -> str:
         """Return the command used to call this detect"""
         return self.args.command()
@@ -186,7 +275,12 @@ class DetectionResult:
 
         return a + b + c
     
-    def check(self, gt_path: str = None, stdout: str = "check.txt", log = False):
+    def check(
+            self,
+            gt_path: str = None,
+            stdout: str = "check.txt",
+            verbose = False
+        ):
         """Call fmdt-check with these results
         
         Parameters
@@ -205,10 +299,10 @@ class DetectionResult:
 
             assert self.video.has_meteors(), f"Video {self.video} has no gts in our data base. Specify a meteors file with the `gt_path` argument"
 
-            return self.video.evaluate_args(self.args, self.video.meteors(), stdout=stdout, log=log)
+            return self.video.evaluate_args(self.args, self.video.meteors(), stdout=stdout, verbose=verbose)
 
         else:
-            return fmdt.check(self.args.detect_args.trk_path, gt_path, stdout=stdout, log=log)
+            return fmdt.check(self.args.detect_args.trk_path, gt_path, stdout=stdout, verbose=verbose)
 
     # @staticmethod
     # def from_file(trk_path: str, log_path: str):
@@ -256,6 +350,33 @@ class DetectionResult:
     
     def mean_std_dev(self) -> float:
         return self.df["std_dev"].mean()
+    
+class LogParserResult(AbstractResult):
+
+    def __init__(
+            self,
+            args: fmdt.args.Args
+        ):
+
+        self.args = args
+
+    def vid_path(self):
+        return self.args.vid_in_path()
+
+
+class VisuResult(AbstractResult):
+
+    def __init__(
+            self,
+            args: fmdt.args.Args
+        ):
+
+        self.args = args
+
+    def vid_path(self):
+        return self.args.vid_out_path()
+        
+
     
 # load a DetectionResult object from a trk_path and a log_path
 def load_det_result(trk_path: str, log_path: str) -> DetectionResult:
