@@ -79,97 +79,6 @@ def count(
 
 FMDT_TIMEOUT = 1
 
-def _run_detect_stdout(
-        argv: list[str],
-        timeout: float,
-        log: bool,
-        cache: bool,
-        cache_file: str = None
-    ) -> tuple[list[fmdt.core.TrackedObject], int]:
-    """Handle the final logic of calling `fmdt-detect` when not storing the track list in a file"""
-
-    if log:
-        print(f"Executing cmd: {' '.join(argv)}")
-
-    # Store this data in a tmp file and then use that to get the tracking list.
-    tmp_filename = "fmdt_detect_tmp.txt"
-    tmp_file = open(tmp_filename, "w")
-
-    if not timeout is None:
-
-        try:
-            subprocess.run(argv, timeout=timeout, stdout=tmp_file)
-            tmp_file.close()
-
-        except:
-            print(f"Subprocess timed out for {colored(' '.join(argv), 'red')}")
-            tmp_file.close()
-            os.remove(tmp_filename)
-            return [], 0
-    else:
-        subprocess.run(argv, stdout=tmp_file)
-
-    if log: 
-        with open(tmp_filename) as tmp_file:
-            print(tmp_file.read())
-    
-    if cache:
-        shutil.copyfile(src=tmp_file, dst=cache_file)
-
-    trk_list = fmdt.core.extract_all_information(tmp_filename)
-    nframes = fmdt.core.nframes_processed(tmp_filename)
-
-    os.remove(tmp_filename)
-
-    return trk_list, nframes
-
-def _run_detect_trk_path(
-        trk_path: str,
-        argv: list[str],
-        timeout: float,
-        log: bool,
-        cache: bool,
-        cache_file: str
-    ) -> tuple[list[fmdt.core.TrackedObject], int]:
-
-    with open(trk_path, 'w') as outfile:
-
-        if log:
-            print(f"Executing cmd: {' '.join(argv)}")
-
-        if not timeout is None:
-            try: 
-                proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
-                outs, _ = proc.communicate(timeout=timeout)
-                lines = outs.decode("utf-8").split("\n")
-                for line in lines:
-                    print(line)
-                    outfile.write(line + "\n")
-                proc.wait(timeout=timeout)
-            except:
-                print("==================================================================")
-                print("")
-                print(f"Subprocess timed out for \n\t{colored(' '.join(argv), 'blue')}")
-                print("")
-                print("==================================================================")
-                return [], 0
-        else:
-            proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
-            outs, _ = proc.communicate()
-            lines = outs.decode("utf-8").split("\n")
-            for line in lines:
-                print(line)
-                outfile.write(line + "\n")
-            proc.wait()
-        
-    trk_list = fmdt.core.extract_all_information(trk_path)
-    nframes = fmdt.core.nframes_processed(trk_path)
-            
-    if cache:
-        shutil.copyfile(src=trk_path, dst=cache_file)
-
-    return trk_list, nframes
-    
 
 def detect(
         #=================== fmdt-detect parameters ================
@@ -202,8 +111,8 @@ def detect(
         trk_roi_path: str | None = None,
         log_path: str | None = None,
         #================== Additional Parameters ====================
-        trk_path: str | None = "trk.txt",
-        log: bool = False,
+        trk_path: str | None = None,
+        verbose: bool = False,
         timeout: float = None,
         cache: bool = False,
         save_df: bool = False
@@ -217,7 +126,7 @@ def detect(
     Wrapper Parameters
     ------------------
     trk_path (str): path to redirect stdout of `fmdt-detect`
-    log (bool): Print logging messages to stdout (True) or do nothing (False). Default False.
+    verbose (bool): Print logging messages to stdout (True) or do nothing (False). Default False.
     timeout (float): timeout in seconds of the Python subprocess executing `fmdt-detect`. Default None. 
         Used to speed up ground truth testing.
     """
@@ -253,7 +162,20 @@ def detect(
                                  trk_roi_path=trk_roi_path,
                                  log_path=log_path,
                                  trk_path=trk_path,
-                                 log=log)
+                                 verbose=verbose)
+
+    if not log_path is None:
+
+        if verbose:
+            print(f"Clearing all frame files (matching r'\d*.txt') from {log_path}")
+
+        fmdt.utils.mkdir_p(log_path)
+
+        # Clear all the frame files in log_path
+        frames = fmdt.res.get_ordered_frames(log_path) 
+
+        for f in frames:
+            os.remove(fmdt.utils.join(log_path, f))
     
     if save_df and log_path is None:
         print("Save_df activated in final detect call")
@@ -268,9 +190,9 @@ def detect(
 
     #============ Retrieve Tracked list ===========================================#
     if trk_path is None:
-        trk_list, nframes = _run_detect_stdout(argv, timeout, log, cache, cache_file) 
+        trk_list, nframes = _run_detect(args.gen_unique_trk(), argv, timeout, verbose, cache, cache_file, tmp_file=True)
     else:
-        trk_list, nframes = _run_detect_trk_path(trk_path, argv, timeout, log, cache, cache_file)
+        trk_list, nframes = _run_detect(trk_path, argv, timeout, verbose, cache, cache_file)
 
     #============= Recover data if log_path =======================================#
     if not args.detect_args.log_path is None:
@@ -305,12 +227,21 @@ def log_parser(
         trk_path: str | None = None,
         trk_json_path: str | None = None,
         trk_bb_path: str | None = None,
-    ) -> fmdt.args.Args:
+        #========================== Additional Options ========================
+        stdout: str | None = None,
+        verbose: bool = False
+    ) -> fmdt.res.LogParserResult:
     """Wrapper to executable fmdt-log-parser.
 
     Parameters
     ----------
     Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/log.html
+
+    
+    stdout (str): A file path to save the contents of the standard out of fmdt-log-parser
+    verbose (bool): 
+
+
     """
     log_parser_args = fmdt.args.log_parser_args(log_path=log_path,
                                                 trk_roi_path=trk_roi_path,
@@ -324,9 +255,17 @@ def log_parser(
 
     argv = fmdt.args.handle_log_parser_args(**log_parser_args.to_dict())
 
-    subprocess.run(argv)
+    if stdout is None:
 
-    return fmdt.args.Args(log_parser_args=log_parser_args, detect_args=None, visu_args=None)
+        stdout = log_parser_args.gen_unique_file(prefix="log_parser_")
+        _run_process(stdout, argv, verbose, tmp_file=True)
+
+    else:
+        _run_process(stdout, argv, verbose)
+
+    args = fmdt.args.Args(log_parser_args=log_parser_args, detect_args=None, visu_args=None)
+
+    return fmdt.res.LogParserResult(args)
             
 def visu(
         vid_in_path: str,
@@ -339,8 +278,11 @@ def visu(
         trk_id: bool | None = None,
         trk_nat_num: bool | None = None,
         trk_only_meteor: bool | None = None,
-        gt_path: str | None = None
-    ) -> fmdt.args.Args:
+        gt_path: str | None = None,
+        #========================== Additional Options ========================
+        verbose: bool = False,
+        stdout: str | None = None
+    ) -> fmdt.res.VisuResult:
     """Wrapper to executable fmdt-visu.
 
     Parameters
@@ -361,15 +303,21 @@ def visu(
 
     argv = fmdt.args.handle_visu_args(**visu_args.to_dict())
 
-    subprocess.run(argv)
+    if stdout is None:
+        stdout = visu_args.gen_unique_file(prefix="visu_")
+        _run_process(stdout, argv, verbose, tmp_file=True)
+    else:
+        _run_process(stdout, argv, verbose)
 
-    return fmdt.args.Args(visu_args=visu_args, detect_args=None, log_parser_args=None)
+    args = fmdt.args.Args(visu_args=visu_args, detect_args=None, log_parser_args=None)
+
+    return fmdt.res.VisuResult(args)
 
 def check(
         trk_path: str,
         gt_path: str,
         stdout: str = None,
-        log = False
+        verbose = False
     ) -> fmdt.res.CheckResult:
     """Call fmdt-check
     
@@ -377,36 +325,16 @@ def check(
     ----------
     std_out (str): File to store stdout of fmdt-check"""
 
-    if fmdt.args.get_exec_path() is None:
-        fmdt_check_exe = shutil.which("fmdt-check")
-    else:
-        fmdt_check_exe = shutil.which("fmdt-check", path=fmdt.args.get_exec_path())
+    argv = fmdt.args.handle_check_args(trk_path, gt_path)
 
-    assert not fmdt_check_exe is None, "fmdt-check executable not found!"
+    _run_process(stdout, argv, verbose, False)
 
-    argv = [fmdt_check_exe, "--trk-path", trk_path, "--gt-path", gt_path]
-    res = subprocess.run(argv, stdout=subprocess.PIPE)
-
-    file_content = res.stdout.decode()
-
-    if not stdout is None:
-        with open(stdout, "w") as file:
-            file.write(file_content)
-
-        stats = fmdt.res.load_check_stats(stdout)
-        gt_table = fmdt.res.load_check_gt_table(stdout)
+    stats = fmdt.res.load_check_stats(stdout)
+    gt_table = fmdt.res.load_check_gt_table(stdout)
     
-    else:
-
-        stats = None
-        gt_table = None
-
-    if (log):
-        print(file_content)
-
     return fmdt.res.CheckResult(gt_table=gt_table, stats=stats)
 
-def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
+def detect_directory(dir_name: str, args: fmdt.args.Args, verbose=False):
     """Call `fmdt-detect` on all videos in the directory `dir_name` using the settings stored in `args`
     
     Parameters
@@ -427,16 +355,11 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
     failing_cmds = []
     i = 0
     for v in videos:
-        # res = fmdt.detect(directory + "/" + v, ccl_hyst_lo=150, ccl_hyst_hi=245, trk_all=True, log=False, trk_path="tracks.txt")
-        # a = fmdt.args.video_input(directory + "/" + v)
-        # a.detect_args["trk_path"] = "tracks.txt"
 
-        # if i > 10:
-        #     break
         args.detect_args["vid_in_path"] = dir_name + "/" + v
 
-        fail = args.does_detect_fail(log=log)
-        if log: 
+        fail = args.does_detect_fail(verbose=verbose)
+        if verbose: 
             print(f"{v} fails? {fail}")
 
         if (fail):
@@ -446,3 +369,102 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, log=False):
 
     for c in failing_cmds:
         print(c)
+
+
+# ===================== _run_$EXECUTABLE ======================================
+def _run_detect(
+        trk_path: str,
+        argv: list[str],
+        timeout: float,
+        verbose: bool,
+        cache: bool,
+        cache_file: str,
+        tmp_file: bool = False
+    ) -> tuple[list[fmdt.core.TrackedObject], int]:
+    """Handle the final logic of calling `fmdt-detect`
+    
+
+    Parameters
+    ----------
+    tmp_file (bool): Indicates whether `trk_path` is a temporary file that should be deleted after execution.
+        Default False
+    
+    """
+
+    with open(trk_path, 'w') as outfile:
+
+        if verbose:
+            print(f"Executing cmd: {' '.join(argv)}")
+
+            if tmp_file:
+                print(f"{trk_path} marked as a temporary file")
+
+        if not timeout is None:
+            try: 
+                proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+                outs, _ = proc.communicate(timeout=timeout)
+                lines = outs.decode("utf-8").split("\n")
+                for line in lines:
+                    if verbose:
+                        print(line)
+                    outfile.write(line + "\n")
+                proc.wait(timeout=timeout)
+            except:
+                print("==================================================================")
+                print("")
+                print(f"Subprocess timed out for \n\t{colored(' '.join(argv), 'blue')}")
+                print("")
+                print("==================================================================")
+                return [], 0
+        else:
+            proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+            outs, _ = proc.communicate()
+            lines = outs.decode("utf-8").split("\n")
+            for line in lines:
+                if verbose:
+                    print(line)
+                outfile.write(line + "\n")
+            proc.wait()
+        
+    trk_list = fmdt.core.extract_all_information(trk_path)
+    nframes = fmdt.core.nframes_processed(trk_path)
+            
+    if cache:
+        shutil.copyfile(src=trk_path, dst=cache_file)
+
+    if tmp_file:
+        os.remove(trk_path)
+
+    return trk_list, nframes
+
+def _run_process(
+        stdout_file,
+        argv: list[str],
+        verbose: bool,
+        tmp_file: bool = False
+    ) -> tuple[list[fmdt.core.TrackedObject], int]:
+    """Handle the final logic of calling `fmdt-log-parser`
+    
+    Parameters
+    ----------
+    stdout_file (str): File path to capture standard out of log_parser
+    tmp_file (bool): Indicates whether `trk_path` is a temporary file that should be deleted after execution.
+        Default False
+    
+    """
+    with open(stdout_file, 'w') as outfile:
+
+        if verbose:
+            print(f"Executing cmd: {' '.join(argv)}")
+
+        proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
+        outs, _ = proc.communicate()
+        lines = outs.decode("utf-8").split("\n")
+        for line in lines:
+            if verbose:
+                print(line)
+            outfile.write(line + "\n")
+        proc.wait()
+
+    if tmp_file:
+        os.remove(stdout_file)
