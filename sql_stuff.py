@@ -1,13 +1,13 @@
 """Convert the contents of `human_detectsions.csv` and `video_list.csv` and "meteors.txt" into a single data base file `videos.db`"""
 
-import sqlite3 
+import sqlite3
 import pandas as pd
 from fmdt.args import *
 import fmdt.db
 import fmdt.truth
 import fmdt.utils
 
-from fmdt.utils import md5ssl 
+from fmdt.utils import md5ssl
 
 def create_database_file():
     """Create our database 'videos.db' wiping the previous content"""
@@ -19,15 +19,21 @@ def create_video_table():
     con = sqlite3.connect("videos.db")
     cur = con.cursor()
 
+    # ============================ Add MD5 hashes for data integrity =================
     # this is a little bit dangerous because we are now working recursively
-    vids = fmdt.retrieve_videos()
+    # vids = fmdt.retrieve_videos()
+    # cur.execute("""CREATE TABLE video(
+    #                 id INTEGER NOT NULL PRIMARY KEY,
+    #                 name TEXT,
+    #                 type TEXT,
+    #                 md5 TEXT
+    #             )""")
 
     cur.execute("""CREATE TABLE video(
-                    id INTEGER NOT NULL PRIMARY KEY,
-                    name TEXT,
-                    type TEXT,
-                    md5 TEXT
-                )""")
+                id INTEGER NOT NULL PRIMARY KEY,
+                name TEXT,
+                type TEXT
+            )""")
 
     # Let's load in our csv
     df = pd.read_csv("./data/video_list.csv")
@@ -39,10 +45,16 @@ def create_video_table():
         name = r["name"]
         type = r["type"]
 
+        # cur.execute(f"""
+        # INSERT INTO video VALUES
+        #     ({id}, '{name}', '{type}', '{md5ssl(vids[i].full_path())}')
+        # """)
+
         cur.execute(f"""
-        INSERT INTO video VALUES 
-            ({id}, '{name}', '{type}', '{md5ssl(vids[i].full_path())}')
+        INSERT INTO video VALUES
+            ({id}, '{name}', '{type}')
         """)
+
 
         print(f"Finished inserting {name}")
 
@@ -65,7 +77,7 @@ def create_human_detections():
 
     # Pandas DataFrame Ground Truths
     cur.execute("""CREATE TABLE human_detections (
-                        id INTEGER NOT NULL PRIMARY KEY, 
+                        id INTEGER NOT NULL PRIMARY KEY,
                         video_name TEXT,
                         start_x INTEGER,
                         start_y INTEGER,
@@ -90,7 +102,7 @@ def create_human_detections():
         end_frame = r["end_frame"]
 
         cur.execute(f"""
-        INSERT INTO human_detections VALUES 
+        INSERT INTO human_detections VALUES
             ({i}, '{vid_name}', {start_x}, {start_y}, {start_frame}, {end_x}, {end_y}, {end_frame})
         """)
 
@@ -106,7 +118,7 @@ def create_human_detections():
     #     m = meteors[i - start]
 
     #     query = f"""
-    #     INSERT INTO human_detections VALUES 
+    #     INSERT INTO human_detections VALUES
     #         ({i}, '{m.video_name}', {m.start_x}, {m.start_y}, {m.start_frame}, {m.end_x}, {m.end_y}, {m.end_frame})
     #     """
 
@@ -144,7 +156,7 @@ def create_video_clips():
         all_clips += w.create_clips(db_dir = "./")
 
     for i, c in enumerate(all_clips):
-        
+
         sql = f"""INSERT INTO video_clips VALUES (
             {i}, {c.parent_id()}, {c.start_frame}, {c.end_frame}
         )"""
@@ -162,7 +174,8 @@ def read_best_detections():
 
     best_d6  = pd.read_csv("./data/best_d6.csv")
     best_d12 = pd.read_csv("./data/best_d12.csv")
-    best_win = pd.read_csv("./data/best_win_clips.csv")
+    best_win = pd.read_csv("./data/best_window_new.csv")
+    # best_win = pd.read_csv("./data/best_win_clips.csv")
 
     # The goal is to convert these files into a "best detection"
 
@@ -178,7 +191,7 @@ def read_best_detections():
     for _, r in best_d6.iterrows():
 
         if r.trk_rate != 0:
-        
+
             v = fmdt.get_video(r.video_name)
             d_args = fmdt.Args.new(ccl_hyst_lo=r.lmin, ccl_hyst_hi=r.lmax).detect_args
 
@@ -190,7 +203,7 @@ def read_best_detections():
     for _, r in best_d12.iterrows():
 
         if r.trk_rate != 0:
-        
+
             v = fmdt.get_video(r.video_name)
             d_args = fmdt.Args.new(ccl_hyst_lo=r.lmin, ccl_hyst_hi=r.lmax).detect_args
 
@@ -202,11 +215,13 @@ def read_best_detections():
 
         if r.trk_rate != 0:
 
-            v = fmdt.VideoClip(r.video_name, r.start_frame, r.end_frame)
+            # v = fmdt.VideoClip(r.video_name, r.start_frame, r.end_frame)
+            v = fmdt.VideoClip(r["name"], r.start_frame, r.end_frame)
             d_args = fmdt.Args.new(ccl_hyst_lo=r.lmin, ccl_hyst_hi=r.lmax, knn_d = 30).detect_args
 
             win_detections.append(
-                (v.id(db_dir = "./"), d_args, r.n_Tpos, r.trk_rate)
+                # (v.id(db_dir = "./"), d_args, r.n_Tpos, r.trk_rate)
+                (v.id(db_dir = "./"), d_args, r.tpos, r.trk_rate)
             )
 
     print(len(d6_detections))
@@ -218,7 +233,7 @@ def read_best_detections():
 
     con = sqlite3.connect("videos.db")
     cur = con.cursor()
-    
+
     cur.execute(fmdt.DetectArgs.sql_create_table())
     con.commit()
 
