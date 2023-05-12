@@ -1,13 +1,10 @@
 import unittest
-import shutil
-# import fmdt.api
 import os
 import fmdt.args
 import fmdt.api
 import fmdt.res
 import fmdt.core
 import fmdt.download
-import pandas as pd
 
 from fmdt.utils import stderr
 
@@ -20,7 +17,7 @@ class TestDatabase(unittest.TestCase):
     NB_DRACO6_TOTAL = 52
     NB_DRACO6_WITH_METEORS = 38
     NB_DRACO12_TOTAL = 41
-    NB_DRACO12_WITH_METEORS = 37 
+    NB_DRACO12_WITH_METEORS = 37
     NB_WINDOW = 7
 
     def test_demo(self):
@@ -44,7 +41,7 @@ class TestDatabase(unittest.TestCase):
         for d in d6_det:
             self.assertTrue(d.has_best_detection())
 
-    
+
     def test_draco12(self):
 
         d12 = fmdt.load_draco12()
@@ -68,13 +65,13 @@ class TestDatabase(unittest.TestCase):
     def test_window_clips(self):
 
         window_clips = fmdt.load_window_clips()
-        
+
         for w in window_clips:
             self.assertTrue(w.has_meteors())
 
     def test_report(self):
         stderr("Database successfully tested")
-    
+
 
 class TestDetect(unittest.TestCase):
 
@@ -96,12 +93,12 @@ class TestDetect(unittest.TestCase):
     def test_detect_demo_verbose_trk_path(self):
 
         res = self.DEMO.detect(verbose=True, trk_path=self.TRACK_PATH)
-        
+
         self.assertTrue(os.path.exists(self.TRACK_PATH))
         os.remove(self.TRACK_PATH)
 
         res.cleanup()
-        
+
 
     def test_detect_demo_no_trk_path(self):
 
@@ -119,13 +116,13 @@ class TestVisu(unittest.TestCase):
 
 class TestArgs(unittest.TestCase):
 
-    """This TestCase deals with the creation of Args objects and verifies that the shell commands have 
-    their parameters set appropriately. 
+    """This TestCase deals with the creation of Args objects and verifies that the shell commands have
+    their parameters set appropriately.
     """
 
     CCL_HYST_LO = 150
     CCL_HYST_HI = 155
-    
+
     def test_cmd_production(self):
 
         args = fmdt.Args.new(ccl_hyst_lo=self.CCL_HYST_LO, ccl_hyst_hi=self.CCL_HYST_HI)
@@ -151,7 +148,7 @@ class TestArgs(unittest.TestCase):
 #         fmdt_detect_exe = shutil.which("fmdt-detect")
 #         self.assertTrue(not fmdt_detect_exe is None, "Executable 'fmdt-detect' not found on the path")
 
-    
+
 # class TestARGS(unittest.TestCase):
 
 #     #================= Creation of Args type ==============
@@ -219,7 +216,7 @@ class TestArgs(unittest.TestCase):
 
 #         self.assertTrue(len(res.trk_list) == 82)
 #         self.assertTrue(len(res.nrois) == 256)
-        
+
 
 #         df = res.to_dataframe()
 
@@ -249,7 +246,7 @@ class TestArgs(unittest.TestCase):
 
 
 def main() -> None:
-    unittest.main()    
+    unittest.main()
 
 if __name__ == '__main__':
     main()

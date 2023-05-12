@@ -42,10 +42,10 @@ class VideoType(Enum):
             return "DEMO"
         else:
             return "OTHER"
-        
+
     def __repr__(self) -> str:
         return self.__str__()
-    
+
     def dir(self) -> str:
 
         con = fmdt.config.load_config()
@@ -61,12 +61,12 @@ class VideoType(Enum):
             return con.win
         else:
             return "./"
-        
-    
+
+
     @staticmethod
     def from_str(str):
         if str == "DRACO6":
-            return VideoType.DRACO6 
+            return VideoType.DRACO6
         elif str == "DRACO12":
             return VideoType.DRACO12
         elif str == "WINDOW":
@@ -81,38 +81,38 @@ class VideoType(Enum):
 class Video:
 
     csv_hdr = "id,name,type\n"
-    
+
     def __init__(self, name: str, type: VideoType = None):
         self.name = name
         self.type = type
 
     def to_csv(self) -> str:
         return f"{self.name},{self.type}\n"
-    
+
     def __str__(self) -> str:
         return f"{self.name}"
-    
+
     def __repr__(self) -> str:
         return self.__str__()
-    
+
     def is_draco6(self) -> bool:
         return self.type == VideoType.DRACO6
-    
+
     def is_window(self) -> bool:
         return self.type == VideoType.WINDOW
-    
+
     def is_draco12(self) -> bool:
         return self.type == VideoType.DRACO12
-    
+
     def dir(self) -> str:
         return self.type.dir()
-    
+
     def visu_name(self) -> str:
 
         beg, ext = fmdt.utils.decompose_video_filename(self.name)
 
         return beg + "_visu." + ext
-    
+
     def prefix(self) -> str:
 
         pre, _ = fmdt.utils.decompose_video_filename(self.name)
@@ -121,18 +121,18 @@ class Video:
     def suffix(self) -> str:
         _, suffix = fmdt.utils.decompose_video_filename(self.name)
         return suffix
-    
+
     def default_trk_path(self, dir: str = "."):
-        return dir + "/" + self.prefix() + "_trk.txt" 
+        return dir + "/" + self.prefix() + "_trk.txt"
 
     def detect_best(
             self,
             log_path = None,
-            verbose = False 
+            verbose = False
         ) -> fmdt.res.DetectionResult:
-        """Use the arguments from our best_detections database file to call a detection. 
-        
-        If there is no recorded best detection, then use FMDT's default parameters  
+        """Use the arguments from our best_detections database file to call a detection.
+
+        If there is no recorded best detection, then use FMDT's default parameters
         """
 
         if self.has_best_detection():
@@ -152,7 +152,7 @@ class Video:
             verbose = False
         ) -> bool:
         """Call detect_best().check() and see if the trk_rate is the same as what is recorded in our database
-        
+
 
         Return
         ------
@@ -215,8 +215,8 @@ class Video:
     ) -> fmdt.res.DetectionResult:
         """Call fmdt-detect with the provided parameters"""
 
-        args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
-        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, 
+        args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop,
+        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi,
         ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
         knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
         trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, verbose,
@@ -239,7 +239,7 @@ class Video:
     #     assert self.has_meteors(), f"Cannot call Video.check() because {self.name} has no ground truths in our database"
 
     #     args = fmdt.detect_args(**kwargs)
-        
+
     #     # I want to see if we have a cached trk list
     #     cached_trk_path = args.detect_args.cache_trk()
     #     cached_met_path = args.detect_args.cache_dir() + "_meteors.txt"
@@ -249,13 +249,13 @@ class Video:
     #         # Then we can directly call fmdt.check
     #         args.detect()
     #         # gen tmp file using meteors
-        
+
 
     #     pass
 
 
-    
-    def check_args(self, args: fmdt.Args) -> list[bool]: 
+
+    def check_args(self, args: fmdt.Args) -> list[bool]:
         """Check which meteors are detected by this choice of args using our internal python implementation to check if
         a meteor and tracked object are the same
 
@@ -268,12 +268,12 @@ class Video:
         args.detect_args.vid_in_path = self.full_path()
         res = args.detect()
 
-        return [m.is_detected_in_list(res.trk_list) for m in self.meteors()] 
-    
+        return [m.is_detected_in_list(res.trk_list) for m in self.meteors()]
 
 
 
-    def evaluate(self,        
+
+    def evaluate(self,
         #=================== fmdt-detect parameters ================
         vid_in_start: int | None = None,
         vid_in_stop: int | None = None,
@@ -311,8 +311,8 @@ class Video:
         log_check = False
         ):
 
-        args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop, 
-        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi, 
+        args = fmdt.args.detect_args(self.full_path(), vid_in_start, vid_in_stop,
+        vid_in_skip, vid_in_buff, vid_in_loop, vid_in_threads, ccl_hyst_lo, ccl_hyst_hi,
         ccl_fra_path, ccl_fra_id, cca_mag, cca_ell, mrp_s_min, mrp_s_max, knn_k, knn_d,
         knn_s, trk_ext_d, trk_ext_o, trk_angle, trk_star_min, trk_meteor_min,
         trk_meteor_max, trk_ddev, trk_all, trk_roi_path, log_path, trk_path, verbose,
@@ -335,41 +335,41 @@ class Video:
         con = sqlite3.connect(db_filename)
 
         query = f"""
-            select id from video where name = '{self.name}' 
-        
+            select id from video where name = '{self.name}'
+
         """
 
         df = pd.read_sql_query(query, con)
-        con.close()        
+        con.close()
 
         assert len(df) == 1, f"Something went wrong when looking up {self.name}"
         # Alternatively, we could return -1...
-        
+
         return df.iat[0,0]
-    
+
     def has_id(self, rhs_id: int) -> bool:
         """Return true if self has the same id as rhs_id"""
         return self.id() == rhs_id
-    
+
     def full_path(self) -> str:
         return self.dir() + "/" + self.name
-    
+
     def meteors(
             self,
             db_filename: str = "videos.db",
             db_dir = DEFAULT_DATA_DIR
     ) -> list[fmdt.HumanDetection]:
-        
+
         return retrieve_meteors(self.name, db_filename, db_dir)
-    
+
     def has_meteors(
             self,
             db_filename: str = "videos.db",
             db_dir = DEFAULT_DATA_DIR
     ) -> bool:
-        
+
         return len(self.meteors(db_filename, db_dir)) > 0
-    
+
     def has_best_detection(
             self,
             db_file: str = "videos.db",
@@ -415,7 +415,7 @@ class Video:
         _, trk_rate, _ = self.best_detection(db_file, db_dir)
 
         return trk_rate
-        
+
 
     def best_true_pos(
             self,
@@ -445,24 +445,24 @@ class Video:
         df = pd.read_sql_query(f"select * from video where video.name = {self.name}")
 
         return df["md5"].iloc[0]
-    
+
     def compute_trk_rate(self, **detect_args):
 
         c_res = self.detect(**detect_args).check()
         return c_res.trk_rate()
-    
+
     def frame_rate(self) -> float:
         return fmdt.utils.get_avg_frame_rate(self.full_path())
-    
+
     def nb_frames(self) -> int:
         return fmdt.utils.get_video_nb_frames(self.full_path())
 
     def nb_meteors(self) -> int:
         return len(self.meteors())
-    
+
     def duration(self) -> float:
         return fmdt.utils.get_video_duration(self.full_path())
-    
+
     def get_intervals(self, dur_s: float) -> list[tuple[int, int]]:
         """Compute a list of (start_frame, end_frame) intervals whose length is dur_s"""
         fps = self.frame_rate()
@@ -498,10 +498,10 @@ class Video:
             verbose = False
         ):
         """Call fmdt-detect and fmdt-check to evaluate how well a given set of arguments detects our ground truth
-        
+
         Parameters
         ----------
-        
+
         args (fmdt.Args): The set of fmdt-detect parameters that we want to evaluate
         meteors (list[fmdt.HumanDetection]): The list of meteors in our ground truth
         rerun (bool): Used to determine if we should rerun fmdt-detect when the trk_path file
@@ -525,8 +525,8 @@ class Video:
 
         # Then call fmdt_check
 
-        return fmdt.check(args.detect_args.trk_path, tmp_gt_file, stdout, verbose)
-    
+        return fmdt.check(args.detect_args.trk_path, tmp_gt_file, stdout, verbose, args=args)
+
     def create_clip(self, start_frame: int, end_frame: int):
 
         valid_bounds = start_frame >= 0 and end_frame <= self.nb_frames()
@@ -542,13 +542,13 @@ class Video:
             db_dir = DEFAULT_DATA_DIR):
         """
         If a video has meteors in our data base, create video clips that capture each meteor
-        
+
         Parameters
         ----------
         frame_buffer: int
             The number of frames to include before and after the appearance of a meteor
         condense: bool
-            Whether or not to condense sequences that overlap. For example if two meteors have the frame 
+            Whether or not to condense sequences that overlap. For example if two meteors have the frame
             intervals [0, 10] and [5, 15] and condense == True, then only create one video clip with frames
             [0, 15]
         """
@@ -578,7 +578,7 @@ class Video:
         if save_to_disk:
             for c in clips:
                 c.save()
-        
+
         return clips
 
     def retrieve_clips(
@@ -601,7 +601,7 @@ class Video:
     def from_pd_row(ser: pd.Series):
         out = Video(ser["name"], VideoType.from_str(ser["type"]))
         return out
-    
+
 
     @staticmethod
     def from_db_id(
@@ -609,7 +609,7 @@ class Video:
         db_file = "videos.db",
         db_dir = DEFAULT_DATA_DIR
     ):
-        
+
         con = sqlite3.connect(fmdt.utils.join(db_dir, db_file))
 
         video_pd = pd.read_sql_query(f"SELECT * FROM video WHERE id = {id}", con = con)
@@ -618,7 +618,7 @@ class Video:
         con.close()
 
         return v
-    
+
 class VideoClip(Video):
 
     def __init__(self, name: str, start_frame: int, end_frame: int, type: VideoType = None):
@@ -632,7 +632,7 @@ class VideoClip(Video):
 
     def __eq__(self, rhs) -> bool:
         return (
-            self.name == rhs.name and 
+            self.name == rhs.name and
             self.start_frame == rhs.start_frame and
             self.end_frame == rhs.end_frame
         )
@@ -648,12 +648,12 @@ class VideoClip(Video):
         def pred(hum_det: fmdt.HumanDetection):
             """Check if the meteors start frame is in the clip"""
             return hum_det.start_frame >= self.start_frame and hum_det.start_frame < self.end_frame
-        
+
         def modify_meteor(m: fmdt.HumanDetection):
             """Modify the interval with respect to this video clip"""
             m_c = deepcopy(m)
-            m_c.start_frame = m.start_frame - self.start_frame 
-            m_c.end_frame   = m.end_frame   - self.start_frame 
+            m_c.start_frame = m.start_frame - self.start_frame
+            m_c.end_frame   = m.end_frame   - self.start_frame
 
             return m_c
 
@@ -675,10 +675,10 @@ class VideoClip(Video):
             db_dir = DEFAULT_DATA_DIR
         ) -> tuple[fmdt.Args, float, int] | None:
         """
-        Get the best detection from our database, retrieved as a (args, trk_rate, n_true_pos) tuple. 
+        Get the best detection from our database, retrieved as a (args, trk_rate, n_true_pos) tuple.
 
         If no best detection exists, return None.
-        
+
         """
 
         id = self.id(db_file, db_dir)
@@ -688,17 +688,17 @@ class VideoClip(Video):
         else:
             fmdt.utils.stderr(f"WARNING: {self} has no best detection in {fmdt.utils.join(db_dir, db_file)}, VideoClip.best_detection(); returning None")
             return None
-    
+
     def parent_path(self) -> str:
         """Return the full path to the folder that these clips will appear in"""
         return self.dir() + "/" + self.prefix() + "/"
-    
+
     def full_path(self) -> str:
         return self.parent_path() + f"f{self.start_frame:04}-{self.end_frame:04}_." + self.suffix()
 
     def save(self, overwrite = False):
         """
-        Write this clip to disk 
+        Write this clip to disk
         """
         fmdt.utils.mkdir_p(self.parent_path())
 
@@ -735,12 +735,12 @@ class VideoClip(Video):
             db_dir = DEFAULT_DATA_DIR
         ) -> int:
         """Retrieve the clip id of this clip in our database using (parent_id, start_frame, end_frame) as a key
-        
+
         Return
         ------
         clip_id (int): The id of this clip in our database, if it exists. If the database does not contain
             a clip with the corresponding key, raise DatabaseError
-        
+
         """
 
         con = sqlite3.connect(fmdt.utils.join(db_dir, db_file))
@@ -748,22 +748,22 @@ class VideoClip(Video):
         try:
 
             df = pd.read_sql_query(f"""
-                                    SELECT clip_id 
+                                    SELECT clip_id
                                     FROM video_clips
                                     WHERE parent_id = {self.parent_id()}
                                     AND start_frame = {self.start_frame}
-                                    AND end_frame = {self.end_frame} 
-                                    """, 
+                                    AND end_frame = {self.end_frame}
+                                    """,
                                     con)
         except Exception as db_err:
-            
+
             print(db_err)
             print(colored("Potential solution: update your database file with fmdt.download_dbs()", "green"))
             con.close()
             exit(1)
 
         con.close()
-        
+
         if len(df) != 1:
             raise DatabaseError(f"{self} has no matches in database {fmdt.utils.join(db_file, db_dir)}")
 
@@ -779,8 +779,8 @@ class VideoClip(Video):
 
         parent_video = Video.from_db_id(row["parent_id"], db_file, db_dir)
         return VideoClip(parent_video.name, row["start_frame"], row["end_frame"], parent_video.type)
-    
-    
+
+
 # Take a list of Videos and turn it into a data base.
 def videos_to_csv(videos: list[Video], csv_filename: str) -> None:
     # First get the header
@@ -788,7 +788,7 @@ def videos_to_csv(videos: list[Video], csv_filename: str) -> None:
 
     with open(csv_filename, "w") as csv:
         csv.write(hdr)
-        
+
         i = 0
         for v in videos:
             csv.write(f"{i},{v.name},{v.type}\n")
@@ -813,7 +813,7 @@ def load_draco6(
 
     vids = retrieve_videos(db_filename, db_dir, require_gt, require_exist, require_best_det)
     return [v for v in vids if v.is_draco6()]
-    
+
 def load_draco12(
         db_filename: str = "videos.db",
         db_dir = DEFAULT_DATA_DIR,
@@ -846,7 +846,7 @@ def load_window_clips(
     """Load all of the clips associated with all of our windows objects"""
     return retrieve_video_clips(db_file, db_dir, require_exist, require_best_det)
 
-    
+
 def load_demo(db_filename: str = "videos.db", db_dir = DEFAULT_DATA_DIR) -> Video:
     """Load video 2022_05_31_tauh_34_meteors.mp4 from our database"""
     vids = retrieve_videos(db_filename, db_dir)
@@ -863,8 +863,8 @@ def load_all(
         require_best_det = False
     ) -> list[Video]:
     """Load all Draco6, Draco12, and window_clips
-    
-    The default behavior is to load all the videos that have at least one ground truth and exist on disk. We can also 
+
+    The default behavior is to load all the videos that have at least one ground truth and exist on disk. We can also
     require that a video has a best detection with the require_best_det parameter
 
     Parameters
@@ -872,7 +872,7 @@ def load_all(
     require_gt (bool): When True, all returned videos have a ground truth in our database
         default: True
     require_exist (bool): When True, all returned videos exist on disk
-        default: True 
+        default: True
     require_best_det (bool): When True, all returned videos have a recorded best detection in the best_detections table
         of our database.
         default: False
@@ -908,7 +908,7 @@ def retrieve_videos(
 
     if require_gt:
         vids = [v for v in vids if v.has_meteors(db_file, db_dir)]
-    
+
     if require_exist:
         vids = [v for v in vids if v.exists()]
 
@@ -981,7 +981,7 @@ def query_best_detection(
             SELECT * FROM best_detections
             WHERE id_video_clip = {id};
             """, con)
-    
+
     else:
 
         df = pd.read_sql_query(f"""
@@ -1007,22 +1007,22 @@ def retrieve_best_detection_df(
 
     if video_clip:
         df = pd.read_sql_query(f"""
-            SELECT * FROM best_detections 
+            SELECT * FROM best_detections
             INNER JOIN detect_args
             ON best_detections.id_args = detect_args.id_args
             WHERE id_video_clip = {id};
         """, con)
-        
+
         df = df.drop(df.columns[_ID_ARGS_COL], axis=1)
 
     else:
         df = pd.read_sql_query(f"""
-            SELECT * FROM best_detections 
+            SELECT * FROM best_detections
             INNER JOIN detect_args
             ON best_detections.id_args = detect_args.id_args
             WHERE id_video = {id};
         """, con)
-        
+
         df = df.drop(df.columns[_ID_ARGS_COL], axis=1)
 
     con.close()
@@ -1033,7 +1033,7 @@ def retrieve_best_detection_df(
             raise DatabaseError(f"Error accessing best args for VideoClip by id {id} from {db_filename}")
         else:
             raise DatabaseError(f"Error accessing best args for Video by id {id} from {db_filename}")
-    
+
 
     return df
 
@@ -1045,18 +1045,18 @@ def retrieve_best_arg(
     ) -> fmdt.Args:
     """
     Retrieve the Args object that is associated with the passed Video or VideoClip id
-    
+
     Parameters
     ----------
     id (int): unique identifier of the Video or VideoClip that we would like to retrieve.
         when video_clip is True, search for a match in the id_video_clip column of our
         best_detection table
-    video_clip (bool): Informs this function if we want to retrieve the best args for a VideoClip (True) or 
+    video_clip (bool): Informs this function if we want to retrieve the best args for a VideoClip (True) or
         for a Video (false)
 
     Examples
     --------
-    >>> args = fmdt.retrieve_best_args(1, video_clip=False) 
+    >>> args = fmdt.retrieve_best_args(1, video_clip=False)
 
     Returns the best Args associated with the *Video* whose id is 1 (Draconids-6mm1.05-0750-164200.avi)
 
@@ -1078,13 +1078,13 @@ def retrieve_best_detection(
     ) -> tuple[fmdt.Args, float, int]:
     """
     Retrieve the best detection result (args, trk_rate, true_pos) associated with a Video or VideoClip id
-    
+
     Parameters
     ----------
     id (int): unique identifier of the Video or VideoClip that we would like to retrieve.
         when video_clip is True, search for a match in the id_video_clip column of our
         best_detection table
-    video_clip (bool): Informs this function if we want to retrieve the best args for a VideoClip (True) or 
+    video_clip (bool): Informs this function if we want to retrieve the best args for a VideoClip (True) or
         for a Video (false)
 
     Return
@@ -1101,7 +1101,7 @@ def retrieve_best_detection(
     n_true_pos = df["true_pos"].iloc[0]
 
     return args, trk_rate, n_true_pos
-    
+
 def get_video_diagnostics(vids: list[Video]) -> tuple[int, int]:
     """Print information about the local environment"""
     # d6 = fmdt.load_draco6()/
@@ -1126,7 +1126,7 @@ def print_diagnostics_d6():
     print(f"Draconids-6mm*.avi videos configured with dir: {fmdt.config.draco6_dir()}")
     print("================================================================================")
     print_diagnostics(fmdt.load_draco6())
-    
+
 def print_diagnostics_d12():
     print("================================================================================")
     print(f"Draconids-12mm*.avi videos configured with dir: {fmdt.config.draco12_dir()}")
@@ -1142,8 +1142,8 @@ def print_diagnostics_win():
 def print_diagnostics_all():
     """Print diagnostic information for the three class of videos in our database, Draco6, Draco12, and window
 
-    We compare the number of videos that are present on disk with the number of videos in our database. 
-    
+    We compare the number of videos that are present on disk with the number of videos in our database.
+
     """
     print("Printing information about the local environment")
     print_diagnostics_d6()
@@ -1170,7 +1170,7 @@ def get_video_by_id(id: int) -> Video | None:
     if len(v) != 0:
         return v[0]
     else:
-        return None 
+        return None
 
 
 
@@ -1183,7 +1183,7 @@ def get_video_by_name(name: str) -> Video | None:
         return None
 
 def get_video_by_ids(ids: list[int]) -> Video | None:
-    return [get_video_by_id(id) for id in ids if not get_video_by_id(id) is None] 
+    return [get_video_by_id(id) for id in ids if not get_video_by_id(id) is None]
 
 
 #!============================== Modifying our data base ============================
@@ -1204,7 +1204,7 @@ def best_draco6(
     # db_filename = fmdt.utils.join(db_dir, db_file)
 
     # con = sqlite3.connect(db_filename)
-    
+
     # df = pd.read_sql_query(f"""
     #     SELECT * FROM best_detections as bd
     #     INNER JOIN video as v
@@ -1229,7 +1229,7 @@ def best_draco6(
 
 
 
-    
+
 
 
 

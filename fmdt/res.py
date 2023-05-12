@@ -15,9 +15,9 @@ from fmdt.utils import (
 
 class AbstractResult:
     """Abstract Base Clase for the Result type.
-    
+
     Any implementer MUST conform to the following specifications:
-    - have an args field of type fmdt.args.Args 
+    - have an args field of type fmdt.args.Args
     - have a function .get_trk_list() that returns list[TrackedObject]
     - have a function .vid_path() that returns the relevant video path.
 
@@ -78,9 +78,9 @@ class AbstractResult:
         assert not vid_in_path is None, "Cannot call fmdt.DetectionResult.split() with empty vid_in_path"
 
         meteors = [t for t in self.get_trk_list() if t.is_meteor()]
-        
+
         # Extract the start and end frames
-        start_end = [(m.start_frame, m.end_frame) for m in meteors] 
+        start_end = [(m.start_frame, m.end_frame) for m in meteors]
 
         if self.args.verbose:
             stderr("Args set to verbose inside split")
@@ -96,7 +96,7 @@ class AbstractResult:
 
     def clutter_files(self) -> list[str]:
         return self.args.clutter()
-        
+
     def cleanup(self, verbose = None) -> None:
 
         if not verbose is None:
@@ -117,7 +117,7 @@ def get_ordered_frames(log_path: str, max_frames = None) -> list[str]:
 
     if not os.path.exists(log_path):
         raise LogError(f"Cannot retrieve log files from {log_path} as it does not exist")
-    
+
     frames = os.listdir(log_path)
 
     # Retain only the files names who are of the format [\d*].txt
@@ -141,9 +141,9 @@ def retrieve_all_nroi(log_path: str, frames: list[str]) -> list[int]:
 
     Parameters
     ----------
-    log_path (str): The directory that was passed to fmdt-detect's --log-path parameter    
+    log_path (str): The directory that was passed to fmdt-detect's --log-path parameter
     max_frames (int | None): The maximum number of frame files in `log_path` to read. Useful for when
-        multiple different executions are saving log information to the same directory. 
+        multiple different executions are saving log information to the same directory.
     """
 
     rxp = r'\[(\d*)\]'
@@ -156,7 +156,7 @@ def retrieve_all_nroi(log_path: str, frames: list[str]) -> list[int]:
         with open(join(log_path, frame), "r") as file:
             lines = file.readlines()
             rois = [l for l in lines if contains_roi(l) and "(t)" in l]
-            tokens = rois[0].split() 
+            tokens = rois[0].split()
             n_roi = [n for n in tokens if rxp_comp.search(n)]
             return int(n_roi[0][1:-2])
 
@@ -188,13 +188,13 @@ def retrieve_mean_err_std_dev(filename: str) -> tuple[float, float]:
                 mean_err = float(l_split[-3])
                 std_dev  = float(l_split[-1])
                 return (mean_err, std_dev)
-            
+
 def retrieve_all_mean_errs(log_path: str, frames: list[str]) -> list[float]:
 
     def mean_err(filename) -> float:
         m, _ = retrieve_mean_err_std_dev(join(log_path, filename))
         return m
-    
+
     return [mean_err(f) for f in frames]
 
 def retrieve_all_std_devs(log_path: str, frames: list[str]) -> list[float]:
@@ -202,11 +202,11 @@ def retrieve_all_std_devs(log_path: str, frames: list[str]) -> list[float]:
     def mean_err(filename) -> float:
         _, s = retrieve_mean_err_std_dev(join(log_path, filename))
         return s
-    
+
     return [mean_err(f) for f in frames]
 
 def retrieve_log_info(
-        log_path: str, 
+        log_path: str,
         max_frames = None,
         verbose = False
     ) -> tuple[list[int], list[int], list[float], list[float]]:
@@ -218,7 +218,7 @@ def retrieve_log_info(
     frames = get_ordered_frames(log_path, max_frames)
 
     nrois = retrieve_all_nroi(log_path, frames)
-    nassocs = retrieve_all_nassociations(log_path, frames[1:]) 
+    nassocs = retrieve_all_nassociations(log_path, frames[1:])
     mean_errs = retrieve_all_mean_errs(log_path, frames[1:])
     std_devs = retrieve_all_std_devs(log_path, frames[1:])
 
@@ -251,7 +251,7 @@ class DetectionResult(AbstractResult):
 
         self.nframes = nframes
         self.df = df
-        self.args = args 
+        self.args = args
         self.trk_list = trk_list
         self.video = video
 
@@ -277,17 +277,17 @@ class DetectionResult(AbstractResult):
 
     def trk_list_summary(self) -> str:
         return f"objects in trk_list: {self.n_meteors_detected()} meteor(s), {self.n_stars_detected()} star(s), {self.n_noise_detected()} noise"
-    
+
     def __str__(self) -> str:
         a = f"fmdt.res.DetectionResult with args digest: {self.args.detect_args.digest()[0:16]}"
         b = f"\n{self.trk_list_summary()}"
-        
+
         c = ""
         if not self.df is None:
             c = f"\n{str(self.df)}"
 
         return a + b + c
-    
+
     def check(
             self,
             gt_path: str = None,
@@ -295,13 +295,13 @@ class DetectionResult(AbstractResult):
             verbose = False
         ):
         """Call fmdt-check with these results
-        
+
         Parameters
         ----------
         gt_path (str): Full path to ground truth file. Used when dealing with a call to fmdt.detect directly and not
             interfacing with a Video object. When calling with the function chain Video.detect().check(), we don't need
             to pass in the gt_path
-        
+
         """
 
         assert not self.args.detect_args.trk_path is None, "To call fmdt.check we must specify the `trk_path`"
@@ -320,7 +320,7 @@ class DetectionResult(AbstractResult):
     # @staticmethod
     # def from_file(trk_path: str, log_path: str):
 
-    
+
     # @staticmethod
     # def from_detect(args: fmdt.args.Args):
 
@@ -333,7 +333,7 @@ class DetectionResult(AbstractResult):
     #         trk_list = fmdt.extract_all_information(trk_path)
 
     #     if not log_path is None:
-    #         rois, nassocs, mean_errs, std_devs = retrieve_log_info(log_path) 
+    #         rois, nassocs, mean_errs, std_devs = retrieve_log_info(log_path)
     #     else:
     #         rois = []
     #         nassocs = []
@@ -346,7 +346,7 @@ class DetectionResult(AbstractResult):
         """Rate of Association (ROA) is the ratio nassoc / nroi"""
 
         assert not self.df is None, f"Cannot compute the roa of {self} because the field df is missing. Consider rerunning your detection with `save_df=True`"
-        
+
         return self.df["nassoc"] / self.df["nroi"]
 
     def mean_roa(self) -> float:
@@ -360,10 +360,10 @@ class DetectionResult(AbstractResult):
 
     def mean_mean_err(self) -> float:
         return self.df["mean_err"].mean()
-    
+
     def mean_std_dev(self) -> float:
         return self.df["std_dev"].mean()
-    
+
 class LogParserResult(AbstractResult):
 
     def __init__(
@@ -388,15 +388,15 @@ class VisuResult(AbstractResult):
 
     def vid_path(self):
         return self.args.vid_out_path()
-        
 
-    
+
+
 # load a DetectionResult object from a trk_path and a log_path
 def load_det_result(trk_path: str, log_path: str) -> DetectionResult:
     """Load a det_result object whose content is stored in trk_path and log_path"""
 
     if os.path.exists(trk_path):
-        trk_list = fmdt.core.extract_all_information(trk_path) 
+        trk_list = fmdt.core.extract_all_information(trk_path)
         n_frames = fmdt.core.nframes_processed(trk_path)
     else:
         trk_list = []
@@ -414,7 +414,7 @@ def load_det_result(trk_path: str, log_path: str) -> DetectionResult:
 # I want to parse the file.
 # Let's start off by parsing the first table
 
-# start after Id|    Type 
+# start after Id|    Type
 # end at Statistics
 
 CHECK_TABLE_HEADER = "#   Id |    Type || Detect |  GT || Start |  Stop ||      #"
@@ -444,9 +444,9 @@ def load_check_gt_table(check_stdout: str) -> pd.DataFrame:
 
         for (i, el) in enumerate(lines):
             if "Statistics:" in el:
-                stat_line_nmbr= i 
+                stat_line_nmbr= i
 
-        table = lines[(hdr_line_nmbr + 2):stat_line_nmbr] 
+        table = lines[(hdr_line_nmbr + 2):stat_line_nmbr]
 
 
         ids = []
@@ -467,7 +467,7 @@ def load_check_gt_table(check_stdout: str) -> pd.DataFrame:
             starts.append(int(s[CTBL_START]))
             stops.append(int(s[CTBL_STOP]))
             tracks.append(int(s[CTBL_TRACKS]))
-        
+
     return pd.DataFrame({
         "id": ids,
         "types": types,
@@ -478,7 +478,7 @@ def load_check_gt_table(check_stdout: str) -> pd.DataFrame:
         "tracks": tracks
     })
 
-CHECK_NGT = "- Number of GT objs"      
+CHECK_NGT = "- Number of GT objs"
 CHECK_NTRACK = "- Number of tracks"
 CHECK_TPOS = "- True positives"
 CHECK_FPOS = "- False positives"
@@ -545,7 +545,7 @@ def load_check_stats(check_stdout: str) -> pd.DataFrame:
         for j in range(6):
             m, s, n, a = check_line_to_tuple(lines[i + j])
             ms.append(m); ss.append(s); ns.append(n); alls.append(a)
-        
+
         m, s, n, a = check_tracking_rate_line(lines[i + 6])
         ms.append(m); ss.append(s); ns.append(n); alls.append(a)
 
@@ -562,7 +562,7 @@ def load_check_stats(check_stdout: str) -> pd.DataFrame:
             tneg.append(r[4])
             fneg.append(r[5])
             trk_rate.append(r[6])
-    
+
     return pd.DataFrame({
         "type": names,
         "gt": ngts,
@@ -574,11 +574,12 @@ def load_check_stats(check_stdout: str) -> pd.DataFrame:
         "trk_rate": trk_rate
     })
 
-class CheckResult:
+class CheckResult(AbstractResult):
 
-    def __init__(self, gt_table: pd.DataFrame = None, stats: pd.DataFrame = None):
+    def __init__(self, gt_table: pd.DataFrame = None, stats: pd.DataFrame = None, args = None):
         self.gt_table = gt_table
         self.stats = stats
+        self.args = args
 
     def __str__(self) -> str:
         a = "GroundTruth table\n-----------------\n"
@@ -587,9 +588,11 @@ class CheckResult:
         d = str(self.stats) + "\n"
 
         return a + b + c + d
-    
-    def __repr__(self) -> str:
-        return self.__str__()
+
+    def vid_path(self) -> str:
+        assert self.args is not None, f"Cannot retrieve vid_path because the args field of this CheckResult is empty"
+
+        return self.args.vid_in_path()
 
     def meteor_stats(self) -> pd.Series:
         return self.stats[self.stats["type"] == "meteor"].iloc[0]
@@ -602,7 +605,7 @@ class CheckResult:
 
     def all_stats(self) -> pd.Series:
         return self.stats[self.stats["type"] == "all"].iloc[0]
-    
+
     def trk_rate(self) -> float:
         return self.meteor_stats()["trk_rate"]
 
@@ -617,17 +620,17 @@ class CheckResult:
 
     def false_neg(self) -> int:
         return self.meteor_stats()["fneg"]
-    
+
     def gts(self) -> int:
         """Return the number ground truth meteors used when checking"""
         return self.stats["gt"].iloc[0]
 
     def nb_meteors_detected(self) -> int:
         return sum(self.gt_table["tracks"] != 0)
-    
+
     def detect_rate(self) -> float:
         return self.nb_meteors_detected() / self.gts()
-    
+
     def meteors_detected(self) -> bool:
         """Return True if the tracking rate is greater than 0"""
         return self.trk_rate() > 0.0
@@ -635,6 +638,6 @@ class CheckResult:
 def main():
     file = "test_check_one.txt"
 
-    df = load_check_gt_table(file) 
+    df = load_check_gt_table(file)
 
 

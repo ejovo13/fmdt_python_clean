@@ -1,7 +1,5 @@
 """Module dedicated to reporting the statistics of the current database"""
 
-import fmdt.db
-
 from fmdt.download import (
     get_db_dir
 )
@@ -46,7 +44,7 @@ def num_meteors(
     con = sqlite3.connect(join(db_dir, db_file))
 
     df = pd.read_sql_query("""
-        SELECT type, count(*) 
+        SELECT type, count(*)
         FROM video
         INNER JOIN human_detections as hd
         ON video.name = hd.video_name

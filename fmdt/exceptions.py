@@ -11,7 +11,7 @@ class DatabaseError(Exception):
     pass
 
 class AbstractExecutableArgsError(Exception):
-    """Raised when an implementer of the ABC AbstractExecutableArgs does not fulfill 
+    """Raised when an implementer of the ABC AbstractExecutableArgs does not fulfill
     the required condiitons
     """
 

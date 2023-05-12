@@ -3,7 +3,7 @@ from fmdt.utils import join
 
 from os.path import exists
 from requests import get
-from appdirs import user_data_dir 
+from appdirs import user_data_dir
 from deprecated import deprecated
 
 # Constant URLs for downloading
@@ -43,11 +43,11 @@ def download_file(
         if (log):
             print(f"Downloading csv file from {url}")
         r = get(url)
-        with open(filename, "w") as csv: 
+        with open(filename, "w") as csv:
             csv.write(r.text)
 
         return True
-    
+
 def download_binary_file(
         filename: str,
         url: str,
@@ -69,7 +69,7 @@ def download_binary_file(
 
         r = get(url, stream=True)
         with open(filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024): 
+            for chunk in r.iter_content(chunk_size=1024):
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
 
@@ -113,7 +113,7 @@ def download_demo_mp4(filename: str = "demo.mp4"):
         print(f"Downloading mp4 file from {url}...")
         r = get(url)
         with open(filename, "wb") as file:
-            for chunk in r.iter_content(chunk_size=255): 
+            for chunk in r.iter_content(chunk_size=255):
                 if chunk: # filter out keep-alive new chunks
                     file.write(chunk)
 

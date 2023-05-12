@@ -5,7 +5,6 @@ from appdirs import AppDirs
 import fmdt.truth
 import fmdt.download
 import fmdt.res
-import pandas as pd
 import shutil
 
 from fmdt.utils import join
@@ -30,7 +29,7 @@ class Config:
         s0= "============================\n"
         s = f"Draco6   {self.d6}\nDraco12  {self.d12}\nWindow   {self.win}"
         return h + s0 + s
-    
+
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -41,7 +40,7 @@ class Config:
 
         with open(full_path, "w") as file:
             file.write(self.to_json())
-        
+
         print(f"Saved config to {full_path}")
 
     @staticmethod
@@ -51,15 +50,15 @@ class Config:
     @staticmethod
     def load():
         return load_config()
-    
+
     @staticmethod
     def gt6_csv() -> str:
         return dirs.user_data_dir + "/gt6.csv"
-    
+
     @staticmethod
     def gt12_csv() -> str:
         return dirs.user_data_dir + "/gt12.csv"
-    
+
     # @staticmethod
     # def gt612_csv() -> str:
     #     return dirs.user_data_dir + "/gt12.csv"
@@ -80,13 +79,13 @@ def load_config() -> Config:
                             Config not yet initialized!
             ============================================================
 
-            In order to initialize your config, call 
+            In order to initialize your config, call
 
             >>> fmdt.init(d6_dir="/your/draco6/dir", d12_dir="your/draco12/dir",
                          win_dir="/your/window/dir")
 
-            You only ever have to do this ONE time! 
-            
+            You only ever have to do this ONE time!
+
             For example, for a unix user ejovo we could have:
 
             >>> fmdt.init("/home/ejovo/Videos/Watec6mm", "/home/ejovo/Vidoes/Watec12mm",
@@ -156,7 +155,7 @@ def listdir_window() -> list[str]:
     con = load_config()
 
     win = [v for v in os.listdir(con.win) if is_window(v)]
-    return win 
+    return win
 
 def listdir_all() -> list[str]:
 
@@ -191,7 +190,7 @@ def load_gt12() -> fmdt.truth.GroundTruth:
 
 # if check_for_config_file():
     # con = load_config()
-    
+
 def draco6_dir():
     con = load_config()
     return con.d6
@@ -234,16 +233,16 @@ def bytes_format(x: int) -> str:
 
     if abs(x) < 1024:
         return str(x) + "B"
-    
+
     if abs(x) < 1024 * 1024:
         return str(x // 1024) + "KB"
 
     if abs(x) < 1024 * 1024 * 1024:
         return str(x // (1024 * 1024)) + "MB"
-    
+
     if abs(x) < 1024 * 1024 * 1024 * 1024:
         return str(x // (1024 * 1024 * 1024)) + "GB"
-    
+
     if abs(x) < 1024 * 1024 * 1024 * 1024 * 1024:
         return str(x // (1024 * 1024 * 1024 * 1024)) + "TB"
 
@@ -265,7 +264,7 @@ def clear_cache() -> int:
             os.remove(full_path)
             files_removed += 1
             continue
-    
+
         if os.path.isdir(full_path):
             files_removed += count_files_in_dir(p)
             top_level_dir_removed += 1

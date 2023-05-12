@@ -4,9 +4,6 @@ import sys
 import numpy as np
 import subprocess
 
-# from hashlib import md5
-from functools import partial
-
 from termcolor import (
     colored
 )
@@ -19,7 +16,7 @@ def retain_meteors(tracking_list: list[dict]) -> list[dict]:
 
 def separate_meteor_sequences(tracking_list: list[dict], frame_buffer = 5) -> list[tuple[int, int]]:
     """
-    Take a tracking list and compute the disparate sequences of meteors 
+    Take a tracking list and compute the disparate sequences of meteors
 
     If two meteors are within frame_buffer frames of each other, consider them as part of the
     same sequence
@@ -31,7 +28,7 @@ def separate_meteor_sequences(tracking_list: list[dict], frame_buffer = 5) -> li
     return condense_start_end(start_end, frame_buffer)
 
 def condense_start_end(start_end: list[tuple[int, int]], frame_buffer = 5) -> list[tuple[int, int]]:
-    """Condense a list of (f_start, f_end) frame pairs into a small sequence of 
+    """Condense a list of (f_start, f_end) frame pairs into a small sequence of
     non-overlapping sequences
     """
     start_end_condensed = [start_end[0]]
@@ -43,7 +40,7 @@ def condense_start_end(start_end: list[tuple[int, int]], frame_buffer = 5) -> li
             start_end_condensed[ci] = (start_end_condensed[ci][0], start_end[i + 1][1])
         else:
             ci = ci + 1
-            start_end_condensed.append(start_end[i + 1]) 
+            start_end_condensed.append(start_end[i + 1])
 
     return start_end_condensed
 
@@ -52,7 +49,7 @@ def condense_start_end(start_end: list[tuple[int, int]], frame_buffer = 5) -> li
 def get_avg_frame_rate(filename: str) -> float:
     """
     Get the average framerate of a video
-    
+
     Adapted from https://github.com/kkroening/ffmpeg-python/blob/master/examples/video_info.py#L15
     """
     probe = ffmpeg.probe(filename)
@@ -63,7 +60,7 @@ def get_avg_frame_rate(filename: str) -> float:
 def get_nominal_frame_rate(filename: str) -> float:
     """
     Get the average framerate of a video
-    
+
     Adapted from https://github.com/kkroening/ffmpeg-python/blob/master/examples/video_info.py#L15
     """
     probe = ffmpeg.probe(filename)
@@ -95,15 +92,15 @@ def get_video_duration(filename: str) -> float:
 
 def video_has_cfr(filename: str) -> bool:
     """Check whether a video is encoded with a constant frame rate (CFR)
-    
+
     This amounts to checking if the nominal frame rate and the average frame rate are identical"""
     return get_avg_frame_rate(filename) == get_nominal_frame_rate(filename)
 
-    
+
 def decompose_video_filename(filename: str) -> tuple[str, str]:
     """Separate the name of a video from its extension
 
-    Ex: decompose_video_filename("vid.mp4") returns the pair ("vid", "mp4") 
+    Ex: decompose_video_filename("vid.mp4") returns the pair ("vid", "mp4")
     """
     sep = filename.split('.')
     # assert len(sep) == 2, "Filename has multiply periods"
@@ -129,7 +126,7 @@ def time_s_to_ffmpeg_format(time: int | float) -> str:
     time -= time_h * 60 * 60
     time_m = int(time // 60)
     time -= time_m * 60
-    time_s = int(np.floor(time)) 
+    time_s = int(np.floor(time))
     time -= time_s
     time_ms = time
 
@@ -185,9 +182,9 @@ def extract_video_frames(
 
 def convert_video_to_ndarray(filename: str, verbose=False) -> np.ndarray:
     """
-    Convert a video file to a numpy array of size [n_frames, height, width, 3] 
+    Convert a video file to a numpy array of size [n_frames, height, width, 3]
 
-    Taken from ffmpeg-python's documentation 
+    Taken from ffmpeg-python's documentation
     https://github.com/kkroening/ffmpeg-python/blob/master/examples/README.md#convert-video-to-numpy-array
     """
 
@@ -237,7 +234,7 @@ def convert_ndarray_to_video(
     """
     Convert a rgb numpy array to video using ffmpeg-python
 
-    Adapted from https://github.com/kkroening/ffmpeg-python/issues/246#issuecomment-520200981 
+    Adapted from https://github.com/kkroening/ffmpeg-python/issues/246#issuecomment-520200981
     """
 
     if verbose:
@@ -301,7 +298,7 @@ def stderr(message: str) -> None:
 
 # def md5sum(filename: str) -> str:
 #     """Compute the md5sum of a file. Used to check the integrity of video files
-    
+
 #     Taken from https://stackoverflow.com/a/7829658/11838135
 #     """
 #     with open(filename, mode='rb') as f:

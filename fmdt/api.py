@@ -3,7 +3,6 @@ API to call fmdt executables. Assumes that fmdt-detect and other executables
 are on the system path
 """
 import fmdt.res
-import random
 from os import listdir
 import subprocess
 import os
@@ -15,9 +14,9 @@ import shutil
 import pandas as pd
 
 def help():
-    s = """    fmdt.api contains a Python wrapper for the `fmdt-detect` and `fmdt-visu` 
+    s = """    fmdt.api contains a Python wrapper for the `fmdt-detect` and `fmdt-visu`
     executables.
-    
+
     fmdt.api contains the public-facing functions (also aliased under fmdt.*):
         fmdt[.api].count
         fmdt[.api].detect
@@ -47,7 +46,7 @@ def count(
     meteors (bool): When True, include meteor objects in our count (Default True)
     noise (bool): When True, include noise objects in our count (Default False)
     all (bool): When True, include all objects in the count
-    
+
     Examples
     --------
     >>> fmdt.detect(vid_in_path="demo.mp4", trk_path="tracks.txt") # Store tracks in tracking file
@@ -55,7 +54,7 @@ def count(
 
     >>> fmdt.count("tracks.txt", all=True) # Count stars, meteors, and noise
 
-    >>> fmdt.count("tracks.txt", stars=True, meteors=False, noise=True) # Count stars and noise 
+    >>> fmdt.count("tracks.txt", stars=True, meteors=False, noise=True) # Count stars and noise
     """
     if all:
         stars = True
@@ -65,24 +64,24 @@ def count(
     tracked = fmdt.core.extract_key_information(trk_path)
 
     # If we shouldn't keep this object type, filter it out
-    def refine(obj_type: bool, type_str: str) -> None: 
+    def refine(obj_type: bool, type_str: str) -> None:
         if not obj_type:
             tracked = [t for t in tracked if t["type"] != type_str]
-    
+
     refine(stars, "stars")
     refine(meteors, "meteors")
     refine(noise, "noise")
 
     # tracked_meteors = fmdt.utils.retain_meteors(tracked)
     return len(tracked)
-    
+
 
 FMDT_TIMEOUT = 1
 
 
 def detect(
         #=================== fmdt-detect parameters ================
-        vid_in_path: str, 
+        vid_in_path: str,
         vid_in_start: int | None = None,
         vid_in_stop: int | None = None,
         vid_in_skip: int | None = None,
@@ -127,7 +126,7 @@ def detect(
     ------------------
     trk_path (str): path to redirect stdout of `fmdt-detect`
     verbose (bool): Print logging messages to stdout (True) or do nothing (False). Default False.
-    timeout (float): timeout in seconds of the Python subprocess executing `fmdt-detect`. Default None. 
+    timeout (float): timeout in seconds of the Python subprocess executing `fmdt-detect`. Default None.
         Used to speed up ground truth testing.
     """
 
@@ -173,11 +172,11 @@ def detect(
         fmdt.utils.mkdir_p(log_path)
 
         # Clear all the frame files in log_path
-        frames = fmdt.res.get_ordered_frames(log_path) 
+        frames = fmdt.res.get_ordered_frames(log_path)
 
         for f in frames:
             os.remove(fmdt.utils.join(log_path, f))
-    
+
     if save_df and log_path is None:
         print("Save_df activated in final detect call")
         args.detect_args.log_path = args.detect_args.cache_dir()
@@ -197,7 +196,7 @@ def detect(
 
     #============= Recover data if log_path =======================================#
     if not args.detect_args.log_path is None:
-        nrois, nassocs, mean_errs, std_devs = fmdt.res.retrieve_log_info(args.detect_args.log_path, nframes) 
+        nrois, nassocs, mean_errs, std_devs = fmdt.res.retrieve_log_info(args.detect_args.log_path, nframes)
     else:
         nrois = []
         nassocs = []
@@ -216,7 +215,7 @@ def detect(
                 'std_dev': [0.0] + std_devs
             })
 
-    return fmdt.res.DetectionResult(nframes, df, args, trk_list)   
+    return fmdt.res.DetectionResult(nframes, df, args, trk_list)
 
 def log_parser(
         log_path: str,
@@ -238,9 +237,9 @@ def log_parser(
     ----------
     Extensively documented here: https://fmdt.readthedocs.io/en/latest/user/usage/log.html
 
-    
+
     stdout (str): A file path to save the contents of the standard out of fmdt-log-parser
-    verbose (bool): 
+    verbose (bool):
 
 
     """
@@ -267,7 +266,7 @@ def log_parser(
     args = fmdt.args.Args(log_parser_args=log_parser_args, detect_args=None, visu_args=None, verbose=verbose)
 
     return fmdt.res.LogParserResult(args)
-            
+
 def visu(
         vid_in_path: str,
         trk_path: str,
@@ -318,10 +317,11 @@ def check(
         trk_path: str,
         gt_path: str,
         stdout: str = None,
-        verbose = False
+        verbose = False,
+        args = None
     ) -> fmdt.res.CheckResult:
     """Call fmdt-check
-    
+
     Parameters
     ----------
     std_out (str): File to store stdout of fmdt-check"""
@@ -332,18 +332,18 @@ def check(
 
     stats = fmdt.res.load_check_stats(stdout)
     gt_table = fmdt.res.load_check_gt_table(stdout)
-    
-    return fmdt.res.CheckResult(gt_table=gt_table, stats=stats)
+
+    return fmdt.res.CheckResult(gt_table=gt_table, stats=stats, args=args)
 
 def detect_directory(dir_name: str, args: fmdt.args.Args, verbose=False):
     """Call `fmdt-detect` on all videos in the directory `dir_name` using the settings stored in `args`
-    
+
     Parameters
     ----------
     dir_name (str): Path to the directory of videos that you'd like to detect
-    args: (fmdt.args.Args): Configuration of parameters used to call fmdt.detect    
-    
-    
+    args: (fmdt.args.Args): Configuration of parameters used to call fmdt.detect
+
+
     """
 
     entries = listdir(dir_name)
@@ -360,12 +360,12 @@ def detect_directory(dir_name: str, args: fmdt.args.Args, verbose=False):
         args.detect_args["vid_in_path"] = dir_name + "/" + v
 
         fail = args.does_detect_fail(verbose=verbose)
-        if verbose: 
+        if verbose:
             print(f"{v} fails? {fail}")
 
         if (fail):
             failing_cmds.append(" ".join(args.detect_cmd()))
-        
+
         i = i + 1
 
     for c in failing_cmds:
@@ -383,13 +383,13 @@ def _run_detect(
         tmp_file: bool = False
     ) -> tuple[list[fmdt.core.TrackedObject], int]:
     """Handle the final logic of calling `fmdt-detect`
-    
+
 
     Parameters
     ----------
     tmp_file (bool): Indicates whether `trk_path` is a temporary file that should be deleted after execution.
         Default False
-    
+
     """
 
     with open(trk_path, 'w') as outfile:
@@ -401,7 +401,7 @@ def _run_detect(
                 print(f"{trk_path} marked as a temporary file")
 
         if not timeout is None:
-            try: 
+            try:
                 proc = subprocess.Popen(argv, stdout=subprocess.PIPE)
                 outs, _ = proc.communicate(timeout=timeout)
                 lines = outs.decode("utf-8").split("\n")
@@ -426,10 +426,10 @@ def _run_detect(
                     print(line)
                 outfile.write(line + "\n")
             proc.wait()
-        
+
     trk_list = fmdt.core.extract_all_information(trk_path)
     nframes = fmdt.core.nframes_processed(trk_path)
-            
+
     if cache:
         shutil.copyfile(src=trk_path, dst=cache_file)
 
@@ -445,13 +445,13 @@ def _run_process(
         tmp_file: bool = False
     ) -> tuple[list[fmdt.core.TrackedObject], int]:
     """Handle the final logic of calling `fmdt-log-parser`
-    
+
     Parameters
     ----------
     stdout_file (str): File path to capture standard out of log_parser
     tmp_file (bool): Indicates whether `trk_path` is a temporary file that should be deleted after execution.
         Default False
-    
+
     """
     with open(stdout_file, 'w') as outfile:
 
